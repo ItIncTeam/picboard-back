@@ -1,6 +1,9 @@
 # Check out https://hub.docker.com/_/node to select a new base image
 FROM node:20.11-alpine
 
+# Install pnpm globally
+RUN npm install -g pnpm@latest-9
+
 # Set to a non-root built-in user `node`
 USER node
 
@@ -15,16 +18,16 @@ WORKDIR /home/node/dist/app
 
 COPY --chown=node package*.json ./
 
-RUN npm install
+RUN pnpm install --frozen-lockfile --prod
 
 ENV PORT=4309
 # Bundle app source code
 COPY --chown=node . .
 
-RUN npm run build
+RUN pnpm run build
 
 # Bind to all network interfaces so that it can be mapped to the host OS
 
 EXPOSE ${PORT}
 
-CMD [ "npm", "start" ]
+CMD [ "pnpm", "start" ]
