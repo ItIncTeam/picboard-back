@@ -4,7 +4,7 @@ pipeline {
     agent any
     environment {
         ENV_TYPE = "production"
-        PORT = 4308
+        PORT = 4309
         NAMESPACE = "picboard-space"
         REGISTRY_HOSTNAME = "itinc"
         PROJECT = "picboard-test"
