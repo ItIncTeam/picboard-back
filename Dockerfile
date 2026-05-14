@@ -1,6 +1,14 @@
 # Check out https://hub.docker.com/_/node to select a new base image
 FROM node:20.11-alpine
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+# Install pnpm globally
+# RUN npm install -g pnpm@latest-9
+
 # Set to a non-root built-in user `node`
 USER node
 
@@ -13,18 +21,23 @@ WORKDIR /home/node/dist/app
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
 
-COPY --chown=node package*.json ./
+#COPY --chown=node package*.json ./
 
-RUN npm install
+COPY --chown=node package.json pnpm-lock.yaml ./
 
-ENV PORT=4308
+RUN pnpm install --frozen-lockfile
+
+ENV PORT=4309
 # Bundle app source code
 COPY --chown=node . .
 
-RUN npm run build
+RUN pnpm run build
+
+# Опционально: удаляем dev-зависимости после сборки (если не нужны в runtime)
+# RUN pnpm prune --prod
 
 # Bind to all network interfaces so that it can be mapped to the host OS
 
 EXPOSE ${PORT}
 
-CMD [ "npm", "start" ]
+CMD [ "pnpm", "start" ]
