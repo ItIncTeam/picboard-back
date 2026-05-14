@@ -1,4 +1,5 @@
 import { Field, ID, ObjectType, Directive } from '@nestjs/graphql';
+import { User } from './user.stub';
 
 @ObjectType()
 @Directive('@key(fields: "id")')
@@ -14,4 +15,7 @@ export class Post {
 
   @Field({ nullable: true })
   coverImageFileId?: string;
+
+  @Field(() => User)
+  author: User;
 }

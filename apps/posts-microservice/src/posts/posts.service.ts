@@ -39,4 +39,11 @@ export class PostsService {
 
     return post;
   }
+
+  async findByAuthorId(authorId: string) {
+    return this.prisma.post.findMany({
+      where: { authorId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

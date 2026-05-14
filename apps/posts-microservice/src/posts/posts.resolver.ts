@@ -34,7 +34,8 @@ export class PostsResolver {
 
   @ResolveField(() => User)
   author(@Parent() post: Post) {
-    return { __typename: 'User', id: post.authorId };
+    return { id: post.authorId };
+    /*{ __typename: 'User', id: post.authorId };*/
   }
 
   @ResolveField(() => FileAsset, { nullable: true })
