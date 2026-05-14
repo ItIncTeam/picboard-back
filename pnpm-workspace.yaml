@@ -1,3 +1,15 @@
 allowBuilds:
   '@nestjs/core': true
   unrs-resolver: false
+
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - '@apollo/protobufjs'
+  - '@nestjs/core'
+  - '@prisma/engines'
+  - bcrypt
+  - prisma
+  - protobufjs
