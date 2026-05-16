@@ -1,16 +1,19 @@
+//configModule from './dynamic-config.module' HAS TO BE IMPORTED ON TOP OF EVERYTHING!
+import { configModule } from './dynamic-config.module';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import {
   ApolloFederationDriver,
   ApolloFederationDriverConfig,
 } from '@nestjs/apollo';
-import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from '@app/auth';
+import { AppConfigModule } from './config/app-config.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env.users' }),
+    configModule,
+    AppConfigModule,
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: {

@@ -1,31 +1,46 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { RmqService } from './rmq.service';
 
-export const RMQ_SERVICE = 'RMQ_SERVICE';
+export interface RmqModuleAsyncOptions {
+  imports?: any[];
+  inject?: any[];
+  name: string;
+  useFactory: (...args: any[]) => {
+    url: string;
+    queue: string;
+  };
+}
 
 @Module({})
 export class RmqModule {
-  static register(): DynamicModule {
+  static registerAsync(options: RmqModuleAsyncOptions): DynamicModule {
     return {
       module: RmqModule,
       imports: [
-        ClientsModule.register([
+        ClientsModule.registerAsync([
           {
-            name: RMQ_SERVICE,
-            transport: Transport.RMQ,
-            options: {
-              urls: [
-                process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
-              ],
-              queue: process.env.RABBITMQ_QUEUE || 'default_queue',
-              queueOptions: { durable: true },
+            name: options.name,
+            imports: options.imports ?? [],
+            inject: options.inject ?? [],
+            useFactory: (...args: any[]) => {
+              const rmqOptions = options.useFactory(...args);
+
+              return {
+                transport: Transport.RMQ,
+                options: {
+                  urls: [rmqOptions.url],
+                  queue: rmqOptions.queue,
+                  queueOptions: {
+                    durable: true,
+                  },
+                },
+              };
             },
           },
         ]),
       ],
-      providers: [RmqService],
-      exports: [ClientsModule, RmqService],
+      /*providers: [RmqService],*/
+      exports: [ClientsModule /*, RmqService*/],
     };
   }
 }

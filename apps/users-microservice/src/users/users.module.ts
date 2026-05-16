@@ -1,17 +1,38 @@
 import { Module } from '@nestjs/common';
 import { UsersResolver } from './users.resolver';
 import { UsersService } from './users.service';
-import { UsersPrismaService } from '../prisma/users-prisma.service';
 import { JwtModule } from '@nestjs/jwt';
+import { RmqModule } from '@app/rmq';
+import { AppConfigModule } from '../config/app-config.module';
+import { AppConfig } from '../config/app.config';
+import { USERS_RMQ_CLIENT } from './users.constants';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_ACCESS_SECRET || 'super-secret',
-      signOptions: { expiresIn: '7d' },
+    AppConfigModule,
+    PrismaModule,
+    RmqModule.registerAsync({
+      name: USERS_RMQ_CLIENT,
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        url: appConfig.rabbitMqUrl,
+        queue: appConfig.rabbitMqQueue,
+      }),
+    }),
+    JwtModule.registerAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        secret: appConfig.jwtAccessSecret,
+        signOptions: {
+          expiresIn: appConfig.jwtAccessExpiresIn,
+        },
+      }),
     }),
   ],
-  providers: [UsersResolver, UsersService, UsersPrismaService],
+  providers: [UsersResolver, UsersService],
   exports: [UsersService],
 })
 export class UsersModule {}
