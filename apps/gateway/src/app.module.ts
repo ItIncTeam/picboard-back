@@ -1,16 +1,21 @@
+//configModule from './dynamic-config.module' HAS TO BE IMPORTED ON TOP OF EVERYTHING!
+import { configModule } from './dynamic-config.module';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
 import { IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
+import { AppConfig } from './config/app.config';
+import { AppConfigModule } from './config/app-config.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env.gateway' }),
+    configModule,
+    AppConfigModule,
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => ({
         server: {
           cors: true,
           context: ({ req }) => ({
@@ -22,9 +27,9 @@ import { IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
         gateway: {
           supergraphSdl: new IntrospectAndCompose({
             subgraphs: [
-              { name: 'users', url: config.getOrThrow('USERS_GQL_URL') },
-              { name: 'posts', url: config.getOrThrow('POSTS_GQL_URL') },
-              { name: 'files', url: config.getOrThrow('FILES_GQL_URL') },
+              { name: 'users', url: config.usersGqlUrl },
+              { name: 'posts', url: config.postsGqlUrl },
+              { name: 'files', url: config.filesGqlUrl },
             ],
           }),
           buildService: ({ url }) =>

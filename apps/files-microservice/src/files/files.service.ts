@@ -3,16 +3,16 @@ import { ClientProxy } from '@nestjs/microservices';
 import { randomUUID } from 'crypto';
 import { FilesPrismaService } from '../prisma/files-prisma.service';
 import { CreateUploadSessionInput } from './dto/create-upload-session.input';
-import { RMQ_SERVICE } from '@app/rmq';
+import { FILES_RMQ_CLIENT } from './files.constants';
+import { AppConfig } from '../config/app.config';
 
 @Injectable()
 export class FilesService {
   constructor(
     private readonly prisma: FilesPrismaService,
-    @Inject(RMQ_SERVICE) private readonly rmqClient: ClientProxy,
-  ) {
-    console.log('files.service token', RMQ_SERVICE);
-  }
+    private readonly appConfig: AppConfig,
+    @Inject(FILES_RMQ_CLIENT) private readonly client: ClientProxy,
+  ) {}
 
   findById(id: string) {
     return this.prisma.fileAsset.findUnique({
@@ -29,7 +29,7 @@ export class FilesService {
         purpose: input.purpose,
         mimeType: input.mimeType,
         size: input.size,
-        bucket: process.env.MINIO_BUCKET || 'uploads',
+        bucket: this.appConfig.minioBucket,
         objectKey,
         status: 'PENDING',
       },
@@ -45,12 +45,12 @@ export class FilesService {
       },
     });
 
-    this.rmqClient.emit('file.upload.completed', {
+    /*this.client.emit('file.upload.completed', {
       fileId: file.id,
       ownerId: file.ownerId,
       purpose: file.purpose,
       url: file.url,
-    });
+    });*/
 
     return file;
   }

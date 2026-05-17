@@ -2,9 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { AppConfig } from './config/app.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const appConfig = app.get<AppConfig>(AppConfig);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -17,13 +20,13 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
-      urls: [process.env.RABBITMQ_URL!],
-      queue: process.env.RABBITMQ_QUEUE || 'posts_queue',
+      urls: [appConfig.rabbitMqUrl],
+      queue: appConfig.rabbitMqQueue,
       queueOptions: { durable: true },
     },
   });
 
   await app.startAllMicroservices();
-  await app.listen(process.env.PORT || 3002);
+  await app.listen(appConfig.port);
 }
 bootstrap();

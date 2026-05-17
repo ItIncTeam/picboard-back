@@ -3,12 +3,13 @@ import { ClientProxy } from '@nestjs/microservices';
 import { CreatePostInput } from './dto/create-post.input';
 import { Inject } from '@nestjs/common';
 import { PostsPrismaService } from '../prisma/posts-prisma.service';
+import { POSTS_RMQ_CLIENT } from './posts.constants';
 
 @Injectable()
 export class PostsService {
   constructor(
     private readonly prisma: PostsPrismaService,
-    @Inject('RMQ_SERVICE') private readonly rmqClient: ClientProxy,
+    @Inject(POSTS_RMQ_CLIENT) private readonly client: ClientProxy,
   ) {}
 
   feed() {
@@ -30,12 +31,12 @@ export class PostsService {
       },
     });
 
-    this.rmqClient.emit('post.created', {
+    /*this.client.emit('post.created', {
       postId: post.id,
       authorId: post.authorId,
       coverImageFileId: post.coverImageFileId,
       createdAt: post.createdAt.toISOString(),
-    });
+    });*/
 
     return post;
   }
