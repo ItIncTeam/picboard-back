@@ -8,13 +8,27 @@ datasource db {
 }
 
 model User {
-  id                   String   @id @default(uuid()) @db.Uuid
-  email                String   @unique
-  username             String   @unique
+  id                   String         @id @default(uuid()) @db.Uuid
+  email                String         @unique
+  username             String         @unique
   passwordHash         String
   displayName          String?
   bio                  String?
-  profilePictureFileId String?  @db.Uuid
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  profilePictureFileId String?        @db.Uuid
+  providers            Json?          @default("{}")
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  OAuthAccount         OAuthAccount[]
+}
+
+model OAuthAccount {
+  id         String  @id @default(uuid()) @db.Uuid
+  userId     String  @db.Uuid
+  provider   String // 'google' or 'github'
+  providerId String // ID от провайдера
+  userName   String?
+  email      String?
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
 }
