@@ -27,8 +27,10 @@ pipeline {
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
-                       export PNPM_IGNORE_PACKAGE_MANAGER=true
                        yarn install
+                       yarn run prisma:generate:users
+                       yarn run prisma:generate:posts
+                       yarn run prisma:generate:files
                        yarn test
                     '''
                 }
@@ -41,7 +43,6 @@ pipeline {
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
-                       export PNPM_IGNORE_PACKAGE_MANAGER=true
                        yarn test:users:e2e
                     '''
                 }
