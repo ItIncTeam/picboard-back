@@ -28,8 +28,8 @@ pipeline {
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
                        export PNPM_IGNORE_PACKAGE_MANAGER=true
-                       pnpm install
-                       pnpm test
+                       yarn install
+                       yarn test
                     '''
                 }
             }
@@ -42,7 +42,7 @@ pipeline {
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
                        export PNPM_IGNORE_PACKAGE_MANAGER=true
-                       pnpm test:users:e2e
+                       yarn test:users:e2e
                     '''
                 }
             }
