@@ -27,6 +27,7 @@ pipeline {
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
+                       export PNPM_IGNORE_PACKAGE_MANAGER=true
                        pnpm install
                        pnpm test
                     '''
@@ -40,6 +41,7 @@ pipeline {
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
+                       export PNPM_IGNORE_PACKAGE_MANAGER=true
                        pnpm test:users:e2e
                     '''
                 }
