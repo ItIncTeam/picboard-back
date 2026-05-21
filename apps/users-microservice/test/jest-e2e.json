@@ -7,9 +7,9 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@app/auth$": "<rootDir>/../../libs/auth/src",
-    "^@app/auth/(.*)$": "<rootDir>/../../libs/auth/src/$1",
-    "^@app/contracts$": "<rootDir>/../../libs/contracts/src",
-    "^@app/contracts/(.*)$": "<rootDir>/../../libs/contracts/src/$1"
+    "^@app/auth(|/.*)$": "<rootDir>/../../libs/auth/src/$1",
+    "^@app/common(|/.*)$": "<rootDir>/../../libs/common/src/$1",
+    "^@app/contracts(|/.*)$": "<rootDir>/../../libs/contracts/src/$1",
+    "^@app/rmq(|/.*)$": "<rootDir>/../../libs/rmq/src/$1"
   }
 }
