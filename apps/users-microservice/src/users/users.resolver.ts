@@ -8,12 +8,12 @@ import {
   Field,
   Context,
 } from '@nestjs/graphql';
-import { User } from './entities/user.entity';
+import { User } from '../graphql/types/user.type';
 import { UsersService } from './users.service';
-import { RegisterInput } from './dto/register.input';
-import { LoginInput } from './dto/login.input';
 import { UnauthorizedException, UseGuards } from '@nestjs/common';
 import { GqlJwtAuthGuard } from '@app/auth';
+import { SignUpInput } from '../graphql/inputs/sign-up.input';
+import { SignInInput } from '../graphql/inputs/sign-in.input';
 
 @ObjectType()
 class LoginPayload {
@@ -33,13 +33,8 @@ export class UsersResolver {
     return this.usersService.findById(id);
   }
 
-  @Mutation(() => User)
-  register(@Args('input') input: RegisterInput) {
-    return this.usersService.register(input);
-  }
-
   @Mutation(() => LoginPayload)
-  login(@Args('input') input: LoginInput) {
+  login(@Args('input') input: SignInInput) {
     return this.usersService.login(input);
   }
 

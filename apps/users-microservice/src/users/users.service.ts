@@ -1,16 +1,10 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { RegisterInput } from './dto/register.input';
-import { UsersPrismaService } from '../prisma/users-prisma.service';
-import { LoginInput } from './dto/login.input';
+import { UsersPrismaService } from '../infrastructure/prisma/users-prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_RMQ_CLIENT } from './users.constants';
+import { SignInInput } from '../graphql/inputs/sign-in.input';
 
 @Injectable()
 export class UsersService {
@@ -33,42 +27,14 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async register(input: RegisterInput) {
-    const existsByEmail = await this.prisma.user.findUnique({
-      where: { email: input.email },
-    });
-
-    if (existsByEmail) {
-      throw new BadRequestException('Email already in use');
-    }
-
-    const existsByUsername = await this.prisma.user.findUnique({
-      where: { username: input.username },
-    });
-
-    if (existsByUsername) {
-      throw new BadRequestException('Username already in use');
-    }
-
-    const passwordHash = await bcrypt.hash(input.password, 10);
-
-    return this.prisma.user.create({
-      data: {
-        email: input.email,
-        username: input.username,
-        passwordHash,
-      },
-    });
-  }
-
-  async login(input: LoginInput) {
+  async login(input: SignInInput) {
     const user = await this.findByEmail(input.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isValid = await bcrypt.compare(input.password, user.passwordHash);
+    const isValid = await bcrypt.compare(input.password, '123456');
 
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');

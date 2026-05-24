@@ -104,4 +104,25 @@ export class AppConfig {
     }
     return value;
   }
+
+  get nodeEnv(): string {
+    const value = this.configService.get<string>('NODE_ENV');
+    if (!value) {
+      throw new Error('NODE_ENV is not defined');
+    }
+    return value;
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
+  }
+
+  get emailConfirmationExpiresInMs(): number {
+    const value = this.configService.get<string>(
+      'EMAIL_CONFIRMATION_EXPIRES_IN_MS',
+    );
+    if (!value)
+      throw new Error('EMAIL_CONFIRMATION_EXPIRES_IN_MS is not defined');
+    return Number(value);
+  }
 }

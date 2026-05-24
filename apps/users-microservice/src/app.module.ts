@@ -9,19 +9,26 @@ import {
 import { UsersModule } from './users/users.module';
 import { AuthModule } from '@app/auth';
 import { AppConfigModule } from './config/app-config.module';
+import { createGraphqlFormatError } from '@app/common';
+import { AppConfig } from './config/app.config';
 
 @Module({
   imports: [
     configModule,
     AppConfigModule,
-    GraphQLModule.forRoot<ApolloFederationDriverConfig>({
+    GraphQLModule.forRootAsync<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
-      autoSchemaFile: {
-        federation: 2,
-      },
-      sortSchema: true,
-      playground: true,
-      context: ({ req }) => ({ req }),
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        autoSchemaFile: {
+          federation: 2,
+        },
+        sortSchema: true,
+        playground: true,
+        context: ({ req }) => ({ req }),
+        formatError: createGraphqlFormatError(appConfig.isProduction),
+      }),
     }),
     UsersModule,
     AuthModule,

@@ -13,6 +13,12 @@ export class User {
   username: string;
 
   @Field({ nullable: true })
+  confirmationCode: string;
+
+  @Field({ nullable: true })
+  confirmationCodeExpDate: Date;
+
+  @Field({ nullable: true })
   displayName?: string;
 
   @Field({ nullable: true })

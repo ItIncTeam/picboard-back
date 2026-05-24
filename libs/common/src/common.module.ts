@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
-import { CommonService } from './common.service';
 
 @Module({
-  providers: [CommonService],
-  exports: [CommonService],
+  providers: [
+    /*MyLoggingInterceptor, MyValidationPipe*/
+  ],
+  exports: [
+    /*MyLoggingInterceptor, MyValidationPipe*/
+  ],
 })
 export class CommonModule {}
