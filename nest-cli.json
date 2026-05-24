@@ -1,17 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/picboard-back/src",
+  "sourceRoot": "apps/gateway/src",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/picboard-back/tsconfig.app.json",
-    "assets": [
-      {"include": "**/env/*", "watchAssets":  true}
-    ]
+    "tsConfigPath": "apps/gateway/tsconfig.app.json",
+    "assets": [{ "include": "**/env/*", "watchAssets": true }]
   },
   "monorepo": true,
-  "root": "apps/picboard-back",
+  "root": "apps/gateway",
   "projects": {
     "auth": {
       "type": "library",
@@ -56,15 +54,6 @@
       "sourceRoot": "apps/gateway/src",
       "compilerOptions": {
         "tsConfigPath": "apps/gateway/tsconfig.app.json"
-      }
-    },
-    "picboard-back": {
-      "type": "application",
-      "root": "apps/picboard-back",
-      "entryFile": "main",
-      "sourceRoot": "apps/picboard-back/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/picboard-back/tsconfig.app.json"
       }
     },
     "posts-microservice": {
