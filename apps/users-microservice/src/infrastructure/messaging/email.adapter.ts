@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import nodemailer from 'nodemailer';
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class EmailAdapter {
-  constructor() {}
+  constructor(private readonly appConfig: AppConfig) {}
 
   async sendEmail(email: string, subject: string, message: string) {
     const transporter = nodemailer.createTransport({
@@ -13,13 +14,13 @@ export class EmailAdapter {
       secure: true,
       ignoreTLS: true,
       auth: {
-        user: 'dina.additional@gmail.com',
-        pass: 'dpsy fiuh adlv wpzb',
+        user: this.appConfig.nodeMailerEmail,
+        pass: this.appConfig.nodeMailerPassword,
       },
     });
 
     const info = await transporter.sendMail({
-      from: 'dina.additional@gmail.com',
+      from: this.appConfig.nodeMailerEmail,
       to: email,
       subject: subject,
       html: message,

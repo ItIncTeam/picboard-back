@@ -125,4 +125,20 @@ export class AppConfig {
       throw new Error('EMAIL_CONFIRMATION_EXPIRES_IN_MS is not defined');
     return Number(value);
   }
+
+  get nodeMailerEmail(): string {
+    const value = this.configService.get<string>('NODE_MAILER_EMAIL');
+    if (!value) {
+      throw new Error('NODE_MAILER_EMAIL is not defined');
+    }
+    return value;
+  }
+
+  get nodeMailerPassword(): string {
+    const value = this.configService.get<string>('NODE_MAILER_PASSWORD');
+    if (!value) {
+      throw new Error('NODE_MAILER_PASSWORD is not defined');
+    }
+    return value;
+  }
 }
