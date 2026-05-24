@@ -1,28 +1,14 @@
 import {
   Args,
-  Mutation,
   Query,
   ResolveReference,
   Resolver,
-  ObjectType,
-  Field,
   Context,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
 import { UsersService } from './users.service';
 import { UnauthorizedException, UseGuards } from '@nestjs/common';
 import { GqlJwtAuthGuard } from '@app/auth';
-import { SignUpInput } from '../graphql/inputs/sign-up.input';
-import { SignInInput } from '../graphql/inputs/sign-in.input';
-
-@ObjectType()
-class LoginPayload {
-  @Field()
-  accessToken: string;
-
-  @Field(() => User)
-  user: User;
-}
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -31,11 +17,6 @@ export class UsersResolver {
   @Query(() => User, { nullable: true })
   user(@Args('id') id: string) {
     return this.usersService.findById(id);
-  }
-
-  @Mutation(() => LoginPayload)
-  login(@Args('input') input: SignInInput) {
-    return this.usersService.login(input);
   }
 
   @UseGuards(GqlJwtAuthGuard)

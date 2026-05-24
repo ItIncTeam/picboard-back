@@ -40,22 +40,22 @@ export class AppConfig {
   })
   env: string = this.configService.get('NODE_ENV');
 
-  /!*  @IsBoolean({
+  /*  @IsBoolean({
     message:
       'Set env variable IS_SWAGGER_ENABLED to enable/disable Swagger, example: true, available values: true, false',
   })
   isSwaggerEnabled: boolean = configValidationUtility.convertToBoolean(
     this.configService.get('IS_SWAGGER_ENABLED'),
-  );*!/
+  );*/
 
-  /!*@IsBoolean({
+/*@IsBoolean({
     message:
       'Set env variable INCLUDE_TESTING_MODULE to enable/disable Dangerous for production TestingModule, example: true, available values: true, false, 0, 1',
   })
   includeTestingModule: boolean = configValidationUtility.convertToBoolean(
     this.configService.get('INCLUDE_TESTING_MODULE'),
-  );*!/
-}*/
+  );*/
+// }*/
 
 @Injectable()
 export class AppConfig {
@@ -101,6 +101,20 @@ export class AppConfig {
     const value = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN');
     if (!value) {
       throw new Error('JWT_ACCESS_EXPIRES_IN is not defined');
+    }
+    return value;
+  }
+
+  get jwtRefreshSecret(): string {
+    const value = this.configService.get<string>('JWT_REFRESH_SECRET');
+    if (!value) throw new Error('JWT_REFRESH_SECRET is not defined');
+    return value;
+  }
+
+  get jwtRefreshExpiresIn(): any {
+    const value = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
+    if (!value) {
+      throw new Error('JWT_REFRESH_EXPIRES_IN is not defined');
     }
     return value;
   }

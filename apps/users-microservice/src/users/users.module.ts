@@ -8,6 +8,7 @@ import { AppConfig } from '../config/app.config';
 import { USERS_RMQ_CLIENT } from './users.constants';
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
 import { SignUpUserUseCase } from '../application/use-cases/sign-up-user/sign-up-user.use.case';
+import { SignInUserUseCase } from '../application/use-cases/sign-in-user/sign-in-user.use.case';
 import { UsersPrismaService } from '../infrastructure/prisma/users-prisma.service';
 import { UsersRepository } from '../domain/repositories/users.repository';
 import { PrismaUsersRepository } from '../infrastructure/prisma/prisma-users.repository';
@@ -49,6 +50,7 @@ import { CqrsModule } from '@nestjs/cqrs';
     UsersService,
     AuthResolver,
     SignUpUserUseCase,
+    SignInUserUseCase,
     UsersPrismaService,
     EmailAdapter,
     /*UsersEventsPublisher,*/
