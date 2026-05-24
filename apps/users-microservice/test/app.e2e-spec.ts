@@ -24,7 +24,9 @@ describe('Users subgraph (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   it('should expose graphql endpoint', async () => {

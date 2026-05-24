@@ -28,6 +28,9 @@ pipeline {
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
                        yarn install
+                       yarn run prisma:generate:users
+                       yarn run prisma:generate:posts
+                       yarn run prisma:generate:files
                        yarn test
                     '''
                 }
@@ -40,7 +43,7 @@ pipeline {
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
                        nvm use --lts
-                       yarn test:e2e
+                       yarn test:users:e2e
                     '''
                 }
             }

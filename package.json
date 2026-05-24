@@ -20,7 +20,7 @@
     "start:prod:posts": "cross-env NODE_ENV=production node dist/apps/posts-microservice/main",
     "start:prod:files": "cross-env NODE_ENV=production node dist/apps/files-microservice/main",
     "start:prod:gateway": "cross-env NODE_ENV=production node dist/apps/gateway/main",
-    "test:users:e2e": "cross-env NODE_ENV=testing jest --config ./apps/users-microservice/test/jest-e2e.json",
+    "test:users:e2e": "cross-env NODE_ENV=testing dotenv -e apps/users-microservice/src/env/.env.testing -- jest --config ./apps/users-microservice/test/jest-e2e.json",
     "test:posts:e2e": "cross-env NODE_ENV=testing jest --config ./apps/posts-microservice/test/jest-e2e.json",
     "test:files:e2e": "cross-env NODE_ENV=testing jest --config ./apps/files-microservice/test/jest-e2e.json",
     "test:gateway:e2e": "cross-env NODE_ENV=testing jest --config ./apps/gateway/test/jest-e2e.json",
@@ -128,7 +128,7 @@
       "ts"
     ],
     "rootDir": ".",
-    "testRegex": ".*\\.spec\\.ts$",
+    "testRegex": ".*\\.(spec|e2e-spec)\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
