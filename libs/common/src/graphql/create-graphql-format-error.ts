@@ -1,74 +1,76 @@
 import { GraphQLError } from 'graphql';
-import { GraphqlApiError } from './types/graphql-api-error.type';
-
-type OriginalGraphQlError = {
-  message?: string | string[];
-  statusCode?: number;
-  error?: string;
-  errors?: Array<{ field: string; message: string }>;
-};
+import {
+  GraphqlApiError,
+  OriginalGraphQlError,
+} from './types/graphql-api-error.type';
+import { unwrapResolverError } from '@apollo/server/errors';
 
 export function createGraphqlFormatError(isProduction: boolean) {
-  return (error: GraphQLError): GraphqlApiError => {
-    const code = error.extensions?.code;
-    const originalError = error.extensions?.originalError as
+  return (formattedError: GraphQLError, error: unknown): GraphqlApiError => {
+    const unwrapped = unwrapResolverError(error);
+    const resolverError = unwrapped as OriginalGraphQlError | undefined;
+    const code = formattedError.extensions?.code;
+    /* const originalError = error.extensions?.originalError as
       | OriginalGraphQlError
-      | undefined;
+      | undefined;*/
 
     const defaultMessage =
-      typeof error.message === 'string' ? error.message : 'Unexpected error';
+      typeof formattedError.message === 'string'
+        ? formattedError.message
+        : 'Unexpected error';
 
-    const originalMessage = Array.isArray(originalError?.message)
-      ? originalError.message[0]
-      : typeof originalError?.message === 'string'
-        ? originalError.message
+    const message = Array.isArray(resolverError?.message)
+      ? resolverError.message[0]
+      : typeof resolverError?.message === 'string'
+        ? resolverError.message
         : defaultMessage;
 
     if (
-      originalError?.statusCode === 400 ||
+      resolverError?.statusCode === 400 ||
       code === 'BAD_USER_INPUT' ||
-      code === 'BAD_REQUEST'
+      code === 'BAD_REQUEST' ||
+      message === 'Validation failed'
     ) {
       return {
-        message: originalMessage || 'Validation failed',
+        message: message || 'Validation failed',
         code: 'BAD_USER_INPUT',
-        statusCode: originalError?.statusCode ?? 400,
-        errors: originalError?.errors ?? null,
+        statusCode: 400,
+        errors: resolverError?.errors ?? null,
       };
     }
 
-    if (originalError?.statusCode === 401 || code === 'UNAUTHENTICATED') {
+    if (resolverError?.statusCode === 401 || code === 'UNAUTHENTICATED') {
       return {
-        message: originalMessage || 'Unauthorized',
+        message: message || 'Unauthorized',
         code: 'UNAUTHENTICATED',
-        statusCode: originalError?.statusCode ?? 401,
+        statusCode: 401,
         errors: null,
       };
     }
 
-    if (originalError?.statusCode === 403 || code === 'FORBIDDEN') {
+    if (resolverError?.statusCode === 403 || code === 'FORBIDDEN') {
       return {
-        message: originalMessage || 'Forbidden',
+        message: message || 'Forbidden',
         code: 'FORBIDDEN',
-        statusCode: originalError?.statusCode ?? 403,
+        statusCode: 403,
         errors: null,
       };
     }
 
-    if (originalError?.statusCode === 404 || code === 'NOT_FOUND') {
+    if (resolverError?.statusCode === 404 || code === 'NOT_FOUND') {
       return {
-        message: originalMessage || 'Resource not found',
+        message: message || 'Resource not found',
         code: 'NOT_FOUND',
-        statusCode: originalError?.statusCode ?? 404,
+        statusCode: 404,
         errors: null,
       };
     }
 
-    if (originalError?.statusCode === 409 || code === 'CONFLICT') {
+    if (resolverError?.statusCode === 409 || code === 'CONFLICT') {
       return {
-        message: originalMessage || 'Conflict',
+        message: message || 'Conflict',
         code: 'CONFLICT',
-        statusCode: originalError?.statusCode ?? 409,
+        statusCode: 409,
         errors: null,
       };
     }

@@ -3,6 +3,13 @@ export type FieldError = {
   message: string;
 };
 
+export type OriginalGraphQlError = {
+  message?: string | string[];
+  statusCode?: number;
+  error?: string;
+  errors?: FieldError[];
+};
+
 export type GraphqlApiError = {
   message: string;
   code:
