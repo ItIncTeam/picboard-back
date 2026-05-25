@@ -19,6 +19,7 @@ import { JwtTokenService } from '../infrastructure/security/jwt-token.service';
 import { AuthResolver } from '../graphql/resolvers/auth.resolver';
 import { EmailAdapter } from '../infrastructure/messaging/email.adapter';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/confirm-email.use.case';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CqrsModule } from '@nestjs/cqrs';
     AuthResolver,
     SignUpUserUseCase,
     SignInUserUseCase,
+    ConfirmEmailUseCase,
     UsersPrismaService,
     EmailAdapter,
     /*UsersEventsPublisher,*/
