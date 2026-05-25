@@ -3,6 +3,9 @@ import { SignUpInput } from '../inputs/sign-up.input';
 import { SignUpUserCommand } from '../../application/use-cases/sign-up-user/sign-up-user.use.case';
 import { CommandBus } from '@nestjs/cqrs';
 import { SignUpPayload } from '../types/sign-up.payload';
+import { EmailConfirmationInput } from '../inputs/email-confirmation.input';
+import { ConfirmEmailCommand } from '../../application/use-cases/confirm-email/confirm-email.use.case';
+import { EmailConfirmationPayload } from '../types/email-confirmation.payload';
 
 @Resolver()
 export class AuthResolver {
@@ -19,6 +22,22 @@ export class AuthResolver {
         isConfirmed: user.isConfirmed,
       },
       message: 'Confirmation email sent',
+    };
+  }
+
+  @Mutation(() => EmailConfirmationPayload)
+  async emailConfirmation(
+    @Args('input') input: EmailConfirmationInput,
+  ): Promise<EmailConfirmationPayload> {
+    const user = await this.commandBus.execute(new ConfirmEmailCommand(input));
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        isConfirmed: user.isConfirmed,
+      },
+      message: `User's email confirmed`,
     };
   }
 }

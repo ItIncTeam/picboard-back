@@ -73,4 +73,45 @@ export class PrismaUsersRepository implements UsersRepository {
       user.isConfirmed,
     );
   }
+
+  async findByConfirmationCode(
+    confirmationCode: string,
+  ): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { confirmationCode },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return new UserEntity(
+      user.id,
+      user.email,
+      user.username,
+      user.passwordHash,
+      user.createdAt,
+      user.confirmationCode,
+      user.confirmationCodeExpDate,
+      user.isConfirmed,
+    );
+  }
+
+  async confirmUserEmail(id: string): Promise<UserEntity> {
+    const user = await this.prisma.user.update({
+      where: { id: id },
+      data: { isConfirmed: true },
+    });
+
+    return new UserEntity(
+      user.id,
+      user.email,
+      user.username,
+      user.passwordHash,
+      user.createdAt,
+      user.confirmationCode,
+      user.confirmationCodeExpDate,
+      user.isConfirmed,
+    );
+  }
 }
