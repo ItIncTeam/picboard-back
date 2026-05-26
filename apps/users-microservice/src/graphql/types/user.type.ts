@@ -18,6 +18,9 @@ export class User {
   @Field({ nullable: true })
   confirmationCodeExpDate: Date;
 
+  @Field()
+  isConfirmed: boolean;
+
   @Field({ nullable: true })
   displayName?: string;
 

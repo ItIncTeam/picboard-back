@@ -27,10 +27,11 @@ COPY --chown=node package.json pnpm-lock.yaml ./
 
 RUN pnpm install --frozen-lockfile
 
-ENV PORT=4309
+ENV PORT=3001
 # Bundle app source code
 COPY --chown=node . .
 
+RUN pnpm prisma:generate:users
 RUN pnpm run build
 
 # Опционально: удаляем dev-зависимости после сборки (если не нужны в runtime)
