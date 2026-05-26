@@ -24,3 +24,54 @@ spec:
              runAsUser: 1000         # опционально
            ports:
              - containerPort: PORT_CONTAINER
+           env:
+             - name: JWT_ACCESS_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_ACCESS_SECRET
+             - name: JWT_ACCESS_EXPIRES_IN
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_ACCESS_EXPIRES_IN
+             - name: JWT_REFRESH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_REFRESH_SECRET
+             - name: JWT_REFRESH_EXPIRES_IN
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_REFRESH_EXPIRES_IN
+             - name: DATABASE_DIRECT_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: DATABASE_DIRECT_URL
+             - name: DATABASE_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: DATABASE_URL
+             - name: EMAIL_CONFIRMATION_EXPIRES_IN_MS
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: EMAIL_CONFIRMATION_EXPIRES_IN_MS
+             - name: NODE_MAILER_EMAIL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: NODE_MAILER_EMAIL
+             - name: NODE_MAILER_PASSWORD
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: NODE_MAILER_PASSWORD
+             - name: PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: PORT
