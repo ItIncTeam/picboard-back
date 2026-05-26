@@ -2,10 +2,8 @@ import { Module } from '@nestjs/common';
 import { UsersResolver } from './users.resolver';
 import { UsersService } from './users.service';
 import { JwtModule } from '@nestjs/jwt';
-import { RmqModule } from '@app/rmq';
 import { AppConfigModule } from '../config/app-config.module';
 import { AppConfig } from '../config/app.config';
-import { USERS_RMQ_CLIENT } from './users.constants';
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
 import { SignUpUserUseCase } from '../application/use-cases/sign-up-user/sign-up-user.use.case';
 import { SignInUserUseCase } from '../application/use-cases/sign-in-user/sign-in-user.use.case';
@@ -23,13 +21,14 @@ import { AuthResolver } from '../graphql/resolvers/auth.resolver';
 import { EmailAdapter } from '../infrastructure/messaging/email.adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/confirm-email.use.case';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
     AppConfigModule,
     PrismaModule,
     CqrsModule,
-    RmqModule.registerAsync({
+    /*RmqModule.registerAsync({
       name: USERS_RMQ_CLIENT,
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -37,7 +36,20 @@ import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/conf
         url: appConfig.rabbitMqUrl,
         queue: appConfig.rabbitMqQueue,
       }),
-    }),
+    }),*/
+    /*ClientsModule.registerAsync([
+      {
+        name: 'POSTS_TCP_CLIENT',
+        inject: [AppConfig],
+        useFactory: (appConfig: AppConfig) => ({
+          transport: Transport.TCP,
+          options: {
+            host: 0.0.0.0,
+            port: 4001,
+          },
+        }),
+      },
+    ]),*/
     JwtModule.registerAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],

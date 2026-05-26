@@ -1,3 +1,4 @@
+/*
 import { DynamicModule, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
@@ -39,8 +40,8 @@ export class RmqModule {
           },
         ]),
       ],
-      /*providers: [RmqService],*/
-      exports: [ClientsModule /*, RmqService*/],
+      /!*providers: [RmqService],*!/
+      exports: [ClientsModule /!*, RmqService*!/],
     };
   }
-}
+}*/

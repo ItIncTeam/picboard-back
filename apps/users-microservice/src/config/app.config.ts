@@ -155,4 +155,16 @@ export class AppConfig {
     }
     return value;
   }
+
+  get tcpPort(): number {
+    const value = this.configService.get<string>('TCP_PORT');
+    if (!value) throw new Error('TCP_PORT is not defined');
+    return Number(value);
+  }
+
+  get tcpHost(): number {
+    const value = this.configService.get<string>('TCP_HOST');
+    if (!value) throw new Error('TCP_HOST is not defined');
+    return Number(value);
+  }
 }

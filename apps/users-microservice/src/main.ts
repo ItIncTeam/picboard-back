@@ -14,14 +14,19 @@ async function bootstrap() {
 
   app.useGlobalFilters(new UsersPrismaExceptionFilter());
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
+  /*app.connectMicroservice<MicroserviceOptions>({
+    /!*transport: Transport.RMQ,
     options: {
       urls: [appConfig.rabbitMqUrl],
       queue: appConfig.rabbitMqQueue,
       queueOptions: { durable: true },
+    },*!/
+    transport: Transport.TCP,
+    options: {
+      host: appConfig.tcpHost,
+      port: appConfig.tcpPort,
     },
-  });
+  });*/
 
   await app.startAllMicroservices();
   await app.listen(appConfig.port, '0.0.0.0');
