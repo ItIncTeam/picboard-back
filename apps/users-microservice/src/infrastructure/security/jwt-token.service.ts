@@ -30,6 +30,7 @@ export class JwtTokenService implements TokenService {
   async verifyRefreshToken(token: string): Promise<{
     sub: string;
     email: string;
+    exp: number;
   }> {
     return this.jwtService.verifyAsync(token, {
       secret: this.appConfig.jwtRefreshSecret,
