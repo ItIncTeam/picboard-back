@@ -70,8 +70,6 @@
     "@nestjs/platform-express": "^11.1.9",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^6.17.0",
     "@prisma/client-runtime-utils": "^7.8.0",
     "@types/supertest": "^7.2.0",
     "amqp-connection-manager": "^4.1.14",

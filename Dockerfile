@@ -32,7 +32,7 @@ ENV PORT=3001
 COPY --chown=node . .
 
 RUN pnpm prisma:generate:users
-RUN pnpm run build
+RUN pnpm run build:users
 
 # Опционально: удаляем dev-зависимости после сборки (если не нужны в runtime)
 # RUN pnpm prune --prod
@@ -41,4 +41,4 @@ RUN pnpm run build
 
 EXPOSE ${PORT}
 
-CMD [ "pnpm", "start" ]
+CMD [ "pnpm", "start:prod:users" ]
