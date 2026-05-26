@@ -8,4 +8,10 @@ export abstract class TokenService {
     sub: string;
     email: string;
   }): Promise<string>;
+
+  abstract verifyRefreshToken(token: string): Promise<{
+    sub: string;
+    email: string;
+    exp: number;
+  }>;
 }

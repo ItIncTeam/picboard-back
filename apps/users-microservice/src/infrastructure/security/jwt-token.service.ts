@@ -26,4 +26,13 @@ export class JwtTokenService implements TokenService {
       expiresIn: this.appConfig.jwtRefreshExpiresIn,
     });
   }
+
+  async verifyRefreshToken(token: string): Promise<{
+    sub: string;
+    email: string;
+  }> {
+    return this.jwtService.verifyAsync(token, {
+      secret: this.appConfig.jwtRefreshSecret,
+    });
+  }
 }

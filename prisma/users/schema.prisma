@@ -21,6 +21,7 @@ model User {
   createdAt               DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime       @updatedAt @db.Timestamptz(6)
   oauthAccount            OAuthAccount[]
+  RefreshToken            RefreshToken[]
 }
 
 model OAuthAccount {
@@ -33,5 +34,17 @@ model OAuthAccount {
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerId])
-   @@index([userId]) // relation scalar fields used in joins/lookups should be indexed for performance as data grows
+  @@index([userId]) // relation scalar fields used in joins/lookups should be indexed for performance as data grows
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String   @unique
+  userId    String   @db.Uuid
+  device    String?
+  expiresAt DateTime @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

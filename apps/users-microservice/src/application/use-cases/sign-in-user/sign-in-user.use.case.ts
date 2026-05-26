@@ -1,10 +1,11 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { SignInInput } from '../../../graphql/inputs/sign-in.input';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { SignInUserResult } from './sign-in-user.result';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { PasswordHasher } from '../../../domain/services/password-hasher';
 import { TokenService } from '../../../domain/services/token.service';
+import { CreateRefreshTokenCommand } from '../create-refresh-token/create-refresh-token.use-case';
 
 export class SignInUserCommand {
   constructor(public input: SignInInput) {}
@@ -17,6 +18,7 @@ export class SignInUserUseCase implements ICommandHandler<SignInUserCommand> {
     private readonly usersRepository: UsersRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly tokenService: TokenService,
+    private readonly commandBus: CommandBus,
   ) {}
 
   async execute(command: SignInUserCommand): Promise<SignInUserResult> {
@@ -45,12 +47,14 @@ export class SignInUserUseCase implements ICommandHandler<SignInUserCommand> {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokenPayload = { sub: user.id, email: user.email };
+    const accessToken = await this.tokenService.signAccessToken({
+      sub: user.id,
+      email: user.email,
+    });
 
-    const [accessToken, refreshToken] = await Promise.all([
-      this.tokenService.signAccessToken(tokenPayload),
-      this.tokenService.signRefreshToken(tokenPayload),
-    ]);
+    const refreshToken = await this.commandBus.execute(
+      new CreateRefreshTokenCommand(user.id, user.email),
+    );
 
     return {
       user,

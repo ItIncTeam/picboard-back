@@ -9,9 +9,12 @@ import { USERS_RMQ_CLIENT } from './users.constants';
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
 import { SignUpUserUseCase } from '../application/use-cases/sign-up-user/sign-up-user.use.case';
 import { SignInUserUseCase } from '../application/use-cases/sign-in-user/sign-in-user.use.case';
+import { CreateRefreshTokenUseCase } from '../application/use-cases/create-refresh-token/create-refresh-token.use-case';
 import { UsersPrismaService } from '../infrastructure/prisma/users-prisma.service';
 import { UsersRepository } from '../domain/repositories/users.repository';
 import { PrismaUsersRepository } from '../infrastructure/prisma/prisma-users.repository';
+import { RefreshTokenRepository } from '../domain/repositories/refresh-token.repository';
+import { PrismaRefreshTokenRepository } from '../infrastructure/prisma/prisma-refresh-token.repository';
 import { PasswordHasher } from '../domain/services/password-hasher';
 import { BcryptPasswordHasher } from '../infrastructure/security/bcrypt-password-hasher';
 import { TokenService } from '../domain/services/token.service';
@@ -53,12 +56,17 @@ import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/conf
     SignUpUserUseCase,
     SignInUserUseCase,
     ConfirmEmailUseCase,
+    CreateRefreshTokenUseCase,
     UsersPrismaService,
     EmailAdapter,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,
       useClass: PrismaUsersRepository,
+    },
+    {
+      provide: RefreshTokenRepository,
+      useClass: PrismaRefreshTokenRepository,
     },
     {
       provide: PasswordHasher,

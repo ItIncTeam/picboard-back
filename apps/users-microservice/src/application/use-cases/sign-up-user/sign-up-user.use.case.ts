@@ -25,7 +25,6 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     private readonly passwordHasher: PasswordHasher,
     private readonly emailAdapter: EmailAdapter,
     private readonly appConfig: AppConfig,
-    /*private readonly usersEventsPublisher: UsersEventsPublisher,*/
   ) {}
 
   async execute(command: SignUpUserCommand) {
@@ -36,7 +35,7 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
       await this.usersRepository.findByEmail(command.input.email);
 
     if (existingUserWithUsername || existingUserWithEmail) {
-      throw new ConflictException() /*EmailAlreadyTakenError(command.input.email)*/;
+      throw new ConflictException();
     }
 
     const user = await this.createUser(command.input);
@@ -44,18 +43,15 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
 
     const confirmationCode = user.confirmationCode!;
 
-    const isEmailSent = this.sendEmail(confirmationCode, command.input.email);
+    const isEmailSent = await this.sendEmail(
+      confirmationCode,
+      command.input.email,
+    );
     if (!isEmailSent) {
       throw new InternalServerErrorException();
     }
 
     return user;
-
-    /*await this.usersEventsPublisher.userSignedUp({
-      userId: user.id,
-      email: user.email,
-      username: user.username,
-    });*/
   }
 
   private async createUser(input: SignUpInput) {
@@ -69,7 +65,7 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
       confirmationCode: uuid(),
       confirmationCodeExpDate: new Date(
         Date.now() + this.appConfig.emailConfirmationExpiresInMs,
-      ), // an hour in .env.local now
+      ),
       isConfirmed: false,
     };
 
@@ -79,12 +75,15 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     return user;
   }
 
-  private sendEmail(confirmationCode: string, email: string): boolean {
+  private async sendEmail(
+    confirmationCode: string,
+    email: string,
+  ): Promise<boolean> {
     try {
       const msg = `<a href="https://somesite.com/confirm-email?code=${confirmationCode}"> Link</a>`;
       const subject = 'Yo!';
 
-      this.emailAdapter.sendEmail(email, subject, msg);
+      await this.emailAdapter.sendEmail(email, subject, msg);
     } catch (error) {
       console.error(error, 'Cannot send an email with confirmation code');
       return false;

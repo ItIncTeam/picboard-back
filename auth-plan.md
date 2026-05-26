@@ -111,7 +111,7 @@ model PasswordResetToken {
 | 3.7 | Обновить `SignInUserUseCase` | Возвращать и access, и refresh. Refresh — в httpOnly cookie |
 | 3.8 | Мутация `refreshToken` | Принимает refresh из cookie, возвращает новый access + ротирует refresh |
 | 3.9 | Обновить `AppConfig` | Добавить `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN` |
-
+ 
 **Результат:** полноценная JWT-аутентификация с безопасной ротацией токенов.
 
 ---

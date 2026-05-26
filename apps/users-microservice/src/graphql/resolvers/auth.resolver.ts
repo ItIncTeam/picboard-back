@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
 import { SignUpInput } from '../inputs/sign-up.input';
 import { SignUpUserCommand } from '../../application/use-cases/sign-up-user/sign-up-user.use.case';
 import { CommandBus } from '@nestjs/cqrs';
@@ -9,6 +9,7 @@ import { SignInUserCommand } from '../../application/use-cases/sign-in-user/sign
 import { EmailConfirmationInput } from '../inputs/email-confirmation.input';
 import { ConfirmEmailCommand } from '../../application/use-cases/confirm-email/confirm-email.use.case';
 import { EmailConfirmationPayload } from '../types/email-confirmation.payload';
+import type { Response } from 'express';
 
 @Resolver()
 export class AuthResolver {
@@ -29,8 +30,23 @@ export class AuthResolver {
   }
 
   @Mutation(() => SignInPayload)
-  async signIn(@Args('input') input: SignInInput): Promise<SignInPayload> {
+  async signIn(
+    @Args('input') input: SignInInput,
+    @Context() context: { req: Request; res: Response },
+  ): Promise<SignInPayload> {
     const result = await this.commandBus.execute(new SignInUserCommand(input));
+
+    const res = context.res;
+    if (res) {
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+
     return {
       user: {
         id: result.user.id,

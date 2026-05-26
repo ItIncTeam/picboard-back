@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import {
   SignInUserCommand,
   SignInUserUseCase,
 } from './sign-in-user.use.case';
+import { CreateRefreshTokenCommand } from '../create-refresh-token/create-refresh-token.use-case';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { PasswordHasher } from '../../../domain/services/password-hasher';
 import { TokenService } from '../../../domain/services/token.service';
@@ -30,6 +32,7 @@ describe('SignInUserUseCase', () => {
   let usersRepository: jest.Mocked<UsersRepository>;
   let passwordHasher: jest.Mocked<PasswordHasher>;
   let tokenService: jest.Mocked<TokenService>;
+  let commandBus: jest.Mocked<CommandBus>;
 
   beforeEach(async () => {
     usersRepository = {
@@ -46,7 +49,12 @@ describe('SignInUserUseCase', () => {
     tokenService = {
       signAccessToken: jest.fn(),
       signRefreshToken: jest.fn(),
+      verifyRefreshToken: jest.fn(),
     } as jest.Mocked<TokenService>;
+
+    commandBus = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<CommandBus>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -54,6 +62,7 @@ describe('SignInUserUseCase', () => {
         { provide: UsersRepository, useValue: usersRepository },
         { provide: PasswordHasher, useValue: passwordHasher },
         { provide: TokenService, useValue: tokenService },
+        { provide: CommandBus, useValue: commandBus },
       ],
     }).compile();
 
@@ -66,7 +75,7 @@ describe('SignInUserUseCase', () => {
       usersRepository.findByEmail.mockResolvedValue(user);
       passwordHasher.compare.mockResolvedValue(true);
       tokenService.signAccessToken.mockResolvedValue('access-token-abc');
-      tokenService.signRefreshToken.mockResolvedValue('refresh-token-xyz');
+      commandBus.execute.mockResolvedValue('refresh-token-xyz');
 
       const command = new SignInUserCommand({
         email: 'test@example.com',
@@ -90,38 +99,9 @@ describe('SignInUserUseCase', () => {
         sub: user.id,
         email: user.email,
       });
-      expect(tokenService.signRefreshToken).toHaveBeenCalledWith({
-        sub: user.id,
-        email: user.email,
-      });
-    });
-
-    it('should generate access and refresh tokens in parallel', async () => {
-      const user = createUser();
-      usersRepository.findByEmail.mockResolvedValue(user);
-      passwordHasher.compare.mockResolvedValue(true);
-
-      let accessResolved = false;
-      let refreshResolved = false;
-
-      tokenService.signAccessToken.mockImplementation(async () => {
-        accessResolved = true;
-        return 'access-token';
-      });
-      tokenService.signRefreshToken.mockImplementation(async () => {
-        refreshResolved = true;
-        return 'refresh-token';
-      });
-
-      await useCase.execute(
-        new SignInUserCommand({
-          email: 'test@example.com',
-          password: 'correct-password',
-        }),
+      expect(commandBus.execute).toHaveBeenCalledWith(
+        new CreateRefreshTokenCommand(user.id, user.email),
       );
-
-      expect(accessResolved).toBe(true);
-      expect(refreshResolved).toBe(true);
     });
   });
 
@@ -143,6 +123,7 @@ describe('SignInUserUseCase', () => {
 
       expect(passwordHasher.compare).not.toHaveBeenCalled();
       expect(tokenService.signAccessToken).not.toHaveBeenCalled();
+      expect(commandBus.execute).not.toHaveBeenCalled();
     });
   });
 
@@ -169,6 +150,7 @@ describe('SignInUserUseCase', () => {
         user.passwordHash,
       );
       expect(tokenService.signAccessToken).not.toHaveBeenCalled();
+      expect(commandBus.execute).not.toHaveBeenCalled();
     });
   });
 
@@ -191,6 +173,7 @@ describe('SignInUserUseCase', () => {
 
       expect(passwordHasher.compare).not.toHaveBeenCalled();
       expect(tokenService.signAccessToken).not.toHaveBeenCalled();
+      expect(commandBus.execute).not.toHaveBeenCalled();
     });
   });
 
@@ -213,6 +196,7 @@ describe('SignInUserUseCase', () => {
 
       expect(passwordHasher.compare).not.toHaveBeenCalled();
       expect(tokenService.signAccessToken).not.toHaveBeenCalled();
+      expect(commandBus.execute).not.toHaveBeenCalled();
     });
   });
 });
