@@ -23,15 +23,18 @@ WORKDIR /home/node/dist/app
 
 #COPY --chown=node package*.json ./
 
-COPY --chown=node package.json pnpm-lock.yaml ./
+COPY --chown=node package.json pnpm-lock.yaml pnpm-workspace.yaml nest-cli.json tsconfig.json ./
+COPY --chown=node apps ./apps
+COPY --chown=node libs ./libs
+COPY --chown=node prisma ./prisma
 
 RUN pnpm install --frozen-lockfile
 
 ENV PORT=3001
 # Bundle app source code
-COPY --chown=node . .
 
-RUN pnpm prisma:generate:users
+
+RUN pnpm prisma:generate:users:prod
 RUN pnpm run build:users
 
 # Опционально: удаляем dev-зависимости после сборки (если не нужны в runtime)

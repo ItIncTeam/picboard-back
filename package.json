@@ -45,6 +45,7 @@
     "prisma:migration:status:files": "dotenv -e apps/files-microservice/src/env/.env.development -- prisma migrate status --config prisma/files/prisma.config.ts",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start:dev": "nest start --watch",
+    "prisma:generate:users:prod": "dotenv -e apps/users-microservice/src/env/.env.production -- prisma generate --config prisma/users/prisma.config.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "cross-env NODE_ENV=production node dist/apps/picboard-back/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
