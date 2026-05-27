@@ -9,7 +9,8 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
-RUN npm install -g corepack@latest && corepack enable && corepack prepare pnpm@9.15.4 --activate
+#hardcoded pnpm version
+RUN npm install -g pnpm@10.13.1
 
 USER node
 
