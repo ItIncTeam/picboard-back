@@ -29,7 +29,7 @@ pipeline {
                        nvm install --lts
                        nvm use --lts
                        yarn install
-                       yarn run prisma:generate:users
+                       yarn run prisma:generate:users:prod
                        yarn test
                     '''
                 }
