@@ -3,7 +3,7 @@ pipeline {
     agent any
     environment {
         ENV_TYPE = "production"
-        PORT = 3001
+        PORT = 4325
         NAMESPACE = "picboard-space"
         REGISTRY_HOSTNAME = "itinc"
         PROJECT = "users-microservice"

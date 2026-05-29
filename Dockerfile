@@ -30,7 +30,7 @@ COPY --chown=node prisma ./prisma
 
 RUN pnpm install --frozen-lockfile
 
-ENV PORT=3001
+ENV PORT=4325
 # Bundle app source code
 
 
