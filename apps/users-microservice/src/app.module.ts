@@ -25,6 +25,7 @@ import { AppConfig } from './config/app.config';
           federation: 2,
         },
         path: '/api/v1',
+        introspection: true,
         sortSchema: true,
         playground: true,
         context: ({ req }) => ({ req }),
