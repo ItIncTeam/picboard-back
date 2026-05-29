@@ -10,6 +10,9 @@ import { EmailConfirmationInput } from '../inputs/email-confirmation.input';
 import { ConfirmEmailCommand } from '../../application/use-cases/confirm-email/confirm-email.use.case';
 import { EmailConfirmationPayload } from '../types/email-confirmation.payload';
 import type { Response } from 'express';
+import { ResendConfirmationEmailCommand } from '../../application/use-cases/resend-confirmation-email/resend-confirmation-email';
+import { ResendEmailInput } from '../inputs/resend-email.input';
+import { EmailResendConfirmationPayload } from '../types/email-resend-confirmation.payload';
 
 @Resolver()
 export class AuthResolver {
@@ -26,6 +29,33 @@ export class AuthResolver {
         isConfirmed: user.isConfirmed,
       },
       message: 'Confirmation email sent',
+    };
+  }
+
+  @Mutation(() => EmailConfirmationPayload)
+  async emailConfirmation(
+    @Args('input') input: EmailConfirmationInput,
+  ): Promise<EmailConfirmationPayload> {
+    const user = await this.commandBus.execute(new ConfirmEmailCommand(input));
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        isConfirmed: user.isConfirmed,
+      },
+      message: `User's email confirmed`,
+    };
+  }
+
+  @Mutation(() => EmailResendConfirmationPayload)
+  async emailConfirmationResending(
+    @Args('input') input: ResendEmailInput,
+  ): Promise<EmailResendConfirmationPayload> {
+    await this.commandBus.execute(new ResendConfirmationEmailCommand(input));
+    return {
+      message:
+        'If the account exists and is not confirmed, a new email was sent',
     };
   }
 
@@ -61,22 +91,6 @@ export class AuthResolver {
       },
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
-    };
-  }
-
-  @Mutation(() => EmailConfirmationPayload)
-  async emailConfirmation(
-    @Args('input') input: EmailConfirmationInput,
-  ): Promise<EmailConfirmationPayload> {
-    const user = await this.commandBus.execute(new ConfirmEmailCommand(input));
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        isConfirmed: user.isConfirmed,
-      },
-      message: `User's email confirmed`,
     };
   }
 }

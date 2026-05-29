@@ -3,6 +3,8 @@ import { UsersRepository } from '../../domain/repositories/users.repository';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
+import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
+import { User } from '../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 @Injectable()
 export class PrismaUsersRepository implements UsersRepository {
@@ -101,6 +103,30 @@ export class PrismaUsersRepository implements UsersRepository {
     const user = await this.prisma.user.update({
       where: { id: id },
       data: { isConfirmed: true },
+    });
+
+    return new UserEntity(
+      user.id,
+      user.email,
+      user.username,
+      user.passwordHash,
+      user.createdAt,
+      user.confirmationCode,
+      user.confirmationCodeExpDate,
+      user.isConfirmed,
+    );
+  }
+
+  async updateConfirmationData(
+    id: string,
+    data: UpdateConfirmationData,
+  ): Promise<UserEntity> {
+    const user: User = await this.prisma.user.update({
+      where: { id: id },
+      data: {
+        confirmationCode: data.confirmationCode,
+        confirmationCodeExpDate: data.confirmationCodeExpDate,
+      },
     });
 
     return new UserEntity(

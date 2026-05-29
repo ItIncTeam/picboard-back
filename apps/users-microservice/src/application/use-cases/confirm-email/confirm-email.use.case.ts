@@ -17,20 +17,18 @@ export class ConfirmEmailUseCase implements ICommandHandler<ConfirmEmailCommand>
     const user: UserEntity | null =
       await this.usersRepository.findByConfirmationCode(command.input.code);
     if (!user) {
-      throw new BadRequestException();
+      throw new BadRequestException('Invalid confirmation code');
     }
 
-    if (user.isConfirmed === true) {
-      throw new BadRequestException();
+    if (user.isConfirmed) {
+      throw new BadRequestException('Email already confirmed');
     }
 
     const now = new Date();
-    if (user.confirmationCodeExpDate! < now) {
-      throw new BadRequestException();
+    if (!user.confirmationCodeExpDate || user.confirmationCodeExpDate < now) {
+      throw new BadRequestException('Confirmation code expired');
     }
 
-    const result = await this.usersRepository.confirmUserEmail(user.id);
-
-    return result;
+    return this.usersRepository.confirmUserEmail(user.id);
   }
 }
