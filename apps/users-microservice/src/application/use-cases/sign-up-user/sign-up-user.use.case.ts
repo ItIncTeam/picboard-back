@@ -3,7 +3,6 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { SignUpInput } from '../../../graphql/inputs/sign-up.input';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { UserEntity } from '../../../domain/entities/user.entity';
@@ -12,6 +11,7 @@ import { EmailAdapter } from '../../../infrastructure/messaging/email.adapter';
 import { CreateUserData } from '../../../domain/repositories/create-user-data.type';
 import { v4 as uuid } from 'uuid';
 import { AppConfig } from '../../../config/app.config';
+import { SignUpInput } from '../../../graphql/inputs/sign-up.input';
 
 export class SignUpUserCommand {
   constructor(public input: SignUpInput) {}
@@ -27,7 +27,7 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     private readonly appConfig: AppConfig,
   ) {}
 
-  async execute(command: SignUpUserCommand) {
+  async execute(command: SignUpUserCommand): Promise<UserEntity> {
     const existingUserWithUsername: UserEntity | null =
       await this.usersRepository.findByUsername(command.input.username);
 
@@ -38,7 +38,11 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
       throw new ConflictException();
     }
 
-    const user = await this.createUser(command.input);
+    const user = await this.createUser(
+      command.input.email,
+      command.input.username,
+      command.input.password,
+    );
     if (!user) throw new InternalServerErrorException();
 
     const confirmationCode = user.confirmationCode!;
@@ -54,13 +58,17 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     return user;
   }
 
-  private async createUser(input: SignUpInput) {
-    const passwordHash = await this.passwordHasher.hash(input.password);
+  private async createUser(
+    email: string,
+    username: string,
+    password: string,
+  ): Promise<UserEntity | null> {
+    const passwordHash = await this.passwordHasher.hash(password);
     if (!passwordHash) return null;
 
     const userData: CreateUserData = {
-      email: input.email,
-      username: input.username,
+      email: email,
+      username: username,
       passwordHash: passwordHash,
       confirmationCode: uuid(),
       confirmationCodeExpDate: new Date(

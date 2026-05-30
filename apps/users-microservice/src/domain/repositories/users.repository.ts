@@ -17,4 +17,9 @@ export abstract class UsersRepository {
     userId: string,
     data: UpdateConfirmationData,
   ): Promise<UserEntity>;
+
+  abstract updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<UserEntity>;
 }

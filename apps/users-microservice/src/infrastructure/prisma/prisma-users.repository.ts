@@ -11,7 +11,7 @@ export class PrismaUsersRepository implements UsersRepository {
   constructor(private readonly prisma: UsersPrismaService) {}
 
   async findByUsername(username: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { username },
     });
 
@@ -32,7 +32,7 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { email },
     });
 
@@ -79,7 +79,7 @@ export class PrismaUsersRepository implements UsersRepository {
   async findByConfirmationCode(
     confirmationCode: string,
   ): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findFirst({
+    const user: User | null = await this.prisma.user.findFirst({
       where: { confirmationCode },
     });
 
@@ -100,7 +100,7 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async confirmUserEmail(id: string): Promise<UserEntity> {
-    const user = await this.prisma.user.update({
+    const user: User = await this.prisma.user.update({
       where: { id: id },
       data: { isConfirmed: true },
     });
@@ -118,14 +118,37 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async updateConfirmationData(
-    id: string,
+    userId: string,
     data: UpdateConfirmationData,
   ): Promise<UserEntity> {
     const user: User = await this.prisma.user.update({
-      where: { id: id },
+      where: { id: userId },
       data: {
         confirmationCode: data.confirmationCode,
         confirmationCodeExpDate: data.confirmationCodeExpDate,
+      },
+    });
+
+    return new UserEntity(
+      user.id,
+      user.email,
+      user.username,
+      user.passwordHash,
+      user.createdAt,
+      user.confirmationCode,
+      user.confirmationCodeExpDate,
+      user.isConfirmed,
+    );
+  }
+
+  async updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<UserEntity> {
+    const user: User = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: passwordHash,
       },
     });
 

@@ -13,6 +13,13 @@ import type { Response } from 'express';
 import { ResendConfirmationEmailCommand } from '../../application/use-cases/resend-confirmation-email/resend-confirmation-email';
 import { ResendEmailInput } from '../inputs/resend-email.input';
 import { EmailResendConfirmationPayload } from '../types/email-resend-confirmation.payload';
+import { UserEntity } from '../../domain/entities/user.entity';
+import { ResetPasswordCommand } from '../../application/use-cases/reset-password/reset-password.use.case';
+import { PasswordResetInput } from '../inputs/password-reset.input';
+import { PasswordResetPayload } from '../types/password-reset.payload';
+import { SetNewPasswordCommand } from '../../application/use-cases/set-new-password/set-new-password.use.case';
+import { SetNewPasswordPayload } from '../types/set-new-password.payload';
+import { SetNewPasswordInput } from '../inputs/set-new-password.input';
 
 @Resolver()
 export class AuthResolver {
@@ -20,7 +27,9 @@ export class AuthResolver {
 
   @Mutation(() => SignUpPayload)
   async signUp(@Args('input') input: SignUpInput): Promise<SignUpPayload> {
-    const user = await this.commandBus.execute(new SignUpUserCommand(input));
+    const user: UserEntity = await this.commandBus.execute(
+      new SignUpUserCommand(input),
+    );
     return {
       user: {
         id: user.id,
@@ -36,15 +45,9 @@ export class AuthResolver {
   async emailConfirmation(
     @Args('input') input: EmailConfirmationInput,
   ): Promise<EmailConfirmationPayload> {
-    const user = await this.commandBus.execute(new ConfirmEmailCommand(input));
+    await this.commandBus.execute(new ConfirmEmailCommand(input.code));
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        isConfirmed: user.isConfirmed,
-      },
-      message: `User's email confirmed`,
+      message: `If an account with that email exists, that email was confirmed`,
     };
   }
 
@@ -52,7 +55,9 @@ export class AuthResolver {
   async emailConfirmationResending(
     @Args('input') input: ResendEmailInput,
   ): Promise<EmailResendConfirmationPayload> {
-    await this.commandBus.execute(new ResendConfirmationEmailCommand(input));
+    await this.commandBus.execute(
+      new ResendConfirmationEmailCommand(input.email),
+    );
     return {
       message:
         'If the account exists and is not confirmed, a new email was sent',
@@ -91,6 +96,29 @@ export class AuthResolver {
       },
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
+    };
+  }
+
+  @Mutation(() => PasswordResetPayload)
+  async passwordReset(
+    @Args('input') input: PasswordResetInput,
+  ): Promise<PasswordResetPayload> {
+    await this.commandBus.execute(new ResetPasswordCommand(input.email));
+    return {
+      message:
+        'If an account with that email exists, recovery instructions were sent.',
+    };
+  }
+
+  @Mutation(() => SetNewPasswordPayload)
+  async setNewPassword(
+    @Args('input') input: SetNewPasswordInput,
+  ): Promise<SetNewPasswordPayload> {
+    await this.commandBus.execute(
+      new SetNewPasswordCommand(input.code, input.password),
+    );
+    return {
+      message: 'If an account with that email exists, new password was set.',
     };
   }
 }

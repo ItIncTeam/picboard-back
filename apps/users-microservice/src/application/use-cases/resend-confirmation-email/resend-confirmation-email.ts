@@ -5,10 +5,9 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { EmailAdapter } from '../../../infrastructure/messaging/email.adapter';
 import { AppConfig } from '../../../config/app.config';
-import { ResendEmailInput } from '../../../graphql/inputs/resend-email.input';
 
 export class ResendConfirmationEmailCommand {
-  constructor(public input: ResendEmailInput) {}
+  constructor(public email: string) {}
 }
 
 @CommandHandler(ResendConfirmationEmailCommand)
@@ -23,7 +22,7 @@ export class ResendConfirmationEmailUseCase implements ICommandHandler<ResendCon
 
   async execute(command: ResendConfirmationEmailCommand): Promise<boolean> {
     const user: UserEntity | null = await this.usersRepository.findByEmail(
-      command.input.email,
+      command.email,
     );
 
     if (!user || user.isConfirmed) {
