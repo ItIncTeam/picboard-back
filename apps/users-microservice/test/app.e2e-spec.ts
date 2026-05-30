@@ -17,6 +17,7 @@ class MockEmailAdapter {
 
 const uniqueEmail = () =>
   `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+const rootUrl = '/api/v1';
 
 describe('Users subgraph (e2e)', () => {
   let app: INestApplication;
@@ -46,7 +47,7 @@ describe('Users subgraph (e2e)', () => {
 
   it('should expose graphql endpoint', async () => {
     const res = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({ query: 'query { __typename }' })
       .expect(200);
 
@@ -57,7 +58,7 @@ describe('Users subgraph (e2e)', () => {
   it('should sign up a user', async () => {
     const email = uniqueEmail();
     const res = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -88,7 +89,7 @@ describe('Users subgraph (e2e)', () => {
     const email = uniqueEmail();
 
     await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -101,7 +102,7 @@ describe('Users subgraph (e2e)', () => {
       });
 
     const res = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
@@ -121,7 +122,7 @@ describe('Users subgraph (e2e)', () => {
     const username = `u_${Date.now()}`;
 
     const signUpRes = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -141,7 +142,7 @@ describe('Users subgraph (e2e)', () => {
     });
 
     const res = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
@@ -161,7 +162,7 @@ describe('Users subgraph (e2e)', () => {
     const username = `u_${Date.now()}`;
 
     const signUpRes = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -181,7 +182,7 @@ describe('Users subgraph (e2e)', () => {
     });
 
     const res = await request(app.getHttpServer())
-      .post('/graphql')
+      .post(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
