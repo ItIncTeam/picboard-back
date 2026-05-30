@@ -22,6 +22,12 @@ import { EmailAdapter } from '../infrastructure/messaging/email.adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/confirm-email.use.case';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ResendConfirmationEmailUseCase } from '../application/use-cases/resend-confirmation-email/resend-confirmation-email';
+import { ResetPasswordUseCase } from '../application/use-cases/reset-password/reset-password.use.case';
+import {
+  SetNewPasswordCommand,
+  SetNewPasswordUseCase,
+} from '../application/use-cases/set-new-password/set-new-password.use.case';
 
 @Module({
   imports: [
@@ -71,6 +77,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     CreateRefreshTokenUseCase,
     UsersPrismaService,
     EmailAdapter,
+    ResendConfirmationEmailUseCase,
+    ResetPasswordUseCase,
+    SetNewPasswordUseCase,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,
