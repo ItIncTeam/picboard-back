@@ -3,13 +3,15 @@ import { UsersRepository } from '../../domain/repositories/users.repository';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
+import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
+import { User } from '../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 @Injectable()
 export class PrismaUsersRepository implements UsersRepository {
   constructor(private readonly prisma: UsersPrismaService) {}
 
   async findByUsername(username: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { username },
     });
 
@@ -30,7 +32,7 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { email },
     });
 
@@ -77,7 +79,7 @@ export class PrismaUsersRepository implements UsersRepository {
   async findByConfirmationCode(
     confirmationCode: string,
   ): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findFirst({
+    const user: User | null = await this.prisma.user.findFirst({
       where: { confirmationCode },
     });
 
@@ -98,9 +100,56 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async confirmUserEmail(id: string): Promise<UserEntity> {
-    const user = await this.prisma.user.update({
+    const user: User = await this.prisma.user.update({
       where: { id: id },
       data: { isConfirmed: true },
+    });
+
+    return new UserEntity(
+      user.id,
+      user.email,
+      user.username,
+      user.passwordHash,
+      user.createdAt,
+      user.confirmationCode,
+      user.confirmationCodeExpDate,
+      user.isConfirmed,
+    );
+  }
+
+  async updateConfirmationData(
+    userId: string,
+    data: UpdateConfirmationData,
+  ): Promise<UserEntity> {
+    const user: User = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        confirmationCode: data.confirmationCode,
+        confirmationCodeExpDate: data.confirmationCodeExpDate,
+      },
+    });
+
+    return new UserEntity(
+      user.id,
+      user.email,
+      user.username,
+      user.passwordHash,
+      user.createdAt,
+      user.confirmationCode,
+      user.confirmationCodeExpDate,
+      user.isConfirmed,
+    );
+  }
+
+  async updatePasswordHash(
+    userId: string,
+    passwordHash: string,
+  ): Promise<UserEntity> {
+    const user: User = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: passwordHash,
+      },
     });
 
     return new UserEntity(

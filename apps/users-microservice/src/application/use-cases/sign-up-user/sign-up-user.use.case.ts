@@ -1,9 +1,9 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { SignUpInput } from '../../../graphql/inputs/sign-up.input';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { UserEntity } from '../../../domain/entities/user.entity';
@@ -12,6 +12,12 @@ import { EmailAdapter } from '../../../infrastructure/messaging/email.adapter';
 import { CreateUserData } from '../../../domain/repositories/create-user-data.type';
 import { v4 as uuid } from 'uuid';
 import { AppConfig } from '../../../config/app.config';
+import { SignUpInput } from '../../../graphql/inputs/sign-up.input';
+import { UserConsentEntity } from '../../../domain/entities/user-consent.entity';
+import { LegalDocumentType } from '../../../domain/enums/legal-document-type.enum';
+import { ConsentAction } from '../../../domain/enums/consent-action.enum';
+import { ConsentRepository } from '../../../domain/repositories/consent/consent.repository';
+import { CreateUserConsentData } from '../../../domain/repositories/consent/create-user-consent-data.type';
 
 export class SignUpUserCommand {
   constructor(public input: SignUpInput) {}
@@ -25,9 +31,18 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     private readonly passwordHasher: PasswordHasher,
     private readonly emailAdapter: EmailAdapter,
     private readonly appConfig: AppConfig,
+    private readonly consentRepository: ConsentRepository,
   ) {}
 
-  async execute(command: SignUpUserCommand) {
+  async execute(command: SignUpUserCommand): Promise<UserEntity> {
+    if (!command.input.acceptTerms) {
+      throw new BadRequestException('Terms must be accepted');
+    }
+
+    if (!command.input.acceptPrivacy) {
+      throw new BadRequestException('Privacy Policy must be accepted');
+    }
+
     const existingUserWithUsername: UserEntity | null =
       await this.usersRepository.findByUsername(command.input.username);
 
@@ -38,8 +53,27 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
       throw new ConflictException();
     }
 
-    const user = await this.createUser(command.input);
+    const user: UserEntity | null = await this.createUser(
+      command.input.email,
+      command.input.username,
+      command.input.password,
+    );
     if (!user) throw new InternalServerErrorException();
+
+    const termsData: CreateUserConsentData = {
+      userId: user.id,
+      type: LegalDocumentType.TERMS,
+      action: ConsentAction.ACCEPTED,
+    };
+    const termsConsent: UserConsentEntity =
+      await this.consentRepository.createConsent(termsData);
+    const privacyData: CreateUserConsentData = {
+      userId: user.id,
+      type: LegalDocumentType.PRIVACY,
+      action: ConsentAction.ACCEPTED,
+    };
+    const privacyConsent: UserConsentEntity =
+      await this.consentRepository.createConsent(privacyData);
 
     const confirmationCode = user.confirmationCode!;
 
@@ -54,13 +88,17 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     return user;
   }
 
-  private async createUser(input: SignUpInput) {
-    const passwordHash = await this.passwordHasher.hash(input.password);
+  private async createUser(
+    email: string,
+    username: string,
+    password: string,
+  ): Promise<UserEntity | null> {
+    const passwordHash = await this.passwordHasher.hash(password);
     if (!passwordHash) return null;
 
     const userData: CreateUserData = {
-      email: input.email,
-      username: input.username,
+      email: email,
+      username: username,
       passwordHash: passwordHash,
       confirmationCode: uuid(),
       confirmationCodeExpDate: new Date(

@@ -2,10 +2,9 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { UserEntity } from '../../../domain/entities/user.entity';
-import { EmailConfirmationInput } from '../../../graphql/inputs/email-confirmation.input';
 
 export class ConfirmEmailCommand {
-  constructor(public input: EmailConfirmationInput) {}
+  constructor(public code: string) {}
 }
 
 @CommandHandler(ConfirmEmailCommand)
@@ -13,24 +12,22 @@ export class ConfirmEmailCommand {
 export class ConfirmEmailUseCase implements ICommandHandler<ConfirmEmailCommand> {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async execute(command: ConfirmEmailCommand) {
+  async execute(command: ConfirmEmailCommand): Promise<void> {
     const user: UserEntity | null =
-      await this.usersRepository.findByConfirmationCode(command.input.code);
+      await this.usersRepository.findByConfirmationCode(command.code);
     if (!user) {
-      throw new BadRequestException();
+      throw new BadRequestException('Invalid confirmation code');
     }
 
-    if (user.isConfirmed === true) {
-      throw new BadRequestException();
+    if (user.isConfirmed) {
+      throw new BadRequestException('Email already confirmed');
     }
 
-    const now = new Date();
-    if (user.confirmationCodeExpDate! < now) {
-      throw new BadRequestException();
+    const now: Date = new Date();
+    if (!user.confirmationCodeExpDate || user.confirmationCodeExpDate < now) {
+      throw new BadRequestException('Confirmation code expired');
     }
 
-    const result = await this.usersRepository.confirmUserEmail(user.id);
-
-    return result;
+    await this.usersRepository.confirmUserEmail(user.id);
   }
 }
