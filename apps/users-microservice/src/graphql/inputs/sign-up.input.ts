@@ -1,5 +1,6 @@
 import { Field, InputType } from '@nestjs/graphql';
 import {
+  IsBoolean,
   IsEmail,
   IsNotEmpty,
   IsString,
@@ -39,4 +40,24 @@ export class SignUpInput {
       'Password must be 6-20 characters, contain at least one lowercase letter, one uppercase letter, and one number, and may include allowed special characters ! " # $ % & \' ( ) * + , - . ,. / : ; < = > ? @ [ \\ ] ^ _ { | } ~.',
   })
   password: string;
+
+  @Field()
+  @IsBoolean()
+  acceptTerms: boolean;
+
+  @Field()
+  @IsBoolean()
+  acceptPrivacy: boolean;
+
+  /*@Field()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  termsVersion: string;
+
+  @Field()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  privacyVersion: string;*/
 }
