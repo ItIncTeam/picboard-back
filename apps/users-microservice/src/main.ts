@@ -4,11 +4,14 @@ import { AppModule } from './app.module';
 import { AppConfig } from './config/app.config';
 import { createValidationPipe } from '@app/common';
 import { UsersPrismaExceptionFilter } from './infrastructure/prisma/users-prisma-exception.filter';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const appConfig = app.get<AppConfig>(AppConfig);
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(createValidationPipe());
 

@@ -8,6 +8,8 @@ import { PrismaModule } from '../infrastructure/prisma/prisma.module';
 import { SignUpUserUseCase } from '../application/use-cases/sign-up-user/sign-up-user.use.case';
 import { SignInUserUseCase } from '../application/use-cases/sign-in-user/sign-in-user.use.case';
 import { CreateRefreshTokenUseCase } from '../application/use-cases/create-refresh-token/create-refresh-token.use-case';
+import { RotateRefreshTokenUseCase } from '../application/use-cases/rotate-refresh-token/rotate-refresh-token.use-case';
+import { LogOutUserUseCase } from '../application/use-cases/log-out-user/log-out-user.use.case';
 import { UsersPrismaService } from '../infrastructure/prisma/users-prisma.service';
 import { UsersRepository } from '../domain/repositories/users.repository';
 import { PrismaUsersRepository } from '../infrastructure/prisma/prisma-users.repository';
@@ -69,6 +71,8 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     SignInUserUseCase,
     ConfirmEmailUseCase,
     CreateRefreshTokenUseCase,
+    RotateRefreshTokenUseCase,
+    LogOutUserUseCase,
     UsersPrismaService,
     EmailAdapter,
     /*UsersEventsPublisher,*/

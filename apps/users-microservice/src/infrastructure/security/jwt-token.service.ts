@@ -20,6 +20,7 @@ export class JwtTokenService implements TokenService {
   async signRefreshToken(payload: {
     sub: string;
     email: string;
+    jti: string;
   }): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.appConfig.jwtRefreshSecret,
@@ -31,6 +32,7 @@ export class JwtTokenService implements TokenService {
     sub: string;
     email: string;
     exp: number;
+    jti: string;
   }> {
     return this.jwtService.verifyAsync(token, {
       secret: this.appConfig.jwtRefreshSecret,

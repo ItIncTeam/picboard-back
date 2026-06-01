@@ -28,7 +28,7 @@ import { AppConfig } from './config/app.config';
         introspection: true,
         sortSchema: true,
         playground: true,
-        context: ({ req }) => ({ req }),
+        context: ({ req, res }) => ({ req, res }),
         formatError: createGraphqlFormatError(appConfig.isProduction),
       }),
     }),
