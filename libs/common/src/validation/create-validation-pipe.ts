@@ -8,9 +8,11 @@ export function createValidationPipe(): ValidationPipe {
     transform: true,
     stopAtFirstError: true,
     exceptionFactory: (errors) => {
+      const formatted = formatValidationErrors(errors);
+      const firstMessage = formatted[0]?.message ?? 'Validation failed';
       return new BadRequestException({
-        message: 'Validation failed',
-        errors: formatValidationErrors(errors),
+        message: firstMessage,
+        errors: formatted,
       });
     },
   });

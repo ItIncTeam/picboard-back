@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import {
+  FieldError,
   GraphqlApiError,
   OriginalGraphQlError,
 } from './types/graphql-api-error.type';
@@ -25,21 +26,43 @@ export function createGraphqlFormatError(isProduction: boolean) {
         ? resolverError.message
         : defaultMessage;
 
+    // NestJS HttpException stores the response object in `.response`
+    // unwrapResolverError may return the response object (without statusCode)
+    const resolverResponse = (resolverError as any)?.response as
+      | { message?: string; errors?: unknown; statusCode?: number }
+      | undefined;
+
+    const originalError = formattedError.extensions?.originalError as
+      | { message?: string; errors?: unknown; statusCode?: number }
+      | undefined;
+
+    const errors = Array.isArray(resolverResponse?.errors)
+      ? (resolverResponse.errors as FieldError[])
+      : Array.isArray((resolverError as any)?.errors)
+        ? ((resolverError as any).errors as FieldError[])
+        : null;
+
+    // Extract HTTP status from any source
+    const getStatus = (expected: number) =>
+      resolverError?.statusCode === expected ||
+      resolverResponse?.statusCode === expected ||
+      originalError?.statusCode === expected;
+
     if (
-      resolverError?.statusCode === 400 ||
+      getStatus(400) ||
+      errors !== null ||
       code === 'BAD_USER_INPUT' ||
-      code === 'BAD_REQUEST' ||
-      message === 'Validation failed'
+      code === 'BAD_REQUEST'
     ) {
       return {
         message: message || 'Validation failed',
         code: 'BAD_USER_INPUT',
         statusCode: 400,
-        errors: resolverError?.errors ?? null,
+        errors,
       };
     }
 
-    if (resolverError?.statusCode === 401 || code === 'UNAUTHENTICATED') {
+    if (getStatus(401) || code === 'UNAUTHENTICATED') {
       return {
         message: message || 'Unauthorized',
         code: 'UNAUTHENTICATED',
@@ -48,7 +71,7 @@ export function createGraphqlFormatError(isProduction: boolean) {
       };
     }
 
-    if (resolverError?.statusCode === 403 || code === 'FORBIDDEN') {
+    if (getStatus(403) || code === 'FORBIDDEN') {
       return {
         message: message || 'Forbidden',
         code: 'FORBIDDEN',
@@ -57,7 +80,7 @@ export function createGraphqlFormatError(isProduction: boolean) {
       };
     }
 
-    if (resolverError?.statusCode === 404 || code === 'NOT_FOUND') {
+    if (getStatus(404) || code === 'NOT_FOUND') {
       return {
         message: message || 'Resource not found',
         code: 'NOT_FOUND',
@@ -66,7 +89,7 @@ export function createGraphqlFormatError(isProduction: boolean) {
       };
     }
 
-    if (resolverError?.statusCode === 409 || code === 'CONFLICT') {
+    if (getStatus(409) || code === 'CONFLICT') {
       return {
         message: message || 'Conflict',
         code: 'CONFLICT',
