@@ -26,12 +26,10 @@ import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/conf
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ResendConfirmationEmailUseCase } from '../application/use-cases/resend-confirmation-email/resend-confirmation-email';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password/reset-password.use.case';
-import {
-  SetNewPasswordCommand,
-  SetNewPasswordUseCase,
-} from '../application/use-cases/set-new-password/set-new-password.use.case';
+import { SetNewPasswordUseCase } from '../application/use-cases/set-new-password/set-new-password.use.case';
 import { ConsentRepository } from '../domain/repositories/consent/consent.repository';
 import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/prisma-consent/prisma-consent.repository';
+import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.service';
 
 @Module({
   imports: [
@@ -82,6 +80,7 @@ import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/p
     RotateRefreshTokenUseCase,
     LogOutUserUseCase,
     UsersPrismaService,
+    RecaptchaV3Service,
     EmailAdapter,
     ResendConfirmationEmailUseCase,
     ResetPasswordUseCase,

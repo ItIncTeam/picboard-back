@@ -156,6 +156,20 @@ export class AppConfig {
     return value;
   }
 
+  get recaptchaSecret(): string {
+    const value = this.configService.get<string>('RECAPTCHA_SECRET');
+    if (!value) {
+      throw new Error('RECAPTCHA_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get recaptchaMinScore(): number {
+    const value = this.configService.get<string>('RECAPTCHA_MIN_SCORE');
+    if (!value) throw new Error('RECAPTCHA_MIN_SCORE is not defined');
+    return Number(value);
+  }
+
   get tcpPort(): number {
     const value = this.configService.get<string>('TCP_PORT');
     if (!value) throw new Error('TCP_PORT is not defined');

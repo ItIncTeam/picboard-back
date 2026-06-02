@@ -2,7 +2,7 @@ import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
 import { SignUpInput } from '../inputs/sign-up.input';
 import { SignUpUserCommand } from '../../application/use-cases/sign-up-user/sign-up-user.use.case';
 import { CommandBus } from '@nestjs/cqrs';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, UseGuards } from '@nestjs/common';
 import { SignUpPayload } from '../types/sign-up.payload';
 import { SignInPayload } from '../types/sign-in.payload';
 import { SignInInput } from '../inputs/sign-in.input';
@@ -24,7 +24,9 @@ import { LogOutUserCommand } from '../../application/use-cases/log-out-user/log-
 import { RefreshTokenPayload } from '../types/refresh-token.payload';
 import { RotateRefreshTokenCommand } from '../../application/use-cases/rotate-refresh-token/rotate-refresh-token.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
+import { Recaptcha, RecaptchaGuard } from '@app/common';
 
+@UseGuards(RecaptchaGuard)
 @Resolver()
 export class AuthResolver {
   constructor(private readonly commandBus: CommandBus) {}
@@ -158,9 +160,15 @@ export class AuthResolver {
   }
 
   @Mutation(() => PasswordResetPayload)
+  @Recaptcha('password_reset')
   async passwordReset(
     @Args('input') input: PasswordResetInput,
   ): Promise<PasswordResetPayload> {
+    /*await this.recaptchaV3Service.ensureHuman(
+      input.captchaToken,
+      'password_reset', // must match frontend action
+    );*/
+
     await this.commandBus.execute(new ResetPasswordCommand(input.email));
     return {
       message:

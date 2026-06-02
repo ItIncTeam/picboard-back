@@ -10,4 +10,9 @@ export class PasswordResetInput {
   @Trim()
   @IsEmail()
   email: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  captchaToken: string;
 }
