@@ -11,6 +11,7 @@
     "^@app/common(|/.*)$": "<rootDir>/../../libs/common/src/$1",
     "^@app/contracts(|/.*)$": "<rootDir>/../../libs/contracts/src/$1",
     "^@app/rmq(|/.*)$": "<rootDir>/../../libs/rmq/src/$1",
-    "^uuid$": "<rootDir>/../../__mocks__/uuid.js"
+    "^uuid$": "<rootDir>/../../__mocks__/uuid.js",
+    "^node-fetch$": "<rootDir>/../../__mocks__/node-fetch.js"
   }
 }
