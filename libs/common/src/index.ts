@@ -1,5 +1,7 @@
 export * from './common.module';
 export * from './decorators/transform/trim';
+export * from './decorators/metadata/recaptcha';
+export * from './guards/recaptcha.guard';
 export * from './validation/create-validation-pipe';
 export * from './validation/format-validation-errors';
 export * from './validation/types/validation-error-item.type';
