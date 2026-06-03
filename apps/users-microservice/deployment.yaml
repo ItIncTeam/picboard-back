@@ -70,6 +70,16 @@ spec:
                  secretKeyRef:
                    name: users-microservice-production-config-secret
                    key: NODE_MAILER_PASSWORD
+             - name: RECAPTCHA_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: RECAPTCHA_SECRET
+             - name: RECAPTCHA_MIN_SCORE
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: RECAPTCHA_MIN_SCORE
              - name: PORT
                valueFrom:
                  secretKeyRef:
