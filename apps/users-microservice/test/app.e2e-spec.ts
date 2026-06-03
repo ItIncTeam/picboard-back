@@ -75,6 +75,8 @@ describe('Users subgraph (e2e)', () => {
             email,
             username: `u_${Date.now()}`,
             password: 'password123',
+            acceptTerms: true,
+            acceptPrivacy: true,
           },
         },
       })
@@ -99,7 +101,7 @@ describe('Users subgraph (e2e)', () => {
           }
         `,
         variables: {
-          input: { email, username: `u_${Date.now()}`, password: 'pw' },
+          input: { email, username: `u_${Date.now()}`, password: 'Password1', acceptTerms: true, acceptPrivacy: true },
         },
       });
 
@@ -133,7 +135,7 @@ describe('Users subgraph (e2e)', () => {
             }
           }
         `,
-        variables: { input: { email, username, password: 'correct' } },
+        variables: { input: { email, username, password: 'correct', acceptTerms: true, acceptPrivacy: true } },
       });
 
     const userId = signUpRes.body.data.signUp.user.id;
@@ -173,7 +175,7 @@ describe('Users subgraph (e2e)', () => {
             }
           }
         `,
-        variables: { input: { email, username, password: 'password123' } },
+        variables: { input: { email, username, password: 'password123', acceptTerms: true, acceptPrivacy: true } },
       });
 
     const userId = signUpRes.body.data.signUp.user.id;
@@ -221,7 +223,7 @@ describe('Users subgraph (e2e)', () => {
             }
           }
         `,
-        variables: { input: { email, username, password: 'password123' } },
+        variables: { input: { email, username, password: 'password123', acceptTerms: true, acceptPrivacy: true } },
       })
       .expect(200);
 
@@ -292,7 +294,7 @@ describe('Users subgraph (e2e)', () => {
               }
             }
           `,
-          variables: { input: { email, username, password: 'password123' } },
+          variables: { input: { email, username, password: 'password123', acceptTerms: true, acceptPrivacy: true } },
         })
         .expect(200);
 

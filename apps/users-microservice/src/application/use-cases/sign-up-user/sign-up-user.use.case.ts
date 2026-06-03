@@ -46,11 +46,15 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     const existingUserWithUsername: UserEntity | null =
       await this.usersRepository.findByUsername(command.input.username);
 
+    if (existingUserWithUsername) {
+      throw new ConflictException('Username is already taken');
+    }
+
     const existingUserWithEmail: UserEntity | null =
       await this.usersRepository.findByEmail(command.input.email);
 
-    if (existingUserWithUsername || existingUserWithEmail) {
-      throw new ConflictException();
+    if (existingUserWithEmail) {
+      throw new ConflictException('Email is already taken');
     }
 
     const user: UserEntity | null = await this.createUser(
