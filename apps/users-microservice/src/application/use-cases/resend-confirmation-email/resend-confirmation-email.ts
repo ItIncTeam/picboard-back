@@ -39,7 +39,7 @@ export class ResendConfirmationEmailUseCase implements ICommandHandler<ResendCon
       confirmationCodeExpDate: confirmationCodeExpDate,
     });
 
-    const link = `https://somesite.com/confirm-email?code=${newCode}`;
+    const link = `https://picboard.space/auth/confirm/registration?code=${newCode}`;
     const subject = 'Confirm your email';
     const message = `<a href="${link}">Confirm email</a>`;
 

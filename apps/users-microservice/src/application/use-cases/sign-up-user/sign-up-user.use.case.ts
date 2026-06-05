@@ -122,7 +122,7 @@ export class SignUpUserUseCase implements ICommandHandler<SignUpUserCommand> {
     email: string,
   ): Promise<boolean> {
     try {
-      const msg = `<a href="https://somesite.com/confirm-email?code=${confirmationCode}"> Link</a>`;
+      const msg = `<a href="https://picboard.space/auth/confirm/registration?code=${confirmationCode}"> Link</a>`;
       const subject = 'Yo!';
 
       await this.emailAdapter.sendEmail(email, subject, msg);
