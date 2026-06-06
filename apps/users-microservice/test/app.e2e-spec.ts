@@ -20,6 +20,15 @@ const uniqueEmail = () =>
   `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 const rootUrl = '/api/v1';
 
+/** Извлекает refresh token из Set-Cookie заголовка ответа */
+const refreshTokenFromCookie = (
+  res: request.Response,
+): string => {
+  const raw = res.headers['set-cookie'];
+  const cookieStr = Array.isArray(raw) ? raw[0] : raw;
+  return cookieStr.split(';')[0].split('=')[1];
+};
+
 describe('Users subgraph (e2e)', () => {
   let app: INestApplication;
   let prisma: UsersPrismaService;
@@ -192,7 +201,6 @@ describe('Users subgraph (e2e)', () => {
           mutation SignIn($input: SignInInput!) {
             signIn(input: $input) {
               accessToken
-              refreshToken
               user { id email username }
             }
           }
@@ -203,7 +211,6 @@ describe('Users subgraph (e2e)', () => {
 
     expect(res.body.errors).toBeUndefined();
     expect(res.body.data.signIn.accessToken).toBeDefined();
-    expect(res.body.data.signIn.refreshToken).toBeDefined();
     expect(res.body.data.signIn.user.email).toBe(email);
     expect(res.body.data.signIn.user.username).toBe(username);
   });
@@ -243,7 +250,6 @@ describe('Users subgraph (e2e)', () => {
           mutation SignIn($input: SignInInput!) {
             signIn(input: $input) {
               accessToken
-              refreshToken
               user { id email username }
             }
           }
@@ -253,7 +259,6 @@ describe('Users subgraph (e2e)', () => {
       .expect(200);
 
     expect(signInRes.body.errors).toBeUndefined();
-    expect(signInRes.body.data.signIn.refreshToken).toBeDefined();
 
     const cookies = signInRes.headers['set-cookie'];
     expect(cookies).toBeDefined();
@@ -311,7 +316,7 @@ describe('Users subgraph (e2e)', () => {
     it('should refresh tokens and set new cookie', async () => {
       const { email, username } = await signUpAndConfirm();
 
-      // Sign in to get refreshToken
+      // Sign in to get refreshToken cookie
       const signInRes = await request(app.getHttpServer())
         .post(rootUrl)
         .send({
@@ -319,7 +324,6 @@ describe('Users subgraph (e2e)', () => {
             mutation SignIn($input: SignInInput!) {
               signIn(input: $input) {
                 accessToken
-                refreshToken
                 user { id }
               }
             }
@@ -328,20 +332,19 @@ describe('Users subgraph (e2e)', () => {
         })
         .expect(200);
 
-      const refreshTokenValue = signInRes.body.data.signIn.refreshToken;
+      const refreshTokenValue = refreshTokenFromCookie(signInRes);
 
-      // Refresh tokens with manual Cookie header (body value, not raw Set-Cookie)
+      // Refresh with the token from cookie
       const refreshRes = await request(app.getHttpServer())
         .post(rootUrl)
         .set('Cookie', `refreshToken=${refreshTokenValue}`)
         .send({
-          query: 'mutation { refreshToken { accessToken refreshToken } }',
+          query: 'mutation { refreshToken { accessToken } }',
         })
         .expect(200);
 
       expect(refreshRes.body.errors).toBeUndefined();
       expect(refreshRes.body.data.refreshToken.accessToken).toBeDefined();
-      expect(refreshRes.body.data.refreshToken.refreshToken).toBeDefined();
 
       // Should set a new refreshToken cookie
       const newCookies = refreshRes.headers['set-cookie'];
@@ -356,7 +359,7 @@ describe('Users subgraph (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post(rootUrl)
         .send({
-          query: 'mutation { refreshToken { accessToken refreshToken } }',
+          query: 'mutation { refreshToken { accessToken } }',
         })
         .expect(200);
 
@@ -376,7 +379,6 @@ describe('Users subgraph (e2e)', () => {
             mutation SignIn($input: SignInInput!) {
               signIn(input: $input) {
                 accessToken
-                refreshToken
                 user { id }
               }
             }
@@ -385,26 +387,23 @@ describe('Users subgraph (e2e)', () => {
         })
         .expect(200);
 
-      const oldRefreshToken = signInRes.body.data.signIn.refreshToken;
+      const oldRefreshToken = refreshTokenFromCookie(signInRes);
 
       // Agent sends the captured refreshToken cookie — first refresh succeeds
       const firstRefresh = await agent
         .post(rootUrl)
         .send({
-          query: 'mutation { refreshToken { accessToken refreshToken } }',
+          query: 'mutation { refreshToken { accessToken } }',
         })
         .expect(200);
 
       expect(firstRefresh.body.errors).toBeUndefined();
-      expect(firstRefresh.body.data.refreshToken.refreshToken).not.toBe(
-        oldRefreshToken,
-      );
 
       // Agent now has the NEW cookie from Set-Cookie — second refresh also succeeds
       const secondRefresh = await agent
         .post(rootUrl)
         .send({
-          query: 'mutation { refreshToken { accessToken refreshToken } }',
+          query: 'mutation { refreshToken { accessToken } }',
         })
         .expect(200);
 
@@ -415,7 +414,7 @@ describe('Users subgraph (e2e)', () => {
         .post(rootUrl)
         .set('Cookie', `refreshToken=${oldRefreshToken}`)
         .send({
-          query: 'mutation { refreshToken { accessToken refreshToken } }',
+          query: 'mutation { refreshToken { accessToken } }',
         })
         .expect(200);
 
@@ -436,7 +435,6 @@ describe('Users subgraph (e2e)', () => {
             mutation SignIn($input: SignInInput!) {
               signIn(input: $input) {
                 accessToken
-                refreshToken
                 user { id }
               }
             }
@@ -445,7 +443,7 @@ describe('Users subgraph (e2e)', () => {
         })
         .expect(200);
 
-      const refreshTokenValue = signInRes.body.data.signIn.refreshToken;
+      const refreshTokenValue = refreshTokenFromCookie(signInRes);
 
       // Refresh
       const refreshRes = await request(app.getHttpServer())

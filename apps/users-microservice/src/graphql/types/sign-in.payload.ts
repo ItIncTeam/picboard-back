@@ -8,7 +8,4 @@ export class SignInPayload {
 
   @Field()
   accessToken: string;
-
-  @Field()
-  refreshToken: string;
 }

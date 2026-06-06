@@ -21,7 +21,7 @@ import { SetNewPasswordPayload } from '../types/set-new-password.payload';
 import { SetNewPasswordInput } from '../inputs/set-new-password.input';
 import type { Request, Response } from 'express';
 import { LogOutUserCommand } from '../../application/use-cases/log-out-user/log-out-user.use.case';
-import { RefreshTokenPayload } from '../types/refresh-token.payload';
+import { AccessTokenPayload } from '../types/access-token.payload';
 import { RotateRefreshTokenCommand } from '../../application/use-cases/rotate-refresh-token/rotate-refresh-token.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { Recaptcha, RecaptchaGuard } from '@app/common';
@@ -101,7 +101,6 @@ export class AuthResolver {
         profilePictureFileId: undefined,
       },
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
     };
   }
 
@@ -128,10 +127,10 @@ export class AuthResolver {
     return 'Logged out';
   }
 
-  @Mutation(() => RefreshTokenPayload)
+  @Mutation(() => AccessTokenPayload)
   async refreshToken(
     @Context() context: { req: Request; res: Response },
-  ): Promise<RefreshTokenPayload> {
+  ): Promise<AccessTokenPayload> {
     const oldRefreshToken = context.req.cookies?.refreshToken;
 
     if (!oldRefreshToken) {
@@ -155,7 +154,6 @@ export class AuthResolver {
 
     return {
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
     };
   }
 
