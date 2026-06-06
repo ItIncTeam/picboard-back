@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RefreshTokenRepository } from '../../domain/repositories/refresh-token.repository';
 import { CreateRefreshTokenData } from '../../domain/repositories/create-refresh-token-data.type';
 import { UsersPrismaService } from './users-prisma.service';
+import { createHash } from 'node:crypto';
 
 @Injectable()
 export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
@@ -10,7 +11,7 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
   async create(data: CreateRefreshTokenData): Promise<void> {
     await this.prisma.refreshToken.create({
       data: {
-        token: data.token,
+        token: this.hash(data.token),
         userId: data.userId,
         device: data.device,
         expiresAt: data.expiresAt,
@@ -23,7 +24,7 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
     expiresAt: Date;
   } | null> {
     const record = await this.prisma.refreshToken.findUnique({
-      where: { token },
+      where: { token: this.hash(token) },
       select: { userId: true, expiresAt: true },
     });
 
@@ -32,7 +33,7 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
 
   async deleteByToken(token: string): Promise<void> {
     await this.prisma.refreshToken.delete({
-      where: { token },
+      where: { token: this.hash(token) },
     });
   }
 
@@ -40,5 +41,9 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
     await this.prisma.refreshToken.deleteMany({
       where: { userId },
     });
+  }
+
+  private hash(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 }
