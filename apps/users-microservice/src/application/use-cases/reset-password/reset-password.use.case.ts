@@ -54,7 +54,7 @@ export class ResetPasswordUseCase implements ICommandHandler<ResetPasswordComman
 
   private buildRecoveryMessage(recoveryCode: string): string {
     return `
-      <a href="https://somesite.com/password-recovery?recoveryCode=${recoveryCode}">
+      <a href="https://picboard.space/auth/confirm/password-recovery?code=${recoveryCode}">
         Reset password
       </a>
     `;
