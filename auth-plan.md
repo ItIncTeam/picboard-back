@@ -163,23 +163,170 @@ model PasswordResetToken {
 
 ---
 
-### Фаза 7: OAuth — Google + GitHub (4-5 дней)
+### Фаза 7: OAuth — Google + GitHub (6-9 часов)
 
-**Ключевое:** модель `OAuthAccount` уже есть, миграция создана. Нужно реализовать flow.
+**Ключевое:** модель `OAuthAccount` уже есть, 2 миграции накачены. `User.passwordHash` nullable — OAuth-юзеры без пароля. `SignInUserUseCase` уже блокирует password-login для OAuth-аккаунтов.
 
-| # | Задача | Детали |
-|---|--------|--------|
-| 7.1 | Установить `passport-google-oauth20` + `passport-github2` | |
-| 7.2 | `GoogleOAuthStrategy` | Passport-стратегия для Google |
-| 7.3 | `GithubOAuthStrategy` | Passport-стратегия для GitHub |
-| 7.4 | `OAuthService` — универсальная логика | Поиск/создание пользователя по OAuth-данным |
-| 7.5 | `LinkOAuthAccountUseCase` | Привязка OAuth к существующему аккаунту |
-| 7.6 | `OAuthLoginUseCase` | Если `OAuthAccount` найден → логин. Если нет → создать User + OAuthAccount (email подтверждён автоматически) |
-| 7.7 | Обработка конфликта email | Если email из OAuth уже занят другим пользователем — предложить привязать, а не создавать дубликат |
-| 7.8 | REST endpoints для OAuth callback | `/auth/google/callback`, `/auth/github/callback` |
-| 7.9 | Выдача JWT (access + refresh) после OAuth — переиспользовать логику фазы 3 | `OAuthLoginUseCase` внутри вызывает фабрику токенов |
+---
 
-**Результат:** вход через Google и GitHub, аккаунты связываются через `OAuthAccount`.
+#### Шаг 1. Установить пакеты
+
+```bash
+npm install passport-google-oauth20 passport-github2
+npm install -D @types/passport-google-oauth20 @types/passport-github2
+```
+
+`@nestjs/axios` не нужен — Passport сам ходит за токенами.
+
+---
+
+#### Шаг 2. Конфиг + env
+
+**`apps/users-microservice/src/config/app.config.ts`** — добавить геттеры:
+
+```
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+GOOGLE_CALLBACK_URL      → https://users.picboard.space/api/v1/auth/google/callback
+GITHUB_CLIENT_ID
+GITHUB_CLIENT_SECRET
+GITHUB_CALLBACK_URL      → https://users.picboard.space/api/v1/auth/github/callback
+OAUTH_SUCCESS_REDIRECT   → https://picboard.space
+```
+
+**`apps/users-microservice/src/env/.env.development`** — прописать тестовые credentials.
+
+---
+
+#### Шаг 3. REST-контроллеры в users-microservice
+
+OAuth работает через HTTP redirect, а не GraphQL. Нужен Express-контроллер:
+
+```
+apps/users-microservice/src/
+└── infrastructure/
+    └── oauth/
+        ├── google-oauth.controller.ts    — GET /api/v1/auth/google/login
+        │                                     GET /api/v1/auth/google/callback
+        ├── github-oauth.controller.ts    — GET /api/v1/auth/github/login
+        │                                     GET /api/v1/auth/github/callback
+        └── oauth.module.ts               — @Module, регистрирует контроллеры
+```
+
+**google-oauth.controller.ts:**
+
+| Endpoint | Что делает |
+|----------|-----------|
+| `GET /auth/google/login` | Редирект на Google: `/o/oauth2/auth?client_id=...&redirect_uri=...` |
+| `GET /auth/google/callback?code=xxx` | Обменивает code на access_token → запрос `/userinfo` → OAuthLoginUseCase → Set-Cookie с refreshToken → редирект на фронт |
+
+Аналогично для GitHub.
+
+---
+
+#### Шаг 4. OAuth use case
+
+```
+apps/users-microservice/src/
+└── application/
+    └── use-cases/
+        └── oauth-login/
+            ├── oauth-login.use-case.ts
+            └── oauth-login.result.ts
+```
+
+**Логика `OAuthLoginUseCase`:**
+
+```
+1. OAuthAccount.findByProvider(provider, providerId)
+   │
+   ├── Найден → login (выдать JWT)
+   │
+   └── Не найден
+       │
+       ├── 2. Ищем User по email
+       │   │
+       │   ├── Email свободен → создать User + OAuthAccount (email auto-confirmed)
+       │   │
+       │   └── Email занят → ошибка "this email is already registered"
+       │
+       └── 3. Выдать accessToken + refreshToken (переиспользуем CreateRefreshTokenCommand)
+            4. Установить httpOnly cookie
+```
+
+---
+
+#### Шаг 5. Подключить в Gateway
+
+Gateway форвардит REST-запросы в users-microservice. Вариант A — через proxy:
+
+```typescript
+// apps/gateway/src/main.ts
+import { createProxyMiddleware } from 'http-proxy-middleware';
+
+app.use(
+  '/auth/google',
+  createProxyMiddleware({ target: 'http://localhost:3001', changeOrigin: true }),
+);
+app.use(
+  '/auth/github',
+  createProxyMiddleware({ target: 'http://localhost:3001', changeOrigin: true }),
+);
+```
+
+Вариант B — через `@nestjs/axios` внутри `OAuthModule`.
+
+---
+
+#### Схема flow
+
+```
+Браузер                    Gateway                    users-microservice
+  │                           │                           │
+  │ GET /auth/google/login    │                           │
+  │──────────────────────────►│──302→ google.com/oauth…   │
+  │◄── 302 Location: google ──│                           │
+  │                           │                           │
+  │ (согласие пользователя)   │                           │
+  │                           │                           │
+  │ GET /auth/google/callback?code=xxx                    │
+  │──────────────────────────►│──► /api/v1/auth/google… ─►│
+  │                           │                           │
+  │                           │   1. code → token         │
+  │                           │   2. token → /userinfo    │
+  │                           │   3. OAuthLoginUseCase    │
+  │                           │   4. Set-Cookie: jwt      │
+  │                           │◄──────────────────────────│
+  │◄── 302 → https://picboard.space ──────────────────────│
+  │                           │                           │
+  │ Теперь браузер имеет httpOnly cookie с refreshToken   │
+  │ Может делать GraphQL-запросы с этим cookie            │
+```
+
+---
+
+#### Что уже готово (не трогать)
+
+- ✅ `OAuthAccount` модель в Prisma + 2 миграции
+- ✅ `User.passwordHash` nullable — OAuth-юзеры без пароля
+- ✅ `SignInUserUseCase` — блокирует password-login для OAuth
+- ✅ JWT access token (`JwtTokenService`)
+- ✅ Refresh token + httpOnly cookie (`CreateRefreshTokenCommand`)
+- ✅ `RotateRefreshTokenUseCase` — ротация токенов
+- ✅ `LogOutUserUseCase` — logout
+- ✅ `GqlJwtAuthGuard` + `JwtStrategy` — защита endpoint-ов
+
+---
+
+#### Оценка
+
+| Шаг | Часы |
+|-----|------|
+| 1. Установка пакетов | 0.1 |
+| 2. Конфиг + env | 0.5 |
+| 3. REST-контроллеры + use case | 4-6 |
+| 4. Интеграция с Gateway | 1-2 |
+| **Итого** | **~6-9** |
 
 ---
 
@@ -289,5 +436,97 @@ apps/users-microservice/src/
 | 4. Logout | 6-8 |
 | 5. Password Recovery | 20-28 |
 | 6. Rate Limiting | 6-8 |
-| 7. OAuth (Google + GitHub) | 28-36 |
-| **Итого (backend)** | **104-144** |
+| 7. OAuth (Google + GitHub) | 6-9 |
+| **Итого (backend)** | **82-121** |
+
+---
+
+## Мультидевайсность (управление сессиями)
+
+### Текущий статус
+
+Базовая мультидевайсность **уже работает**. При логине создаётся новый `RefreshToken` в БД. Старые токены не удаляются — оба устройства остаются активными.
+
+`RefreshTokenRepository.deleteAllByUserId()` реализован, но **не вызывается** нигде, кроме `deleteAllByUserId` в репозитории.
+
+В модели `RefreshToken` есть поле `device`, но оно **не заполняется** — `signIn` и `refreshToken` не передают `user-agent`.
+
+---
+
+### Что добавить (3 подзадачи)
+
+#### 1. Заполнять device при создании токена
+
+**`auth.resolver.ts` — signIn и refreshToken:**
+
+```typescript
+const device = context.req.headers['user-agent'] ?? 'unknown';
+const refreshToken = await this.commandBus.execute(
+  new CreateRefreshTokenCommand(user.id, user.email, device),
+);
+```
+
+То же самое в `refreshToken` мутации.
+
+---
+
+#### 2. Query — список активных сессий
+
+```graphql
+query {
+  mySessions {
+    id
+    device
+    createdAt
+    expiresAt
+    isCurrent
+  }
+}
+```
+
+Нужно:
+
+| Компонент | Файл |
+|-----------|------|
+ | Тип `Session` | `graphql/types/session.type.ts` |
+ | `GetSessionsQuery` | `application/use-cases/get-sessions/get-sessions.use-case.ts` |
+ | `SessionsResolver` | `graphql/resolvers/sessions.resolver.ts` |
+
+Логика use case: `RefreshTokenRepository.findAllByUserId(userId)` → возвращает список. Текущая сессия определяется сравнением `token` (с хэшем) с переданным refreshToken из cookie.
+
+---
+
+#### 3. Mutation — отзыв сессии
+
+```graphql
+mutation {
+  revokeSession(sessionId: "uuid")
+}
+
+mutation {
+  revokeOtherSessions
+}
+```
+
+Нужно:
+
+| Компонент | Файл |
+|-----------|------|
+| `RevokeSessionUseCase` | `application/use-cases/revoke-session/revoke-session.use-case.ts` |
+| `RevokeOtherSessionsUseCase` | `application/use-cases/revoke-other-sessions/revoke-other-sessions.use-case.ts` |
+| Добавить метод в репозиторий | `RefreshTokenRepository.deleteById(id)` |
+| Реализация `deleteById` в Prisma | `PrismaRefreshTokenRepository.deleteById(id)` |
+
+**Важно:** `revokeOtherSessions` должен удалить все сессии пользователя, кроме текущей (токен из httpOnly cookie).
+
+---
+
+### Порядок реализации
+
+```
+1. Заполнять device     — 0.5 часа (только auth.resolver.ts)
+2. Query mySessions     — 2-3 часа (type + use case + resolver)
+3. Mutation revokeSession — 1-2 часа
+```
+
+Не блокирует OAuth — можно делать после.
