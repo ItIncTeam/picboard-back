@@ -12,7 +12,7 @@ async function bootstrap() {
   const appConfig = app.get<AppConfig>(AppConfig);
 
   app.enableCors({
-    origin: ['https://picboard.com', 'http://localhost:3000'],
+    origin: ['https://picboard.space', 'http://localhost:3000'],
     credentials: true,
     methods: ['POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
