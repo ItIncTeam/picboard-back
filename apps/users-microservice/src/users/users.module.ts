@@ -25,17 +25,20 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/confirm-email.use.case';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ResendConfirmationEmailUseCase } from '../application/use-cases/resend-confirmation-email/resend-confirmation-email';
+import { OAuthLoginUseCase } from '../application/use-cases/oauth-login/oauth-login.use-case';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password/reset-password.use.case';
 import { SetNewPasswordUseCase } from '../application/use-cases/set-new-password/set-new-password.use.case';
 import { ConsentRepository } from '../domain/repositories/consent/consent.repository';
 import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/prisma-consent/prisma-consent.repository';
 import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.service';
+import { OAuthModule } from '../infrastructure/oauth/oauth.module';
 
 @Module({
   imports: [
     AppConfigModule,
     PrismaModule,
     CqrsModule,
+    OAuthModule,
     /*RmqModule.registerAsync({
       name: USERS_RMQ_CLIENT,
       imports: [AppConfigModule],
@@ -85,6 +88,7 @@ import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.serv
     ResendConfirmationEmailUseCase,
     ResetPasswordUseCase,
     SetNewPasswordUseCase,
+    OAuthLoginUseCase,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,

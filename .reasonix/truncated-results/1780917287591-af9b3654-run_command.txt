@@ -1,0 +1,341 @@
+$ npm run test:users:e2e 2>&1
+[exit 1]
+
+> picboard-back@0.0.1 test:users:e2e
+> cross-env NODE_ENV=testing dotenv -e apps/users-microservice/src/env/.env.testing -- jest --config ./apps/users-microservice/test/jest-e2e.json
+
+FAIL apps/users-microservice/test/app.e2e-spec.ts
+  Users subgraph (e2e)
+    × should expose graphql endpoint (3 ms)
+    × should sign up a user (1 ms)
+    × should reject sign in for unconfirmed user
+    × should reject sign in with wrong password
+    × should sign in a confirmed user
+    × should logout a user and clear refresh token cookie
+    refreshToken mutation
+      × should refresh tokens and set new cookie
+      × should reject refresh token without cookie
+      × should reject reused refresh token after rotation
+      × should produce a valid JWT access token after refresh
+
+  ● Users subgraph (e2e) › should expose graphql endpoint
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › should sign up a user
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › should reject sign in for unconfirmed user
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › should reject sign in with wrong password
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › should sign in a confirmed user
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › should logout a user and clear refresh token cookie
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › refreshToken mutation › should refresh tokens and set new cookie
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 11)
+      at TestingInstanceLoader.createInstances (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (test/app.e2e-spec.ts:37:42)
+
+  ● Users subgraph (e2e) › refreshToken mutation › should reject refresh token without cookie
+
+    Nest can't resolve dependencies of the OAuthLoginUseCase (?, TokenService, CommandBus). Please make sure that the argument UsersRepository at index [0] is available in the OAuthModule module.
+
+    Potential solutions:
+    - Is OAuthModule a valid NestJS module?
+    - If UsersRepository is a provider, is it part of the current OAuthModule?
+    - If UsersRepository is exported from a separate @Module, is that module imported within OAuthModule?
+      @Module({
+        imports: [ /* the Module containing UsersRepository */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+    [0m [90m 35 |[39m
+     [90m 36 |[39m   beforeAll([36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 37 |[39m     [36mconst[39m moduleFixture[33m:[39m [33mTestingModule[39m [33m=[39m [36mawait[39m [33mTest[39m[33m.[39mcreateTestingModule({
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 38 |[39m       imports[33m:[39m [[33mAppModule[39m][33m,[39m
+     [90m 39 |[39m     })
+     [90m 40 |[39m       [33m.[39moverrideModule([33mAuthModule[39m)[0m
+
+      at TestingInjector.lookupComponentInParentModules (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:290:19)
+      at TestingInjector.resolveComponentWrapper (../../node_modules/.pnpm/@nestjs+testing@11.1.19_@ne_f6d922f7fc48f5fb7eb33a09b7fea39b/node_modules/@nestjs/testing/testing-injector.js:19:45)
+      at resolveParam (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/injector.js:103:9)
+      at ../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (../../node_modules/.pnpm/@nestjs+core@11.1.19_@nestj_ef287dca5d0894fe4b6b122237bfb567/node_modules/@n
+
+[… truncated 9646 chars …]
