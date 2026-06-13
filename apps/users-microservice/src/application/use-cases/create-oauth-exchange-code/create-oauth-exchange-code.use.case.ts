@@ -4,6 +4,7 @@ import { CreateOAuthExchangeCodeInput } from '../../../infrastructure/googleOAut
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateOAuthExchangeCodeOutput } from '../../../infrastructure/googleOAuth/create-oauth-exchange-code-models/create-oauth-exchange-code.output';
 import { OAuthExchangeCodesRepository } from '../../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
+import { AppConfig } from '../../../config/app.config';
 
 export class CreateOAuthExchangeCodeCommand {
   constructor(public input: CreateOAuthExchangeCodeInput) {}
@@ -14,6 +15,7 @@ export class CreateOAuthExchangeCodeCommand {
 export class CreateOAuthExchangeCodeUseCase implements ICommandHandler<CreateOAuthExchangeCodeCommand> {
   constructor(
     private readonly oAuthExchangeCodesRepository: OAuthExchangeCodesRepository,
+    private readonly appConfig: AppConfig,
   ) {}
 
   async execute(
@@ -21,7 +23,9 @@ export class CreateOAuthExchangeCodeUseCase implements ICommandHandler<CreateOAu
   ): Promise<CreateOAuthExchangeCodeOutput> {
     const rawCode = randomBytes(32).toString('base64url');
     const codeHash = createHash('sha256').update(rawCode).digest('hex');
-    const expiresAt = new Date(Date.now() + 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + this.appConfig.oauthCodeExpiresInMs,
+    ); //1min
 
     await this.oAuthExchangeCodesRepository.create({
       codeHash,
@@ -33,7 +37,6 @@ export class CreateOAuthExchangeCodeUseCase implements ICommandHandler<CreateOAu
 
     return {
       code: rawCode,
-      expiresAt,
     };
   }
 }

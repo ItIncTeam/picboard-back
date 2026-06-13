@@ -5,8 +5,9 @@ export type GoogleOAuthOutput = {
   emailVerified: boolean;
   displayName?: string;
   avatarUrl?: string;
-  grantedScopes: string[];
-  /*googleAccessToken: string;
+  /*grantedScopes: string[];
+  googleAccessToken: string;
   googleRefreshToken?: string;
   googleIdToken?: string;*/
 };
+//todo what else can we get from scope?

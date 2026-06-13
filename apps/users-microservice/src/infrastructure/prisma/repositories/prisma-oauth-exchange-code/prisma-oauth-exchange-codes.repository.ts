@@ -4,7 +4,6 @@ import { OAuthExchangeCodeEntity } from '../../../../domain/entities/aouth-excha
 import {
   oauthExchangeCodeEntitySelect,
   toOAuthExchangeCodeEntity,
-  toOAuthExchangeCodeEntityList,
   toOAuthExchangeCodeEntityOrNull,
   toPrismaCreateOAuthExchangeCodeData,
 } from '../../mappers/oauth-exchange-code.mapper';
@@ -16,7 +15,7 @@ export class PrismaOAuthExchangeCodesRepository implements OAuthExchangeCodesRep
   constructor(private readonly prisma: UsersPrismaService) {}
 
   async findById(id: string): Promise<OAuthExchangeCodeEntity | null> {
-    const code: OAuthExchangeCodeEntity | null =
+    const code: OAuthExchangeCode | null =
       await this.prisma.oAuthExchangeCode.findUnique({
         where: { id },
         select: oauthExchangeCodeEntitySelect,
@@ -28,7 +27,7 @@ export class PrismaOAuthExchangeCodesRepository implements OAuthExchangeCodesRep
   async findByCodeHash(
     codeHash: string,
   ): Promise<OAuthExchangeCodeEntity | null> {
-    const code: OAuthExchangeCodeEntity | null =
+    const code: OAuthExchangeCode | null =
       await this.prisma.oAuthExchangeCode.findUnique({
         where: { codeHash },
         select: oauthExchangeCodeEntitySelect,

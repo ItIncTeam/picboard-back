@@ -9,6 +9,7 @@ import {
   toPrismaCreateOAuthAccountData,
 } from '../../mappers/oauth-account.mapper';
 import { CreateOAuthAccountData } from '../../../../domain/repositories/oauth-account/create-oauth-account-data.type';
+import { OAuthAccount } from '../../../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 @Injectable()
 export class PrismaOAuthAccountsRepository implements OAuthAccountsRepository {

@@ -30,6 +30,16 @@ import { SetNewPasswordUseCase } from '../application/use-cases/set-new-password
 import { ConsentRepository } from '../domain/repositories/consent/consent.repository';
 import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/prisma-consent/prisma-consent.repository';
 import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.service';
+import { GoogleOAuthController } from '../infrastructure/googleOAuth/googleOAuth.controller';
+import { CompleteGoogleOAuthUseCase } from '../application/use-cases/complete-google-oAuth/complete-google-oAuth.use.case';
+import { OAuthExchangeCodeUseCase } from '../application/use-cases/exchange-oauth-code/exchange-oauth-code.use.case';
+import { CreateOAuthExchangeCodeUseCase } from '../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use.case';
+import { CompleteGoogleOAuthLoginUseCase } from '../application/use-cases/complete-google-oAuth-login/complete-google-oAuth-login.use.case';
+import { OAuthAccountsRepository } from '../domain/repositories/oauth-account/oauth-accounts.repository';
+import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/repositories/prisma-oauth-account/prisma-oauth-accounts.repository';
+import { PrismaOAuthExchangeCodesRepository } from '../infrastructure/prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';
+import { OAuthExchangeCodesRepository } from '../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
+import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use.case';
 
 @Module({
   imports: [
@@ -85,10 +95,24 @@ import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.serv
     ResendConfirmationEmailUseCase,
     ResetPasswordUseCase,
     SetNewPasswordUseCase,
+    CompleteGoogleOAuthUseCase,
+    CompleteGoogleOAuthLoginUseCase,
+    OAuthExchangeCodeUseCase,
+    CreateOAuthExchangeCodeUseCase,
+    GoogleOAuthController,
+    IssueSessionUseCase,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,
       useClass: PrismaUsersRepository,
+    },
+    {
+      provide: OAuthAccountsRepository,
+      useClass: PrismaOAuthAccountsRepository,
+    },
+    {
+      provide: OAuthExchangeCodesRepository,
+      useClass: PrismaOAuthExchangeCodesRepository,
     },
     {
       provide: RefreshTokenRepository,

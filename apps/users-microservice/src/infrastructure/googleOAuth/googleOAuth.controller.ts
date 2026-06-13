@@ -14,10 +14,8 @@ import { CompleteGoogleOAuthCommand } from '../../application/use-cases/complete
 import { GoogleOAuthOutput } from './oauth-models/google-oauth.output';
 import { GoogleOAuthLoginOutput } from './oauth-login-models/google-oauth-login.output';
 import { CompleteGoogleOAuthLoginCommand } from '../../application/use-cases/complete-google-oAuth-login/complete-google-oAuth-login.use.case';
-import { GoogleOAuthInput } from './oauth-models/google-oauth.input';
 import { CreateOAuthExchangeCodeCommand } from '../../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use.case';
 import { CreateOAuthExchangeCodeOutput } from './create-oauth-exchange-code-models/create-oauth-exchange-code.output';
-import { GoogleOAuthLoginInput } from './oauth-login-models/google-oauth-login.input';
 
 const b64url = (input: Buffer) =>
   input
@@ -25,7 +23,7 @@ const b64url = (input: Buffer) =>
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
-
+//todo what prefix?
 @Controller('auth/google')
 export class GoogleOAuthController {
   constructor(
@@ -60,7 +58,7 @@ export class GoogleOAuthController {
       client_id: this.appConfig.googleClientId,
       redirect_uri: this.appConfig.googleCallbackUrl,
       response_type: 'code',
-      scope: 'openid email profile',
+      scope: 'openid email profile', //todo what's the correct scope
       state,
       code_challenge: challenge,
       code_challenge_method: 'S256',
@@ -80,13 +78,25 @@ export class GoogleOAuthController {
     @Query('code') code?: string,
     @Query('state') state?: string,
     @Query('error') error?: string,
+    @Query('error_description') errorDescription?: string,
   ) {
     const savedState = req.cookies?.oauth_state;
     const verifier = req.cookies?.oauth_pkce_verifier;
 
     if (error) {
-      throw new BadRequestException(`Google OAuth error: ${error}`);
+      /*throw new BadRequestException(`Google OAuth error: ${error}`);*/
+      res.clearCookie('oauth_state', { path: '/auth/google' });
+      res.clearCookie('oauth_pkce_verifier', { path: '/auth/google' });
+
+      return res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=${encodeURIComponent(error)}${
+          errorDescription
+            ? `&error_description=${encodeURIComponent(errorDescription)}`
+            : ''
+        }`,
+      );
     }
+    //todo send fronts error in query, eg in telegram
 
     if (!code || !state) {
       throw new BadRequestException('Missing OAuth callback parameters');
@@ -100,37 +110,29 @@ export class GoogleOAuthController {
       throw new BadRequestException('Missing PKCE code verifier');
     }
 
-    const input_1: GoogleOAuthInput = {
-      code,
-      codeVerifier: verifier,
-      ipAddress: req.ip ? req.ip : undefined, //todo undefined?
-      userAgent: req.headers['user-agent']
-        ? req.headers['user-agent']
-        : undefined, //todo undefined?
-    };
     const googleOAuthResult: GoogleOAuthOutput = await this.commandBus.execute(
-      new CompleteGoogleOAuthCommand(input_1),
+      new CompleteGoogleOAuthCommand({
+        code,
+        codeVerifier: verifier,
+        ipAddress: req.ip || undefined,
+        userAgent: req.get('user-agent') || undefined,
+      }),
     );
 
-    const input_2: GoogleOAuthLoginInput = {
-      provider: googleOAuthResult.provider,
-      providerId: googleOAuthResult.providerId,
-      email: googleOAuthResult.email,
-      emailVerified: googleOAuthResult.emailVerified,
-      displayName: googleOAuthResult.displayName
-        ? googleOAuthResult.displayName
-        : undefined, //todo undefined?
-      avatarUrl: googleOAuthResult.avatarUrl
-        ? googleOAuthResult.avatarUrl
-        : undefined, //todo undefined?
-      grantedScopes: googleOAuthResult.grantedScopes, //todo undefined? do i need them?
-    };
+    //todo add useful properties from google scope
     const loginResult: GoogleOAuthLoginOutput = await this.commandBus.execute(
-      new CompleteGoogleOAuthLoginCommand(input_2),
+      new CompleteGoogleOAuthLoginCommand({
+        provider: googleOAuthResult.provider,
+        providerId: googleOAuthResult.providerId,
+        email: googleOAuthResult.email,
+        displayName: googleOAuthResult.displayName ?? undefined,
+        avatarUrl: googleOAuthResult.avatarUrl ?? undefined,
+      }),
     );
+    /*//todo: redirect logic
     if (loginResult.usedOAuth) {
       ('Front redirects to sign in with access and refresh tokens');
-    }
+    }*/
 
     const exchangeCode: CreateOAuthExchangeCodeOutput =
       await this.commandBus.execute(
@@ -143,7 +145,6 @@ export class GoogleOAuthController {
     res.clearCookie('oauth_state', { path: '/auth/google' });
     res.clearCookie('oauth_pkce_verifier', { path: '/auth/google' });
 
-    //todo we return the code to the same url?
     return res.redirect(
       `${this.appConfig.frontendUrl}/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
     );
