@@ -194,6 +194,16 @@ export class AppConfig {
     return value;
   }
 
+  get oauthCodeExpiresInMs(): number {
+    const value = this.configService.get<string>('OAUTH_CODE_EXPIRES_IN_MS');
+    if (!value) throw new Error('OAUTH_CODE_EXPIRES_IN_MS is not defined');
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error('OAUTH_CODE_EXPIRES_IN_MS must be a positive integer');
+    }
+    return parsed;
+  }
+
   get tcpPort(): number {
     const value = this.configService.get<string>('TCP_PORT');
     if (!value) throw new Error('TCP_PORT is not defined');

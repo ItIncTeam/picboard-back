@@ -1,13 +1,8 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
+import { OAuthAccountsRepository } from '../../../domain/repositories/oauth-account/oauth-accounts.repository';
 import { UserEntity } from '../../../domain/entities/user.entity';
-import { TokenService } from '../../../domain/services/token.service';
-import { CreateRefreshTokenCommand } from '../create-refresh-token/create-refresh-token.use-case';
 
 export class OAuthLoginCommand {
   constructor(
@@ -21,8 +16,6 @@ export class OAuthLoginCommand {
 
 export class OAuthLoginResult {
   user: UserEntity;
-  accessToken: string;
-  refreshToken: string;
   isNewUser: boolean;
 }
 
@@ -34,14 +27,13 @@ export class OAuthLoginUseCase implements ICommandHandler<
 > {
   constructor(
     private readonly usersRepository: UsersRepository,
-    private readonly tokenService: TokenService,
-    private readonly commandBus: CommandBus,
+    private readonly oauthAccountsRepository: OAuthAccountsRepository,
   ) {}
 
   async execute(command: OAuthLoginCommand): Promise<OAuthLoginResult> {
     // 1. Ищем существующий OAuth аккаунт
     const existingAccount =
-      await this.usersRepository.findOAuthAccountByProvider(
+      await this.oauthAccountsRepository.findByProviderAndProviderId(
         command.provider,
         command.providerId,
       );
@@ -53,16 +45,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
         throw new UnauthorizedException('User not found');
       }
 
-      const accessToken = await this.tokenService.signAccessToken({
-        sub: user.id,
-        email: user.email,
-      });
-
-      const refreshToken = await this.commandBus.execute(
-        new CreateRefreshTokenCommand(user.id, user.email, command.device),
-      );
-
-      return { user, accessToken, refreshToken, isNewUser: false };
+      return { user, isNewUser: false };
     }
 
     // 2. Не найден — проверяем email
@@ -71,7 +54,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
     if (existingUser) {
       // Email уже занят — привязываем OAuth к существующему аккаунту
       // Это безопасно, т.к. email прошёл проверку verified через GithubOAuthService
-      await this.usersRepository.createOAuthAccount({
+      await this.oauthAccountsRepository.create({
         userId: existingUser.id,
         provider: command.provider,
         providerId: command.providerId,
@@ -79,20 +62,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
         email: command.email,
       });
 
-      const accessToken = await this.tokenService.signAccessToken({
-        sub: existingUser.id,
-        email: existingUser.email,
-      });
-
-      const refreshToken = await this.commandBus.execute(
-        new CreateRefreshTokenCommand(
-          existingUser.id,
-          existingUser.email,
-          command.device,
-        ),
-      );
-
-      return { user: existingUser, accessToken, refreshToken, isNewUser: false };
+      return { user: existingUser, isNewUser: false };
     }
 
     // 3. Email свободен — создаём нового пользователя
@@ -105,7 +75,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
       isConfirmed: true,
     });
 
-    await this.usersRepository.createOAuthAccount({
+    await this.oauthAccountsRepository.create({
       userId: newUser.id,
       provider: command.provider,
       providerId: command.providerId,
@@ -113,15 +83,6 @@ export class OAuthLoginUseCase implements ICommandHandler<
       email: command.email,
     });
 
-    const accessToken = await this.tokenService.signAccessToken({
-      sub: newUser.id,
-      email: newUser.email,
-    });
-
-    const refreshToken = await this.commandBus.execute(
-      new CreateRefreshTokenCommand(newUser.id, newUser.email, command.device),
-    );
-
-    return { user: newUser, accessToken, refreshToken, isNewUser: true };
+    return { user: newUser, isNewUser: true };
   }
 }

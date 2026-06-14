@@ -4,7 +4,7 @@ import { UserEntity } from '../../domain/entities/user.entity';
 import { OAuthAccountEntity } from '../../domain/entities/oauth-account.entity';
 import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
-import { CreateOAuthAccountData } from '../../domain/repositories/create-oauth-account-data.type';
+import { CreateOAuthAccountData } from '../../domain/repositories/oauth-account/create-oauth-account-data.type';
 import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
 import { User } from '../../../../../prisma/apps/users/src/generated/prisma/users-client';
 

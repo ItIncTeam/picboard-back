@@ -1,6 +1,6 @@
 import { UserEntity } from '../entities/user.entity';
 import { CreateUserData } from './create-user-data.type';
-import { CreateOAuthAccountData } from './create-oauth-account-data.type';
+import { CreateOAuthAccountData } from './oauth-account/create-oauth-account-data.type';
 import { OAuthAccountEntity } from '../entities/oauth-account.entity';
 import { UpdateConfirmationData } from './update-confirmation-data.type';
 
@@ -26,13 +26,4 @@ export abstract class UsersRepository {
     userId: string,
     passwordHash: string,
   ): Promise<UserEntity>;
-
-  abstract findOAuthAccountByProvider(
-    provider: string,
-    providerId: string,
-  ): Promise<OAuthAccountEntity | null>;
-
-  abstract createOAuthAccount(
-    data: CreateOAuthAccountData,
-  ): Promise<OAuthAccountEntity>;
 }
