@@ -99,8 +99,11 @@ export class GitHubOAuthController {
       const githubUser =
         await this.githubOAuthService.getUserProfile(githubToken);
 
-      if (githubUser.email == null) {
-        throw new BadRequestException('Verified Github email is required');
+      //todo уже есть проверка в сервисе
+      if (!githubUser.isVerified) {
+        res.redirect(
+          `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=non_verified_email`,
+        );
       }
       //todo: front has to ask to go to local sign up
 
@@ -115,6 +118,12 @@ export class GitHubOAuthController {
           device,
         ),
       ); // todo: что возвращает scope(запросить аватар и тд)
+
+      if (!result.user.isNewOauth) {
+        return res.redirect(
+          `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=oauth_exists`,
+        );
+      } //todo : отдать фронам
 
       // 3. Генерируем одноразовый exchangeCode, сохраняем хэш
       const exchangeCode = await this.commandBus.execute(

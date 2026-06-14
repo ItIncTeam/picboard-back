@@ -36,7 +36,7 @@ import { ConsentRepository } from '../domain/repositories/consent/consent.reposi
 import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/prisma-consent/prisma-consent.repository';
 import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/prisma-oauth-accounts.repository';
 import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.service';
-import { OAuthModule } from '../infrastructure/oauth/oauth.module';
+import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
 
 @Module({
   imports: [

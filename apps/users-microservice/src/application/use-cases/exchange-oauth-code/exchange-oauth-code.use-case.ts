@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { OAuthExchangeCodesRepository } from '../../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
@@ -64,14 +64,5 @@ export class ExchangeOAuthCodeUseCase implements ICommandHandler<
       refreshToken: session.refreshToken,
       user,
     };
-  }
-
-  /**
-   * Генерирует одноразовый exchangeCode и возвращает raw-строку + хэш для сохранения
-   */
-  static generateCode(): { rawCode: string; codeHash: string } {
-    const rawCode = randomBytes(32).toString('hex');
-    const codeHash = createHash('sha256').update(rawCode).digest('hex');
-    return { rawCode, codeHash };
   }
 }

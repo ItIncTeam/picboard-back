@@ -5,6 +5,7 @@ export type GithubUser = {
   id: number;
   login: string;
   email: string;
+  isVerified: boolean;
 };
 
 @Injectable()
@@ -69,17 +70,24 @@ export class GithubOAuthService {
       this.logger.warn(
         `GitHub user ${githubUser.login} has no verified public email`,
       );
-      throw new Error(
-        'A verified public email is required to sign in with GitHub. ' +
-          'Please add a public verified email in your GitHub settings: ' +
-          'https://github.com/settings/emails',
-      );
+      // throw new Error(
+      //   'A verified public email is required to sign in with GitHub. ' +
+      //     'Please add a public verified email in your GitHub settings: ' +
+      //     'https://github.com/settings/emails',
+      // );
+      return {
+        id: githubUser.id,
+        login: githubUser.login,
+        email: githubUser.email ? githubUser.email : 'verified_email_required',
+        isVerified: false,
+      };
     }
 
     return {
       id: githubUser.id,
       login: githubUser.login,
       email: verifiedEmail,
+      isVerified: true,
     };
   }
 

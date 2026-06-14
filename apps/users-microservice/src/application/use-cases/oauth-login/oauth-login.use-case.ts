@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { OAuthAccountsRepository } from '../../../domain/repositories/oauth-account/oauth-accounts.repository';
 import { UserEntity } from '../../../domain/entities/user.entity';
+import { OAuthAccountEntity } from '../../../domain/entities/oauth-account.entity';
 
 export class OAuthLoginCommand {
   constructor(
@@ -15,8 +16,9 @@ export class OAuthLoginCommand {
 }
 
 export class OAuthLoginResult {
-  user: UserEntity;
+  userId: string;
   isNewUser: boolean;
+  isNewOauth: boolean;
 }
 
 @CommandHandler(OAuthLoginCommand)
@@ -32,20 +34,18 @@ export class OAuthLoginUseCase implements ICommandHandler<
 
   async execute(command: OAuthLoginCommand): Promise<OAuthLoginResult> {
     // 1. Ищем существующий OAuth аккаунт
-    const existingAccount =
+    const existingAccount: OAuthAccountEntity | null =
       await this.oauthAccountsRepository.findByProviderAndProviderId(
         command.provider,
         command.providerId,
       );
 
     if (existingAccount) {
-      // Найден — логинимся
-      const user = await this.usersRepository.findById(existingAccount.userId);
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      return { user, isNewUser: false };
+      return {
+        userId: existingAccount.userId,
+        isNewUser: false,
+        isNewOauth: false,
+      };
     }
 
     // 2. Не найден — проверяем email
@@ -62,7 +62,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
         email: command.email,
       });
 
-      return { user: existingUser, isNewUser: false };
+      return { userId: existingUser.id, isNewUser: false, isNewOauth: true };
     }
 
     // 3. Email свободен — создаём нового пользователя
@@ -83,6 +83,6 @@ export class OAuthLoginUseCase implements ICommandHandler<
       email: command.email,
     });
 
-    return { user: newUser, isNewUser: true };
+    return { userId: newUser.id, isNewUser: true, isNewOauth: true };
   }
 }
