@@ -170,6 +170,40 @@ export class AppConfig {
     return Number(value);
   }
 
+  get githubClientId(): string {
+    const value = this.configService.get<string>('GITHUB_CLIENT_ID');
+    if (!value) throw new Error('GITHUB_CLIENT_ID is not defined');
+    return value;
+  }
+
+  get githubClientSecret(): string {
+    const value = this.configService.get<string>('GITHUB_CLIENT_SECRET');
+    if (!value) throw new Error('GITHUB_CLIENT_SECRET is not defined');
+    return value;
+  }
+
+  get githubCallbackUrl(): string {
+    const value = this.configService.get<string>('GITHUB_CALLBACK_URL');
+    if (!value) throw new Error('GITHUB_CALLBACK_URL is not defined');
+    return value;
+  }
+
+  get oauthSuccessRedirectUrl(): string {
+    const value = this.configService.get<string>('OAUTH_SUCCESS_REDIRECT');
+    if (!value) throw new Error('OAUTH_SUCCESS_REDIRECT is not defined');
+    return value;
+  }
+
+  get oauthCodeExpiresInMs(): number {
+    const value = this.configService.get<string>('OAUTH_CODE_EXPIRES_IN_MS');
+    if (!value) throw new Error('OAUTH_CODE_EXPIRES_IN_MS is not defined');
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error('OAUTH_CODE_EXPIRES_IN_MS must be a positive integer');
+    }
+    return parsed;
+  }
+
   get tcpPort(): number {
     const value = this.configService.get<string>('TCP_PORT');
     if (!value) throw new Error('TCP_PORT is not defined');

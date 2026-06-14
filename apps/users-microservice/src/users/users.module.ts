@@ -25,17 +25,25 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/confirm-email.use.case';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ResendConfirmationEmailUseCase } from '../application/use-cases/resend-confirmation-email/resend-confirmation-email';
+import { OAuthLoginUseCase } from '../application/use-cases/oauth-login/oauth-login.use-case';
+import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use-case';
+import { CreateOAuthExchangeCodeUseCase } from '../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use-case';
+import { ExchangeOAuthCodeUseCase } from '../application/use-cases/exchange-oauth-code/exchange-oauth-code.use-case';
+import { OAuthAccountsRepository } from '../domain/repositories/oauth-account/oauth-accounts.repository';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password/reset-password.use.case';
 import { SetNewPasswordUseCase } from '../application/use-cases/set-new-password/set-new-password.use.case';
 import { ConsentRepository } from '../domain/repositories/consent/consent.repository';
 import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/prisma-consent/prisma-consent.repository';
+import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/prisma-oauth-accounts.repository';
 import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.service';
+import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
 
 @Module({
   imports: [
     AppConfigModule,
     PrismaModule,
     CqrsModule,
+    OAuthModule,
     /*RmqModule.registerAsync({
       name: USERS_RMQ_CLIENT,
       imports: [AppConfigModule],
@@ -85,6 +93,10 @@ import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.serv
     ResendConfirmationEmailUseCase,
     ResetPasswordUseCase,
     SetNewPasswordUseCase,
+    OAuthLoginUseCase,
+    IssueSessionUseCase,
+    CreateOAuthExchangeCodeUseCase,
+    ExchangeOAuthCodeUseCase,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,
@@ -93,6 +105,10 @@ import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.serv
     {
       provide: RefreshTokenRepository,
       useClass: PrismaRefreshTokenRepository,
+    },
+    {
+      provide: OAuthAccountsRepository,
+      useClass: PrismaOAuthAccountsRepository,
     },
     {
       provide: ConsentRepository,
