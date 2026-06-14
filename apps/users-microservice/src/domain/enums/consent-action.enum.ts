@@ -1,4 +1,3 @@
-// domain/enums/consent-action.enum.ts
 export const ConsentAction = {
   ACCEPTED: 'ACCEPTED',
   WITHDRAWN: 'WITHDRAWN',

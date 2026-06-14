@@ -5,7 +5,7 @@ import { SignInUserResult } from './sign-in-user.result';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { PasswordHasher } from '../../../domain/services/password-hasher';
 import { TokenService } from '../../../domain/services/token.service';
-import { CreateRefreshTokenCommand } from '../create-refresh-token/create-refresh-token.use-case';
+import { IssueSessionCommand } from '../issue-session/issue-session.use.case';
 
 export class SignInUserCommand {
   constructor(public input: SignInInput) {}
@@ -47,7 +47,16 @@ export class SignInUserUseCase implements ICommandHandler<SignInUserCommand> {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const accessToken = await this.tokenService.signAccessToken({
+    const session = await this.commandBus.execute(
+      new IssueSessionCommand(user.id, user.email),
+    );
+    return {
+      user,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+    };
+
+    /*const accessToken = await this.tokenService.signAccessToken({
       sub: user.id,
       email: user.email,
     });
@@ -60,6 +69,6 @@ export class SignInUserUseCase implements ICommandHandler<SignInUserCommand> {
       user,
       accessToken,
       refreshToken,
-    };
+    };*/
   }
 }

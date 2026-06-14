@@ -1,8 +1,8 @@
-export type OAuthAccountEntity = {
-  id: string;
-  userId: string;
-  provider: string;
-  providerId: string;
-  username?: string | null;
-  email?: string | null;
-};
+export class OAuthAccountEntity {
+  constructor(
+    public readonly id: string,
+    public readonly userId: string,
+    public readonly provider: string,
+    public readonly providerId: string,
+  ) {}
+}

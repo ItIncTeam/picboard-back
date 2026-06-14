@@ -27,6 +27,9 @@ import { ExchangeOAuthCodeInput } from '../inputs/exchange-oauth-code.input';
 import { ExchangeOAuthCodeCommand } from '../../application/use-cases/exchange-oauth-code/exchange-oauth-code.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { Recaptcha, RecaptchaGuard } from '@app/common';
+import { OAuthExchangeCodeCommand } from '../../application/use-cases/exchange-oauth-code/exchange-oauth-code.use.case';
+import { OAuthExchangeCodeInput } from '../inputs/oauth-exchange-code.input';
+import { ExchangeOAuthCodeResult } from '../../application/use-cases/exchange-oauth-code/exchange-oauth-code.result';
 
 @UseGuards(RecaptchaGuard)
 @Resolver()
@@ -95,12 +98,12 @@ export class AuthResolver {
         id: result.user.id,
         email: result.user.email,
         username: result.user.username,
-        confirmationCode: result.user.confirmationCode,
-        confirmationCodeExpDate: result.user.confirmationCodeExpDate,
+        /*confirmationCode: result.user.confirmationCode,
+        confirmationCodeExpDate: result.user.confirmationCodeExpDate,*/
         isConfirmed: result.user.isConfirmed,
-        displayName: undefined,
+        /*displayName: undefined,
         bio: undefined,
-        profilePictureFileId: undefined,
+        profilePictureFileId: undefined,*/
       },
       accessToken: result.accessToken,
     };
@@ -218,6 +221,35 @@ export class AuthResolver {
     );
     return {
       message: 'If an account with that email exists, new password was set.',
+    };
+  }
+
+  @Mutation(() => SignInPayload)
+  async exchangeOAuthCode(
+    @Args('input') input: OAuthExchangeCodeInput,
+    @Context('req') req: Request,
+    @Context('res') res: Response,
+  ): Promise<SignInPayload> {
+    const result: ExchangeOAuthCodeResult = await this.commandBus.execute(
+      new OAuthExchangeCodeCommand(input.code, req.ip, req.get('user-agent')),
+    );
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        username: result.user.username,
+        isConfirmed: result.user.isConfirmed,
+      },
+      accessToken: result.accessToken,
     };
   }
 }

@@ -26,16 +26,23 @@ import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/conf
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ResendConfirmationEmailUseCase } from '../application/use-cases/resend-confirmation-email/resend-confirmation-email';
 import { OAuthLoginUseCase } from '../application/use-cases/oauth-login/oauth-login.use-case';
-import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use-case';
-import { CreateOAuthExchangeCodeUseCase } from '../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use-case';
-import { ExchangeOAuthCodeUseCase } from '../application/use-cases/exchange-oauth-code/exchange-oauth-code.use-case';
-import { OAuthAccountsRepository } from '../domain/repositories/oauth-account/oauth-accounts.repository';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password/reset-password.use.case';
 import { SetNewPasswordUseCase } from '../application/use-cases/set-new-password/set-new-password.use.case';
 import { ConsentRepository } from '../domain/repositories/consent/consent.repository';
 import { PrismaConsentRepository } from '../infrastructure/prisma/repositories/prisma-consent/prisma-consent.repository';
-import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/prisma-oauth-accounts.repository';
 import { RecaptchaV3Service } from '../infrastructure/security/recaptcha-v3.service';
+import { GoogleOAuthController } from '../infrastructure/googleOAuth/googleOAuth.controller';
+import { CompleteGoogleOAuthUseCase } from '../application/use-cases/complete-google-oAuth/complete-google-oAuth.use.case';
+import { OAuthExchangeCodeUseCase } from '../application/use-cases/exchange-oauth-code/exchange-oauth-code.use.case';
+import { CreateOAuthExchangeCodeUseCase } from '../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use.case';
+import { CompleteGoogleOAuthLoginUseCase } from '../application/use-cases/complete-google-oAuth-login/complete-google-oAuth-login.use.case';
+import { OAuthAccountsRepository } from '../domain/repositories/oauth-account/oauth-accounts.repository';
+import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/repositories/prisma-oauth-account/prisma-oauth-accounts.repository';
+import { PrismaOAuthExchangeCodesRepository } from '../infrastructure/prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';
+import { OAuthExchangeCodesRepository } from '../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
+import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use.case';
+import { UsernameGeneratorService } from '../infrastructure/googleOAuth/username-generator.service';
+
 import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
 
 @Module({
@@ -77,6 +84,7 @@ import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
       }),
     }),
   ],
+  controllers: [GoogleOAuthController],
   providers: [
     UsersResolver,
     UsersService,
@@ -93,22 +101,32 @@ import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
     ResendConfirmationEmailUseCase,
     ResetPasswordUseCase,
     SetNewPasswordUseCase,
-    OAuthLoginUseCase,
-    IssueSessionUseCase,
+    CompleteGoogleOAuthUseCase,
+    CompleteGoogleOAuthLoginUseCase,
+    OAuthExchangeCodeUseCase,
     CreateOAuthExchangeCodeUseCase,
-    ExchangeOAuthCodeUseCase,
+    IssueSessionUseCase,
+    UsernameGeneratorService,
+    OAuthLoginUseCase,
+    /*IssueSessionUseCase,
+    CreateOAuthExchangeCodeUseCase,
+    ExchangeOAuthCodeUseCase,*/
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,
       useClass: PrismaUsersRepository,
     },
     {
-      provide: RefreshTokenRepository,
-      useClass: PrismaRefreshTokenRepository,
-    },
-    {
       provide: OAuthAccountsRepository,
       useClass: PrismaOAuthAccountsRepository,
+    },
+    {
+      provide: OAuthExchangeCodesRepository,
+      useClass: PrismaOAuthExchangeCodesRepository,
+    },
+    {
+      provide: RefreshTokenRepository,
+      useClass: PrismaRefreshTokenRepository,
     },
     {
       provide: ConsentRepository,
