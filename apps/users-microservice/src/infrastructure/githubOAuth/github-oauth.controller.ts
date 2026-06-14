@@ -1,21 +1,14 @@
-import {
-  Controller,
-  Get,
-  Req,
-  Res,
-  Logger,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Get, Req, Res, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { AppConfig } from '../../config/app.config';
 import { GithubOAuthService } from './github-oauth.service';
 import { CommandBus } from '@nestjs/cqrs';
 import { OAuthLoginCommand } from '../../application/use-cases/oauth-login/oauth-login.use-case';
-import { CreateOAuthExchangeCodeCommand } from '../../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use-case';
 import type { Request, Response } from 'express';
+import { CreateOAuthExchangeCodeCommand } from '../../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use.case';
 
 const STATE_COOKIE = 'oauth_state';
-const STATE_TTL_MS = 10 * 60 * 1000; // 10 минут
+/*const STATE_TTL_MS = 10 * 60 * 1000; // 10 минут*/
 
 @Controller('api/v1/auth/github')
 export class GitHubOAuthController {
@@ -65,7 +58,7 @@ export class GitHubOAuthController {
     if (error) {
       this.logger.warn(`GitHub OAuth error from provider: ${error}`);
       res.redirect(
-        `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=${encodeURIComponent(error)}`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=${encodeURIComponent(error)}`,
       );
       return;
     }
@@ -80,16 +73,14 @@ export class GitHubOAuthController {
         'GitHub OAuth: invalid state parameter — possible CSRF attack',
       );
       res.redirect(
-        `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=invalid_state`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=invalid_state`,
       );
       return;
     }
 
     if (!code) {
       this.logger.warn('GitHub OAuth callback without code');
-      res.redirect(
-        `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=no_code`,
-      );
+      res.redirect(`${this.appConfig.frontendUrl}/auth/callback?error=no_code`);
       return;
     }
 
@@ -102,7 +93,7 @@ export class GitHubOAuthController {
       //todo уже есть проверка в сервисе
       if (!githubUser.isVerified) {
         res.redirect(
-          `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=non_verified_email`,
+          `${this.appConfig.frontendUrl}/auth/callback?error=non_verified_email`,
         );
       }
       //todo: front has to ask to go to local sign up
@@ -121,7 +112,7 @@ export class GitHubOAuthController {
 
       if (!result.user.isNewOauth) {
         return res.redirect(
-          `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=oauth_exists`,
+          `${this.appConfig.frontendUrl}/auth/callback?error=oauth_exists`,
         );
       } //todo : отдать фронам
 
@@ -136,7 +127,7 @@ export class GitHubOAuthController {
       // 4. Редирект на фронт с exchangeCode
       // Фронт вызывает mutation { exchangeOAuthCode(code: "...") } → получает accessToken
       res.redirect(
-        `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
+        `${this.appConfig.frontendUrl}/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -152,7 +143,7 @@ export class GitHubOAuthController {
             : 'internal';
 
       res.redirect(
-        `${this.appConfig.oauthSuccessRedirectUrl}/auth/callback?error=${errorType}`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=${errorType}`,
       );
     }
   }

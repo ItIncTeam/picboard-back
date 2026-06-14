@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { UserEntity } from '../../domain/entities/user.entity';
-import { OAuthAccountEntity } from '../../domain/entities/oauth-account.entity';
 import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
-import { CreateOAuthAccountData } from '../../domain/repositories/oauth-account/create-oauth-account-data.type';
 import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
 import { User } from '../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
@@ -113,27 +111,6 @@ export class PrismaUsersRepository implements UsersRepository {
   async findByEmail(email: string): Promise<UserEntity | null> {
     const user: User | null = await this.prisma.user.findUnique({
       where: { email },
-    });
-
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
-  }
-
-  async findById(id: string): Promise<UserEntity | null> {
-    const user: User | null = await this.prisma.user.findUnique({
-      where: { id },
     });
 
     if (!user) {
@@ -274,50 +251,5 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCodeExpDate,
       user.isConfirmed,
     );
-  }
-
-  async findOAuthAccountByProvider(
-    provider: string,
-    providerId: string,
-  ): Promise<OAuthAccountEntity | null> {
-    const account = await this.prisma.oAuthAccount.findUnique({
-      where: {
-        provider_providerId: { provider, providerId },
-      },
-    });
-
-    if (!account) return null;
-
-    return {
-      id: account.id,
-      userId: account.userId,
-      provider: account.provider,
-      providerId: account.providerId,
-      username: account.username,
-      email: account.email,
-    };
-  }
-
-  async createOAuthAccount(
-    data: CreateOAuthAccountData,
-  ): Promise<OAuthAccountEntity> {
-    const account = await this.prisma.oAuthAccount.create({
-      data: {
-        userId: data.userId,
-        provider: data.provider,
-        providerId: data.providerId,
-        username: data.username,
-        email: data.email,
-      },
-    });
-
-    return {
-      id: account.id,
-      userId: account.userId,
-      provider: account.provider,
-      providerId: account.providerId,
-      username: account.username,
-      email: account.email,
-    };
   }
 }

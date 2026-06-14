@@ -170,6 +170,14 @@ export class AppConfig {
     return Number(value);
   }
 
+  get frontendUrl(): string {
+    const value = this.configService.get<string>('FRONTEND_URL');
+    if (!value) {
+      throw new Error('FRONTEND_URL is not defined');
+    }
+    return value;
+  }
+
   get githubClientId(): string {
     const value = this.configService.get<string>('GITHUB_CLIENT_ID');
     if (!value) throw new Error('GITHUB_CLIENT_ID is not defined');
@@ -185,12 +193,6 @@ export class AppConfig {
   get githubCallbackUrl(): string {
     const value = this.configService.get<string>('GITHUB_CALLBACK_URL');
     if (!value) throw new Error('GITHUB_CALLBACK_URL is not defined');
-    return value;
-  }
-
-  get oauthSuccessRedirectUrl(): string {
-    const value = this.configService.get<string>('OAUTH_SUCCESS_REDIRECT');
-    if (!value) throw new Error('OAUTH_SUCCESS_REDIRECT is not defined');
     return value;
   }
 
@@ -214,14 +216,6 @@ export class AppConfig {
     const value = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
     if (!value) {
       throw new Error('GOOGLE_CLIENT_SECRET is not defined');
-    }
-    return value;
-  }
-
-  get frontendUrl(): string {
-    const value = this.configService.get<string>('FRONTEND_URL');
-    if (!value) {
-      throw new Error('FRONTEND_URL is not defined');
     }
     return value;
   }

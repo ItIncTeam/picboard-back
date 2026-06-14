@@ -43,14 +43,16 @@ import { OAuthExchangeCodesRepository } from '../domain/repositories/oauth-excha
 import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use.case';
 import { UsernameGeneratorService } from '../infrastructure/googleOAuth/username-generator.service';
 
-import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
+/*import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';*/
+import { GitHubOAuthController } from '../infrastructure/githubOAuth/github-oauth.controller';
+import { GithubOAuthService } from '../infrastructure/githubOAuth/github-oauth.service';
 
 @Module({
   imports: [
     AppConfigModule,
     PrismaModule,
     CqrsModule,
-    OAuthModule,
+    /*OAuthModule,*/
     /*RmqModule.registerAsync({
       name: USERS_RMQ_CLIENT,
       imports: [AppConfigModule],
@@ -84,8 +86,9 @@ import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
       }),
     }),
   ],
-  controllers: [GoogleOAuthController],
+  controllers: [GoogleOAuthController, GitHubOAuthController],
   providers: [
+    GithubOAuthService,
     UsersResolver,
     UsersService,
     AuthResolver,
@@ -108,9 +111,6 @@ import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';
     IssueSessionUseCase,
     UsernameGeneratorService,
     OAuthLoginUseCase,
-    /*IssueSessionUseCase,
-    CreateOAuthExchangeCodeUseCase,
-    ExchangeOAuthCodeUseCase,*/
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,

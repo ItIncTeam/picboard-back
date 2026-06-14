@@ -23,18 +23,20 @@ import type { Request, Response } from 'express';
 import { LogOutUserCommand } from '../../application/use-cases/log-out-user/log-out-user.use.case';
 import { AccessTokenPayload } from '../types/access-token.payload';
 import { RotateRefreshTokenCommand } from '../../application/use-cases/rotate-refresh-token/rotate-refresh-token.use-case';
-import { ExchangeOAuthCodeInput } from '../inputs/exchange-oauth-code.input';
-import { ExchangeOAuthCodeCommand } from '../../application/use-cases/exchange-oauth-code/exchange-oauth-code.use-case';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { Recaptcha, RecaptchaGuard } from '@app/common';
 import { OAuthExchangeCodeCommand } from '../../application/use-cases/exchange-oauth-code/exchange-oauth-code.use.case';
 import { OAuthExchangeCodeInput } from '../inputs/oauth-exchange-code.input';
 import { ExchangeOAuthCodeResult } from '../../application/use-cases/exchange-oauth-code/exchange-oauth-code.result';
+import { AppConfig } from '../../config/app.config';
 
 @UseGuards(RecaptchaGuard)
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly appConfig: AppConfig,
+  ) {}
 
   @Mutation(() => SignUpPayload)
   async signUp(@Args('input') input: SignUpInput): Promise<SignUpPayload> {
@@ -162,39 +164,6 @@ export class AuthResolver {
     };
   }
 
-  @Mutation(() => SignInPayload)
-  async exchangeOAuthCode(
-    @Args('input') input: ExchangeOAuthCodeInput,
-    @Context() context: { req: Request; res: Response },
-  ): Promise<SignInPayload> {
-    const result = await this.commandBus.execute(
-      new ExchangeOAuthCodeCommand(input.code),
-    );
-
-    const res = context.res;
-    if (res) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-    }
-
-    return {
-      user: {
-        id: result.user.id,
-        email: result.user.email,
-        username: result.user.username,
-        confirmationCode: undefined,
-        confirmationCodeExpDate: undefined,
-        isConfirmed: result.user.isConfirmed,
-      } as any,
-      accessToken: result.accessToken,
-    };
-  }
-
   @Mutation(() => PasswordResetPayload)
   @Recaptcha('password_reset')
   async passwordReset(
@@ -236,7 +205,7 @@ export class AuthResolver {
 
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: this.appConfig.nodeEnv === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,

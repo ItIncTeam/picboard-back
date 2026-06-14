@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common';
+/*import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { AppConfigModule } from '../../config/app-config.module';
 import { GitHubOAuthController } from './github-oauth.controller';
 import { GithubOAuthService } from './github-oauth.service';
-import { InMemoryExchangeOAuthCodeRepository } from './in-memory-exchange-code.repository';
 import { OAuthExchangeCodesRepository } from '../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
+import { PrismaOAuthExchangeCodesRepository } from '../prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';
 
 @Module({
   imports: [AppConfigModule, CqrsModule],
@@ -13,9 +13,9 @@ import { OAuthExchangeCodesRepository } from '../../domain/repositories/oauth-ex
     GithubOAuthService,
     {
       provide: OAuthExchangeCodesRepository,
-      useClass: InMemoryExchangeOAuthCodeRepository,
+      useClass: PrismaOAuthExchangeCodesRepository,
     },
   ],
   exports: [OAuthExchangeCodesRepository],
 })
-export class OAuthModule {}
+export class OAuthModule {}*/

@@ -1,8 +1,7 @@
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { OAuthAccountsRepository } from '../../../domain/repositories/oauth-account/oauth-accounts.repository';
-import { UserEntity } from '../../../domain/entities/user.entity';
 import { OAuthAccountEntity } from '../../../domain/entities/oauth-account.entity';
 
 export class OAuthLoginCommand {

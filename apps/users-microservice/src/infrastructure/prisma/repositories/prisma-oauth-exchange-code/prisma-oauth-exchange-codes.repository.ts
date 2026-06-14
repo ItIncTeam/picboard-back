@@ -9,18 +9,16 @@ import {
 } from '../../mappers/oauth-exchange-code.mapper';
 import { OAuthExchangeCodesRepository } from '../../../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
 import { CreateOAuthExchangeCodeData } from '../../../../domain/repositories/oauth-exchange-code/create-oauth-exchange-code-data.type';
-import { OAuthExchangeCode } from '../../../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 @Injectable()
 export class PrismaOAuthExchangeCodesRepository implements OAuthExchangeCodesRepository {
   constructor(private readonly prisma: UsersPrismaService) {}
 
   async findById(id: string): Promise<OAuthExchangeCodeEntity | null> {
-    const code: OAuthExchangeCode | null =
-      await this.prisma.oAuthExchangeCode.findUnique({
-        where: { id },
-        select: oauthExchangeCodeEntitySelect,
-      });
+    const code = await this.prisma.oAuthExchangeCode.findUnique({
+      where: { id },
+      select: oauthExchangeCodeEntitySelect,
+    });
 
     return toOAuthExchangeCodeEntityOrNull(code);
   }
@@ -28,11 +26,10 @@ export class PrismaOAuthExchangeCodesRepository implements OAuthExchangeCodesRep
   async findByCodeHash(
     codeHash: string,
   ): Promise<OAuthExchangeCodeEntity | null> {
-    const code: OAuthExchangeCode | null =
-      await this.prisma.oAuthExchangeCode.findUnique({
-        where: { codeHash },
-        select: oauthExchangeCodeEntitySelect,
-      });
+    const code = await this.prisma.oAuthExchangeCode.findUnique({
+      where: { codeHash },
+      select: oauthExchangeCodeEntitySelect,
+    });
 
     return toOAuthExchangeCodeEntityOrNull(code);
   }
@@ -58,7 +55,7 @@ export class PrismaOAuthExchangeCodesRepository implements OAuthExchangeCodesRep
   async create(
     data: CreateOAuthExchangeCodeData,
   ): Promise<OAuthExchangeCodeEntity> {
-    const code: OAuthExchangeCode = await this.prisma.oAuthExchangeCode.create({
+    const code = await this.prisma.oAuthExchangeCode.create({
       data: toPrismaCreateOAuthExchangeCodeData(data),
       select: oauthExchangeCodeEntitySelect,
     });
