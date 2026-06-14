@@ -3,11 +3,8 @@ export type GoogleOAuthOutput = {
   providerId: string; // sub
   email: string;
   emailVerified: boolean;
-  displayName?: string;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
   avatarUrl?: string;
-  /*grantedScopes: string[];
-  googleAccessToken: string;
-  googleRefreshToken?: string;
-  googleIdToken?: string;*/
 };
-//todo what else can we get from scope?

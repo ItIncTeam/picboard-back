@@ -40,6 +40,9 @@ import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/reposito
 import { PrismaOAuthExchangeCodesRepository } from '../infrastructure/prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';
 import { OAuthExchangeCodesRepository } from '../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
 import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use.case';
+import { UsernameGeneratorService } from '../infrastructure/googleOAuth/username-generator.service';
+import { TestGoogleController } from '../infrastructure/googleOAuth/test-google.controller';
+import { TestGoogleOAuthService } from '../infrastructure/googleOAuth/test-google.service';
 
 @Module({
   imports: [
@@ -79,6 +82,7 @@ import { IssueSessionUseCase } from '../application/use-cases/issue-session/issu
       }),
     }),
   ],
+  controllers: [GoogleOAuthController, TestGoogleController],
   providers: [
     UsersResolver,
     UsersService,
@@ -99,8 +103,9 @@ import { IssueSessionUseCase } from '../application/use-cases/issue-session/issu
     CompleteGoogleOAuthLoginUseCase,
     OAuthExchangeCodeUseCase,
     CreateOAuthExchangeCodeUseCase,
-    GoogleOAuthController,
     IssueSessionUseCase,
+    UsernameGeneratorService,
+    TestGoogleOAuthService,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,

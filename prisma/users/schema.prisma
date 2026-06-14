@@ -30,10 +30,11 @@ model User {
   profilePictureFileId    String?        @db.Uuid
   createdAt               DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime       @updatedAt @db.Timestamptz(6)
-  oauthAccount            OAuthAccount[]
-  RefreshToken            RefreshToken[]
 
+  oauthAccount            OAuthAccount[]
+  refreshToken            RefreshToken[]
   consents                UserConsent[]
+  oauthExchangeCodes      OAuthExchangeCode[]
 }
 
 model UserConsent {
@@ -56,10 +57,28 @@ model OAuthAccount {
   providerId String
   username   String?
   email      String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerId])
   @@index([userId]) // relation scalar fields used in joins/lookups should be indexed for performance as data grows
+}
+
+model OAuthExchangeCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  codeHash   String    @unique
+  userId     String    @db.Uuid
+  provider   String
+  expiresAt  DateTime  @db.Timestamptz(6)
+  usedAt     DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("oauth_exchange_code")
 }
 
 model RefreshToken {
@@ -69,6 +88,7 @@ model RefreshToken {
   device    String?
   expiresAt DateTime @db.Timestamptz(6)
   createdAt DateTime @default(now()) @db.Timestamptz(6)
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])

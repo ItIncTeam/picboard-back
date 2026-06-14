@@ -1,5 +1,6 @@
 import { OAuthExchangeCodeEntity } from '../../../domain/entities/aouth-exchange-code.entity';
 import { CreateOAuthExchangeCodeData } from '../../../domain/repositories/oauth-exchange-code/create-oauth-exchange-code-data.type';
+import { Prisma } from '../../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 export const oauthExchangeCodeEntitySelect = {
   id: true,

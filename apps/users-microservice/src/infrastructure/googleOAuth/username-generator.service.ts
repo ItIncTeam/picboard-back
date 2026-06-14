@@ -5,12 +5,9 @@ import { UsersRepository } from '../../domain/repositories/users.repository';
 export class UsernameGeneratorService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async generate(input: {
-    email: string;
-    displayName?: string;
-  }): Promise<string> {
+  async generate(input: { email: string; name?: string }): Promise<string> {
     const base = this.normalize(
-      input.displayName || input.email.split('@')[0] || 'user',
+      input.name || input.email.split('@')[0] || 'user',
     );
 
     let candidate = base;

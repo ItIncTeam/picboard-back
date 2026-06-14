@@ -9,6 +9,7 @@ import {
 } from '../../mappers/oauth-exchange-code.mapper';
 import { OAuthExchangeCodesRepository } from '../../../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
 import { CreateOAuthExchangeCodeData } from '../../../../domain/repositories/oauth-exchange-code/create-oauth-exchange-code-data.type';
+import { OAuthExchangeCode } from '../../../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 @Injectable()
 export class PrismaOAuthExchangeCodesRepository implements OAuthExchangeCodesRepository {

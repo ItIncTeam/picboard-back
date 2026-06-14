@@ -1,5 +1,6 @@
 import { OAuthAccountEntity } from '../../../domain/entities/oauth-account.entity';
 import { CreateOAuthAccountData } from '../../../domain/repositories/oauth-account/create-oauth-account-data.type';
+import { Prisma } from '../../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 export const oauthAccountEntitySelect = {
   id: true,
@@ -11,13 +12,11 @@ export const oauthAccountEntitySelect = {
   createdAt: true,*/
 } satisfies Prisma.OAuthAccountSelect;
 
-export type OAuthAccountEntityRow = Prisma.OAuthAccountGetPayload<{
+export type OAuthAccountRow = Prisma.OAuthAccountGetPayload<{
   select: typeof oauthAccountEntitySelect;
 }>;
 
-export function toOAuthAccountEntity(
-  row: OAuthAccountEntityRow,
-): OAuthAccountEntity {
+export function toOAuthAccountEntity(row: OAuthAccountRow): OAuthAccountEntity {
   return new OAuthAccountEntity(
     row.id,
     row.userId,
@@ -27,13 +26,13 @@ export function toOAuthAccountEntity(
 }
 
 export function toOAuthAccountEntityOrNull(
-  row: OAuthAccountEntityRow | null,
+  row: OAuthAccountRow | null,
 ): OAuthAccountEntity | null {
   return row ? toOAuthAccountEntity(row) : null;
 }
 
 export function toOAuthAccountEntityList(
-  rows: OAuthAccountEntityRow[],
+  rows: OAuthAccountRow[],
 ): OAuthAccountEntity[] {
   return rows.map(toOAuthAccountEntity);
 }

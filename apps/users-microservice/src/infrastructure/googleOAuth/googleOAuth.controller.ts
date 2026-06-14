@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { randomBytes, createHash } from 'crypto';
 import { CommandBus } from '@nestjs/cqrs';
@@ -15,15 +8,17 @@ import { GoogleOAuthOutput } from './oauth-models/google-oauth.output';
 import { GoogleOAuthLoginOutput } from './oauth-login-models/google-oauth-login.output';
 import { CompleteGoogleOAuthLoginCommand } from '../../application/use-cases/complete-google-oAuth-login/complete-google-oAuth-login.use.case';
 import { CreateOAuthExchangeCodeCommand } from '../../application/use-cases/create-oauth-exchange-code/create-oauth-exchange-code.use.case';
-import { CreateOAuthExchangeCodeOutput } from './create-oauth-exchange-code-models/create-oauth-exchange-code.output';
+import { CreateOAuthExchangeCodeOutput } from '../oAuth/create-oauth-exchange-code-models/create-oauth-exchange-code.output';
+import { GoogleOAuthLoginInput } from './oauth-login-models/google-oauth-login.input';
 
+// this takes a Buffer, encodes it to normal Base64, then converts it to Base64URL. The result is safe to place in query params, cookies, and headers without extra escaping
 const b64url = (input: Buffer) =>
   input
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
-//todo what prefix?
+
 @Controller('auth/google')
 export class GoogleOAuthController {
   constructor(
@@ -32,8 +27,7 @@ export class GoogleOAuthController {
   ) {}
 
   @Get('start')
-  /*async*/
-  start(@Res() res: Response) {
+  async start(@Res() res: Response) {
     const state = b64url(randomBytes(32));
     const verifier = b64url(randomBytes(64));
     const challenge = b64url(createHash('sha256').update(verifier).digest());
@@ -42,7 +36,7 @@ export class GoogleOAuthController {
       httpOnly: true,
       secure: this.appConfig.isProduction,
       sameSite: 'lax',
-      path: '/auth/google',
+      path: '/',
       maxAge: 10 * 60 * 1000,
     });
 
@@ -50,7 +44,7 @@ export class GoogleOAuthController {
       httpOnly: true,
       secure: this.appConfig.isProduction,
       sameSite: 'lax',
-      path: '/auth/google',
+      path: '/',
       maxAge: 10 * 60 * 1000,
     });
 
@@ -58,12 +52,12 @@ export class GoogleOAuthController {
       client_id: this.appConfig.googleClientId,
       redirect_uri: this.appConfig.googleCallbackUrl,
       response_type: 'code',
-      scope: 'openid email profile', //todo what's the correct scope
+      scope: 'openid email profile',
       state,
       code_challenge: challenge,
       code_challenge_method: 'S256',
-      access_type: 'offline',
-      prompt: 'consent',
+      /*access_type: 'offline', //if Google refresh token needs to be stored...
+      prompt: 'consent', //...and consent needs to be specifically shown again by Google to reissue a refresh token*/
     });
 
     return res.redirect(
@@ -78,61 +72,78 @@ export class GoogleOAuthController {
     @Query('code') code?: string,
     @Query('state') state?: string,
     @Query('error') error?: string,
-    @Query('error_description') errorDescription?: string,
+    /*@Query('error_description') errorDescription?: string,*/
   ) {
     const savedState = req.cookies?.oauth_state;
     const verifier = req.cookies?.oauth_pkce_verifier;
 
     if (error) {
       /*throw new BadRequestException(`Google OAuth error: ${error}`);*/
-      res.clearCookie('oauth_state', { path: '/auth/google' });
-      res.clearCookie('oauth_pkce_verifier', { path: '/auth/google' });
+      res.clearCookie('oauth_state', { path: '/' });
+      res.clearCookie('oauth_pkce_verifier', { path: '/' });
 
       return res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=${encodeURIComponent(error)}${
-          errorDescription
-            ? `&error_description=${encodeURIComponent(errorDescription)}`
-            : ''
-        }`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=${encodeURIComponent(error)}`,
       );
     }
-    //todo send fronts error in query, eg in telegram
 
-    if (!code || !state) {
-      throw new BadRequestException('Missing OAuth callback parameters');
+    if (!code) {
+      /*throw new BadRequestException('Missing OAuth callback parameters');*/
+      return res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=no_code}`,
+      );
     }
 
-    if (!savedState || state !== savedState) {
-      throw new BadRequestException('Invalid OAuth state');
+    if (!state || !savedState || state !== savedState) {
+      return res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=invalid_state}`,
+      );
+      /*throw new BadRequestException('Invalid OAuth state');*/
     }
 
     if (!verifier) {
-      throw new BadRequestException('Missing PKCE code verifier');
+      /*throw new BadRequestException('Missing PKCE code verifier');*/
+      return res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=no_pkce_verifier}`,
+      );
     }
 
+    /* try {*/
     const googleOAuthResult: GoogleOAuthOutput = await this.commandBus.execute(
       new CompleteGoogleOAuthCommand({
         code,
         codeVerifier: verifier,
-        ipAddress: req.ip || undefined,
-        userAgent: req.get('user-agent') || undefined,
       }),
     );
+    if (!googleOAuthResult.emailVerified) {
+      return res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=non_verified_email`,
+      );
+    } //todo front asks to do a local sign up
 
-    //todo add useful properties from google scope
+    const payload: GoogleOAuthLoginInput = {
+      provider: googleOAuthResult.provider,
+      providerId: googleOAuthResult.providerId,
+      email: googleOAuthResult.email,
+      ...(googleOAuthResult.name ? { name: googleOAuthResult.name } : {}),
+      ...(googleOAuthResult.givenName
+        ? { givenName: googleOAuthResult.givenName }
+        : {}),
+      ...(googleOAuthResult.familyName
+        ? { familyName: googleOAuthResult.familyName }
+        : {}),
+      ...(googleOAuthResult.avatarUrl
+        ? { avatarUrl: googleOAuthResult.avatarUrl }
+        : {}),
+    };
     const loginResult: GoogleOAuthLoginOutput = await this.commandBus.execute(
-      new CompleteGoogleOAuthLoginCommand({
-        provider: googleOAuthResult.provider,
-        providerId: googleOAuthResult.providerId,
-        email: googleOAuthResult.email,
-        displayName: googleOAuthResult.displayName ?? undefined,
-        avatarUrl: googleOAuthResult.avatarUrl ?? undefined,
-      }),
+      new CompleteGoogleOAuthLoginCommand(payload),
     );
-    /*//todo: redirect logic
-    if (loginResult.usedOAuth) {
-      ('Front redirects to sign in with access and refresh tokens');
-    }*/
+    if (loginResult.status === 'signed_in_existing_oauth') {
+      return res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=oauth_exists`,
+      );
+    } //todo: redirect logic: FRONTS REDIRECT TO SIGN IN AND USER IS LOGGED IN WITH ACCESS AND REFRESH TOKENS
 
     const exchangeCode: CreateOAuthExchangeCodeOutput =
       await this.commandBus.execute(
@@ -142,11 +153,27 @@ export class GoogleOAuthController {
         }),
       );
 
-    res.clearCookie('oauth_state', { path: '/auth/google' });
-    res.clearCookie('oauth_pkce_verifier', { path: '/auth/google' });
+    res.clearCookie('oauth_state', { path: '/' });
+    res.clearCookie('oauth_pkce_verifier', { path: '/' });
 
     return res.redirect(
       `${this.appConfig.frontendUrl}/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
     );
+    /*} catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      /!*this.logger.error(GitHub OAuth error: ${message});*!/
+
+      const errorType = message.includes('verified')
+        ? 'email_not_verified'
+        : message.includes('No code')
+          ? 'no_code'
+          : message.includes('token exchange')
+            ? 'token_exchange'
+            : 'internal';
+
+      res.redirect(
+        `${this.appConfig.frontendUrl}/auth/callback?error=${errorType}`,
+      );
+    }*/
   }
 }

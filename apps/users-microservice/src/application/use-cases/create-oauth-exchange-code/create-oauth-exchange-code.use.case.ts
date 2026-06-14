@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, createHash } from 'crypto';
-import { CreateOAuthExchangeCodeInput } from '../../../infrastructure/googleOAuth/create-oauth-exchange-code-models/create-oauth-exchange-code.input';
+import { CreateOAuthExchangeCodeInput } from '../../../infrastructure/oAuth/create-oauth-exchange-code-models/create-oauth-exchange-code.input';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CreateOAuthExchangeCodeOutput } from '../../../infrastructure/googleOAuth/create-oauth-exchange-code-models/create-oauth-exchange-code.output';
+import { CreateOAuthExchangeCodeOutput } from '../../../infrastructure/oAuth/create-oauth-exchange-code-models/create-oauth-exchange-code.output';
 import { OAuthExchangeCodesRepository } from '../../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
 import { AppConfig } from '../../../config/app.config';
 

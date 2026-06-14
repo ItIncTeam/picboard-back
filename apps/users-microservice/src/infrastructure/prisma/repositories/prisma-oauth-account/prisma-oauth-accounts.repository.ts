@@ -9,7 +9,6 @@ import {
   toPrismaCreateOAuthAccountData,
 } from '../../mappers/oauth-account.mapper';
 import { CreateOAuthAccountData } from '../../../../domain/repositories/oauth-account/create-oauth-account-data.type';
-import { OAuthAccount } from '../../../../../../../prisma/apps/users/src/generated/prisma/users-client';
 
 @Injectable()
 export class PrismaOAuthAccountsRepository implements OAuthAccountsRepository {
@@ -19,16 +18,15 @@ export class PrismaOAuthAccountsRepository implements OAuthAccountsRepository {
     provider: string,
     providerId: string,
   ): Promise<OAuthAccountEntity | null> {
-    const oauthAccount: OAuthAccount | null =
-      await this.prisma.oAuthAccount.findUnique({
-        where: {
-          provider_providerId: {
-            provider,
-            providerId,
-          },
+    const oauthAccount = await this.prisma.oAuthAccount.findUnique({
+      where: {
+        provider_providerId: {
+          provider,
+          providerId,
         },
-        select: oauthAccountEntitySelect,
-      });
+      },
+      select: oauthAccountEntitySelect,
+    });
 
     return toOAuthAccountEntityOrNull(oauthAccount);
   }
@@ -45,7 +43,7 @@ export class PrismaOAuthAccountsRepository implements OAuthAccountsRepository {
   }*/
 
   async create(data: CreateOAuthAccountData): Promise<OAuthAccountEntity> {
-    const oauthAccount: OAuthAccount = await this.prisma.oAuthAccount.create({
+    const oauthAccount = await this.prisma.oAuthAccount.create({
       data: toPrismaCreateOAuthAccountData(data),
       select: oauthAccountEntitySelect,
     });
