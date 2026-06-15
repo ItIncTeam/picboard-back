@@ -4,6 +4,7 @@ import { default as request } from 'supertest';
 import cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
 import { AuthModule } from '@app/auth';
+import { RecaptchaGuard } from '@app/common';
 import { UsersPrismaService } from '../src/infrastructure/prisma/users-prisma.service';
 import { EmailAdapter } from '../src/infrastructure/messaging/email.adapter';
 
@@ -21,9 +22,7 @@ const uniqueEmail = () =>
 const rootUrl = '/api/v1';
 
 /** Извлекает refresh token из Set-Cookie заголовка ответа */
-const refreshTokenFromCookie = (
-  res: request.Response,
-): string => {
+const refreshTokenFromCookie = (res: request.Response): string => {
   const raw = res.headers['set-cookie'];
   const cookieStr = Array.isArray(raw) ? raw[0] : raw;
   return cookieStr.split(';')[0].split('=')[1];
@@ -41,6 +40,8 @@ describe('Users subgraph (e2e)', () => {
       .useModule(MockAuthModule)
       .overrideProvider(EmailAdapter)
       .useClass(MockEmailAdapter)
+      .overrideGuard(RecaptchaGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -110,7 +111,13 @@ describe('Users subgraph (e2e)', () => {
           }
         `,
         variables: {
-          input: { email, username: `u_${Date.now()}`, password: 'Password1', acceptTerms: true, acceptPrivacy: true },
+          input: {
+            email,
+            username: `u_${Date.now()}`,
+            password: 'Password1',
+            acceptTerms: true,
+            acceptPrivacy: true,
+          },
         },
       });
 
@@ -144,7 +151,15 @@ describe('Users subgraph (e2e)', () => {
             }
           }
         `,
-        variables: { input: { email, username, password: 'correct', acceptTerms: true, acceptPrivacy: true } },
+        variables: {
+          input: {
+            email,
+            username,
+            password: 'correct',
+            acceptTerms: true,
+            acceptPrivacy: true,
+          },
+        },
       });
 
     const userId = signUpRes.body.data.signUp.user.id;
@@ -184,7 +199,15 @@ describe('Users subgraph (e2e)', () => {
             }
           }
         `,
-        variables: { input: { email, username, password: 'password123', acceptTerms: true, acceptPrivacy: true } },
+        variables: {
+          input: {
+            email,
+            username,
+            password: 'password123',
+            acceptTerms: true,
+            acceptPrivacy: true,
+          },
+        },
       });
 
     const userId = signUpRes.body.data.signUp.user.id;
@@ -230,7 +253,15 @@ describe('Users subgraph (e2e)', () => {
             }
           }
         `,
-        variables: { input: { email, username, password: 'password123', acceptTerms: true, acceptPrivacy: true } },
+        variables: {
+          input: {
+            email,
+            username,
+            password: 'password123',
+            acceptTerms: true,
+            acceptPrivacy: true,
+          },
+        },
       })
       .expect(200);
 
@@ -299,7 +330,15 @@ describe('Users subgraph (e2e)', () => {
               }
             }
           `,
-          variables: { input: { email, username, password: 'password123', acceptTerms: true, acceptPrivacy: true } },
+          variables: {
+            input: {
+              email,
+              username,
+              password: 'password123',
+              acceptTerms: true,
+              acceptPrivacy: true,
+            },
+          },
         })
         .expect(200);
 
@@ -466,6 +505,172 @@ describe('Users subgraph (e2e)', () => {
       expect(payload).toHaveProperty('exp');
       // Access token should expire in ~2 minutes
       expect(payload.exp - payload.iat).toBeLessThanOrEqual(180);
+    });
+  });
+
+  describe('GitHub OAuth full flow', () => {
+    let originalFetch: typeof globalThis.fetch;
+
+    beforeAll(() => {
+      // Мокаем fetch для имитации GitHub API
+      originalFetch = globalThis.fetch;
+      globalThis.fetch = jest.fn(async (url: RequestInfo | URL) => {
+        const urlStr = url.toString();
+
+        if (urlStr.includes('github.com/login/oauth/access_token')) {
+          return {
+            ok: true,
+            json: async () => ({ access_token: 'mock_github_token' }),
+          } as Response;
+        }
+
+        if (
+          urlStr.includes('api.github.com/user') &&
+          !urlStr.includes('/emails')
+        ) {
+          return {
+            ok: true,
+            json: async () => ({
+              id: 12345,
+              login: 'oauth_test_user',
+              email: null,
+              avatar_url: null,
+            }),
+          } as Response;
+        }
+
+        if (urlStr.includes('api.github.com/user/emails')) {
+          return {
+            ok: true,
+            json: async () => [
+              {
+                email: 'oauth-test@example.com',
+                primary: true,
+                verified: true,
+              },
+            ],
+          } as Response;
+        }
+
+        return originalFetch(url);
+      });
+    });
+
+    afterAll(() => {
+      globalThis.fetch = originalFetch;
+    });
+
+    const extractCodeFromRedirect = (location: string): string | null => {
+      const match = location.match(/[?&]code=([^&]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    };
+
+    it('should complete full OAuth flow: login → callback → exchangeOAuthCode', async () => {
+      // 1. Открываем логин → получаем state в cookie
+      const loginRes = await request(app.getHttpServer())
+        .get('/api/v1/auth/github/login')
+        .expect(302);
+
+      const cookies = loginRes.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+
+      const cookieStr = Array.isArray(cookies) ? cookies[0] : cookies;
+      const stateMatch = cookieStr.match(/oauth_state=([^;]+)/);
+      expect(stateMatch).not.toBeNull();
+      const state = stateMatch![1];
+
+      // 2. Симулируем колбэк от GitHub
+      const callbackRes = await request(app.getHttpServer())
+        .get(
+          '/api/v1/auth/github/callback?code=mock_github_code&state=' + state,
+        )
+        .set('Cookie', `oauth_state=${state}`)
+        .expect(302);
+
+      const location = callbackRes.headers['location'] as string;
+      expect(location).toContain('/auth/callback?code=');
+
+      // 3. Извлекаем exchangeCode из URL редиректа
+      const exchangeCode = extractCodeFromRedirect(location);
+      expect(exchangeCode).not.toBeNull();
+
+      // 4. Обмениваем exchangeCode на токены
+      const exchangeRes = await request(app.getHttpServer())
+        .post('/api/v1')
+        .send({
+          query: `
+            mutation {
+              exchangeOAuthCode(input: { code: "${exchangeCode}" }) {
+                accessToken
+                user { id email username }
+              }
+            }
+          `,
+        })
+        .expect(200);
+
+      expect(exchangeRes.body.errors).toBeUndefined();
+      expect(exchangeRes.body.data.exchangeOAuthCode.accessToken).toBeDefined();
+      expect(exchangeRes.body.data.exchangeOAuthCode.user.email).toBe(
+        'oauth-test@example.com',
+      );
+    });
+
+    it('should reject already used exchange code', async () => {
+      // 1. Проходим OAuth callback для получения exchangeCode
+      const loginRes = await request(app.getHttpServer())
+        .get('/api/v1/auth/github/login')
+        .expect(302);
+
+      const cookies = loginRes.headers['set-cookie'];
+      const cookieStr = Array.isArray(cookies) ? cookies[0] : cookies;
+      const stateMatch = cookieStr.match(/oauth_state=([^;]+)/);
+      const state = stateMatch![1];
+
+      const callbackRes = await request(app.getHttpServer())
+        .get(
+          '/api/v1/auth/github/callback?code=mock_github_code&state=' + state,
+        )
+        .set('Cookie', `oauth_state=${state}`)
+        .expect(302);
+
+      const location = callbackRes.headers['location'] as string;
+      const exchangeCode = extractCodeFromRedirect(location)!;
+
+      // 2. Первый раз — успех
+      const first = await request(app.getHttpServer())
+        .post('/api/v1')
+        .send({
+          query: `
+            mutation {
+              exchangeOAuthCode(input: { code: "${exchangeCode}" }) {
+                accessToken
+              }
+            }
+          `,
+        })
+        .expect(200);
+
+      expect(first.body.errors).toBeUndefined();
+
+      // 3. Второй раз с тем же кодом — ошибка
+      const second = await request(app.getHttpServer())
+        .post('/api/v1')
+        .send({
+          query: `
+            mutation {
+              exchangeOAuthCode(input: { code: "${exchangeCode}" }) {
+                accessToken
+              }
+            }
+          `,
+        })
+        .expect(200);
+
+      expect(second.body.data).toBeNull();
+      expect(second.body.errors[0].message).toContain(
+        'Exchange code already used',
+      );
     });
   });
 });

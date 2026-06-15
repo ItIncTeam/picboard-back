@@ -4,7 +4,6 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { SignInUserResult } from './sign-in-user.result';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { PasswordHasher } from '../../../domain/services/password-hasher';
-import { TokenService } from '../../../domain/services/token.service';
 import { IssueSessionCommand } from '../issue-session/issue-session.use.case';
 
 export class SignInUserCommand {
@@ -17,7 +16,6 @@ export class SignInUserUseCase implements ICommandHandler<SignInUserCommand> {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly passwordHasher: PasswordHasher,
-    private readonly tokenService: TokenService,
     private readonly commandBus: CommandBus,
   ) {}
 
@@ -55,20 +53,5 @@ export class SignInUserUseCase implements ICommandHandler<SignInUserCommand> {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
     };
-
-    /*const accessToken = await this.tokenService.signAccessToken({
-      sub: user.id,
-      email: user.email,
-    });
-
-    const refreshToken = await this.commandBus.execute(
-      new CreateRefreshTokenCommand(user.id, user.email),
-    );
-
-    return {
-      user,
-      accessToken,
-      refreshToken,
-    };*/
   }
 }

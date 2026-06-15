@@ -6,6 +6,8 @@ export type GithubUser = {
   login: string;
   email: string;
   isVerified: boolean;
+  name?: string | null;
+  avatarUrl?: string | null;
 };
 
 @Injectable()
@@ -15,7 +17,7 @@ export class GithubOAuthService {
   constructor(private readonly appConfig: AppConfig) {}
 
   /**
-   * Обменивает временный code от GitHub на access_token
+   * Exchanges a temporary code from GitHub for an access_token
    */
   async exchangeCode(code: string): Promise<string> {
     const res = await fetch('https://github.com/login/oauth/access_token', {
@@ -46,7 +48,7 @@ export class GithubOAuthService {
   }
 
   /**
-   * Запрашивает профиль пользователя GitHub
+   * Fetches the GitHub user profile
    */
   async getUserProfile(githubToken: string): Promise<GithubUser> {
     const userRes = await fetch('https://api.github.com/user', {
@@ -59,22 +61,19 @@ export class GithubOAuthService {
     const githubUser = (await userRes.json()) as {
       id: number;
       login: string;
+      name?: string | null;
       email?: string | null;
+      avatar_url?: string | null;
     };
 
-    // Всегда запрашиваем список email-ов для проверки verified
-    // email из /user может быть null (если скрыт в настройках) и не гарантирует verified
+    // Always fetch the emails list to check for verified status
+    // Email from /user may be null (if hidden in settings) and doesn't guarantee verified
     const verifiedEmail = await this.fetchVerifiedEmail(githubToken);
 
     if (!verifiedEmail) {
       this.logger.warn(
         `GitHub user ${githubUser.login} has no verified public email`,
       );
-      // throw new Error(
-      //   'A verified public email is required to sign in with GitHub. ' +
-      //     'Please add a public verified email in your GitHub settings: ' +
-      //     'https://github.com/settings/emails',
-      // );
       return {
         id: githubUser.id,
         login: githubUser.login,
@@ -88,11 +87,13 @@ export class GithubOAuthService {
       login: githubUser.login,
       email: verifiedEmail,
       isVerified: true,
+      name: githubUser.name,
+      avatarUrl: githubUser.avatar_url,
     };
   }
 
   /**
-   * Запрашивает список email-ов и возвращает первый подтверждённый primary email
+   * Fetches the user's email list and returns the first verified primary email
    * GitHub API: https://docs.github.com/en/rest/users/emails
    */
   private async fetchVerifiedEmail(

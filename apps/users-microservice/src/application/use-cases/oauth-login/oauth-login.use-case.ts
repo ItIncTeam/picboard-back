@@ -10,14 +10,12 @@ export class OAuthLoginCommand {
     public readonly providerId: string,
     public readonly email: string,
     public readonly username: string,
-    public readonly device?: string,
+    public readonly avatarUrl?: string | null,
   ) {}
 }
 
 export class OAuthLoginResult {
   userId: string;
-  isNewUser: boolean;
-  isNewOauth: boolean;
 }
 
 @CommandHandler(OAuthLoginCommand)
@@ -42,8 +40,6 @@ export class OAuthLoginUseCase implements ICommandHandler<
     if (existingAccount) {
       return {
         userId: existingAccount.userId,
-        isNewUser: false,
-        isNewOauth: false,
       };
     }
 
@@ -59,9 +55,12 @@ export class OAuthLoginUseCase implements ICommandHandler<
         providerId: command.providerId,
         username: command.username,
         email: command.email,
+        // avatarUrl: command.avatarUrl, todo: Добавить в схему юзера аватар
       });
 
-      return { userId: existingUser.id, isNewUser: false, isNewOauth: true };
+      return {
+        userId: existingUser.id,
+      };
     }
 
     // 3. Email свободен — создаём нового пользователя
@@ -82,6 +81,8 @@ export class OAuthLoginUseCase implements ICommandHandler<
       email: command.email,
     });
 
-    return { userId: newUser.id, isNewUser: true, isNewOauth: true };
+    return {
+      userId: newUser.id,
+    };
   }
 }

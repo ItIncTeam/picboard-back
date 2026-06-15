@@ -85,7 +85,6 @@ export class CompleteGoogleOAuthUseCase implements ICommandHandler<CompleteGoogl
       (await userInfoResponse.json()) as GoogleUserInfo;
 
     if (!profile.email || !profile.email_verified) {
-      /*throw new BadRequestException('Verified Google email is required');*/
       return {
         provider: 'google',
         providerId: profile.sub,
