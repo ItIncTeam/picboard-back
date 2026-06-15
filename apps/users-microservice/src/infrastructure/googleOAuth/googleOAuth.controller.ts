@@ -19,7 +19,7 @@ const b64url = (input: Buffer) =>
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 
-@Controller('auth/google')
+@Controller('api/v1/auth/google')
 export class GoogleOAuthController {
   constructor(
     private readonly appConfig: AppConfig,
@@ -117,7 +117,7 @@ export class GoogleOAuthController {
     );
     if (!googleOAuthResult.emailVerified) {
       return res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=non_verified_email`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=unverified_email`,
       );
     } //todo front asks to do a local sign up
 
@@ -139,11 +139,11 @@ export class GoogleOAuthController {
     const loginResult: GoogleOAuthLoginOutput = await this.commandBus.execute(
       new CompleteGoogleOAuthLoginCommand(payload),
     );
-    if (loginResult.status === 'signed_in_existing_oauth') {
+    /*if (loginResult.status === 'signed_in_existing_oauth') {
       return res.redirect(
         `${this.appConfig.frontendUrl}/auth/callback?error=oauth_exists`,
       );
-    } //todo: redirect logic: FRONTS REDIRECT TO SIGN IN AND USER IS LOGGED IN WITH ACCESS AND REFRESH TOKENS
+    } //todo: redirect logic: FRONTS REDIRECT TO SIGN IN AND USER IS LOGGED IN WITH ACCESS AND REFRESH TOKENS*/
 
     const exchangeCode: CreateOAuthExchangeCodeOutput =
       await this.commandBus.execute(

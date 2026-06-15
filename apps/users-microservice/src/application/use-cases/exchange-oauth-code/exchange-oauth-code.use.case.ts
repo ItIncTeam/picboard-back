@@ -4,9 +4,9 @@ import { createHash } from 'node:crypto';
 import { OAuthExchangeCodeEntity } from '../../../domain/entities/aouth-exchange-code.entity';
 import { OAuthExchangeCodesRepository } from '../../../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
 import { ExchangeOAuthCodeResult } from './exchange-oauth-code.result';
-import { IssueSessionCommand } from '../issue-session/issue-session.use.case';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { UserEntity } from '../../../domain/entities/user.entity';
+import { IssueSessionCommand } from '../issue-session/issue-session.use.case';
 
 export class OAuthExchangeCodeCommand {
   constructor(

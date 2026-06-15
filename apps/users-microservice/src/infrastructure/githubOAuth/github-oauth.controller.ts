@@ -93,7 +93,7 @@ export class GitHubOAuthController {
       //todo уже есть проверка в сервисе
       if (!githubUser.isVerified) {
         res.redirect(
-          `${this.appConfig.frontendUrl}/auth/callback?error=non_verified_email`,
+          `${this.appConfig.frontendUrl}/auth/callback?error=unverified_email`,
         );
       }
       //todo: front has to ask to go to local sign up
@@ -110,11 +110,11 @@ export class GitHubOAuthController {
         ),
       ); // todo: что возвращает scope(запросить аватар и тд)
 
-      if (!result.user.isNewOauth) {
+      /*if (!result.user.isNewOauth) {
         return res.redirect(
           `${this.appConfig.frontendUrl}/auth/callback?error=oauth_exists`,
         );
-      } //todo : отдать фронам
+      } //todo : отдать фронам*/
 
       // 3. Генерируем одноразовый exchangeCode, сохраняем хэш
       const exchangeCode = await this.commandBus.execute(
