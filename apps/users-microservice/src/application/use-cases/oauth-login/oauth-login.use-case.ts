@@ -30,7 +30,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
   ) {}
 
   async execute(command: OAuthLoginCommand): Promise<OAuthLoginResult> {
-    // 1. Ищем существующий OAuth аккаунт
+    // 1. Look for an existing OAuth account
     const existingAccount: OAuthAccountEntity | null =
       await this.oauthAccountsRepository.findByProviderAndProviderId(
         command.provider,
@@ -43,19 +43,19 @@ export class OAuthLoginUseCase implements ICommandHandler<
       };
     }
 
-    // 2. Не найден — проверяем email
+    // 2. Not found — check by email
     const existingUser = await this.usersRepository.findByEmail(command.email);
 
     if (existingUser) {
-      // Email уже занят — привязываем OAuth к существующему аккаунту
-      // Это безопасно, т.к. email прошёл проверку verified через GithubOAuthService
+      // Email already taken — link OAuth to existing account
+      // Safe because the email was verified via GithubOAuthService
       await this.oauthAccountsRepository.create({
         userId: existingUser.id,
         provider: command.provider,
         providerId: command.providerId,
         username: command.username,
         email: command.email,
-        // avatarUrl: command.avatarUrl, todo: Добавить в схему юзера аватар
+        // avatarUrl: command.avatarUrl, // Todo: add avatarUrl to User schema
       });
 
       return {
@@ -63,7 +63,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
       };
     }
 
-    // 3. Email свободен — создаём нового пользователя
+    // 3. Email is free — create a new user
     const newUser = await this.usersRepository.create({
       email: command.email,
       username: command.username,

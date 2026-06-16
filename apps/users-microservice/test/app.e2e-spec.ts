@@ -512,7 +512,7 @@ describe('Users subgraph (e2e)', () => {
     let originalFetch: typeof globalThis.fetch;
 
     beforeAll(() => {
-      // Мокаем fetch для имитации GitHub API
+      // Mock fetch to simulate GitHub API
       originalFetch = globalThis.fetch;
       globalThis.fetch = jest.fn(async (url: RequestInfo | URL) => {
         const urlStr = url.toString();
@@ -566,7 +566,7 @@ describe('Users subgraph (e2e)', () => {
     };
 
     it('should complete full OAuth flow: login → callback → exchangeOAuthCode', async () => {
-      // 1. Открываем логин → получаем state в cookie
+      // 1. Open login URL → get state in cookie
       const loginRes = await request(app.getHttpServer())
         .get('/api/v1/auth/github/login')
         .expect(302);
@@ -579,7 +579,7 @@ describe('Users subgraph (e2e)', () => {
       expect(stateMatch).not.toBeNull();
       const state = stateMatch![1];
 
-      // 2. Симулируем колбэк от GitHub
+      // 2. Simulate callback from GitHub
       const callbackRes = await request(app.getHttpServer())
         .get(
           '/api/v1/auth/github/callback?code=mock_github_code&state=' + state,
@@ -590,11 +590,11 @@ describe('Users subgraph (e2e)', () => {
       const location = callbackRes.headers['location'] as string;
       expect(location).toContain('/auth/callback?code=');
 
-      // 3. Извлекаем exchangeCode из URL редиректа
+      // 3. Extract exchangeCode from the redirect URL
       const exchangeCode = extractCodeFromRedirect(location);
       expect(exchangeCode).not.toBeNull();
 
-      // 4. Обмениваем exchangeCode на токены
+      // 4. Exchange the code for tokens
       const exchangeRes = await request(app.getHttpServer())
         .post('/api/v1')
         .send({
@@ -617,7 +617,7 @@ describe('Users subgraph (e2e)', () => {
     });
 
     it('should reject already used exchange code', async () => {
-      // 1. Проходим OAuth callback для получения exchangeCode
+      // 1. Go through OAuth callback to get an exchangeCode
       const loginRes = await request(app.getHttpServer())
         .get('/api/v1/auth/github/login')
         .expect(302);
@@ -637,7 +637,7 @@ describe('Users subgraph (e2e)', () => {
       const location = callbackRes.headers['location'] as string;
       const exchangeCode = extractCodeFromRedirect(location)!;
 
-      // 2. Первый раз — успех
+      // 2. First call — succeeds
       const first = await request(app.getHttpServer())
         .post('/api/v1')
         .send({
@@ -653,7 +653,7 @@ describe('Users subgraph (e2e)', () => {
 
       expect(first.body.errors).toBeUndefined();
 
-      // 3. Второй раз с тем же кодом — ошибка
+      // 3. Second call with the same code — should fail
       const second = await request(app.getHttpServer())
         .post('/api/v1')
         .send({

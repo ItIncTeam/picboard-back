@@ -61,7 +61,7 @@ export class GitHubOAuthController {
       return;
     }
 
-    // Проверяем state — защита от CSRF
+    // Verify state — CSRF protection
     if (
       !stateFromQuery ||
       !stateFromCookie ||
@@ -87,19 +87,17 @@ export class GitHubOAuthController {
       const githubUser =
         await this.githubOAuthService.getUserProfile(githubToken);
 
-      //todo уже есть проверка в сервисе
+      // Todo: check is already done in the service layer
       if (!githubUser.isVerified || !githubUser.email) {
         return res.redirect(
           `${this.appConfig.frontendUrl}/auth/callback?error=unverified_email`,
         );
       }
-      // front has to ask to go to local sign up
 
-      // 2. Логин или регистрация
-      // const device = req.headers['user-agent'] ?? 'unknown';
+      // 2. Login or register
       const result: OAuthLoginResult = await this.commandBus.execute(
         new OAuthLoginCommand(
-          'github', // todo: прописать константы для github google
+          'github', // Todo: use constants for provider names
           String(githubUser.id),
           githubUser.email,
           githubUser.login,
@@ -107,7 +105,7 @@ export class GitHubOAuthController {
         ),
       );
 
-      // 3. Генерируем одноразовый exchangeCode, сохраняем хэш
+      // 3. Generate a one-time exchange code and store its hash
       const exchangeCode = await this.commandBus.execute(
         new CreateOAuthExchangeCodeCommand({
           userId: result.userId,
@@ -115,8 +113,8 @@ export class GitHubOAuthController {
         }),
       );
 
-      // 4. Редирект на фронт с exchangeCode
-      // Фронт вызывает mutation { exchangeOAuthCode(code: "...") } → получает accessToken
+      // 4. Redirect to frontend with the exchange code
+      // Frontend calls mutation { exchangeOAuthCode(code: "...") } → receives accessToken
       res.redirect(
         `${this.appConfig.frontendUrl}/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
       );

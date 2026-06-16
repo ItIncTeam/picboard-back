@@ -115,6 +115,11 @@ spec:
                  secretKeyRef:
                    name: users-microservice-production-config-secret
                    key: GOOGLE_CALLBACK_URL
+             - name: OAUTH_CODE_EXPIRES_IN_MS
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: OAUTH_CODE_EXPIRES_IN_MS
              - name: PORT
                valueFrom:
                  secretKeyRef:

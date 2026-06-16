@@ -117,7 +117,7 @@ export class GithubOAuthService {
       verified: boolean;
     }>;
 
-    // Берём только primary + verified email
+    // Only accept primary + verified email
     const verified = emails.find((e) => e.primary && e.verified);
     return verified?.email ?? null;
   }
