@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: DEPLOYMENT_NAME
+  namespace: NAMESPACE
+  labels:
+    app: PROJECT
+spec:
+  selector:
+    matchLabels:
+      project: PROJECT
+  template:
+    metadata:
+      namespace: NAMESPACE
+      labels:
+        project: PROJECT
+    spec:
+      containers:
+         - name: PROJECT
+           image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
+           securityContext:
+             allowPrivilegeEscalation: false
+             runAsNonRoot: true      # опционально, но хорошая практика
+             runAsUser: 1000         # опционально
+           ports:
+             - containerPort: PORT_CONTAINER
+           env:
+             - name: JWT_ACCESS_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_ACCESS_SECRET
+             - name: JWT_ACCESS_EXPIRES_IN
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_ACCESS_EXPIRES_IN
+             - name: JWT_REFRESH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_REFRESH_SECRET
+             - name: JWT_REFRESH_EXPIRES_IN
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: JWT_REFRESH_EXPIRES_IN
+             - name: DATABASE_DIRECT_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: DATABASE_DIRECT_URL
+             - name: DATABASE_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: DATABASE_URL
+             - name: EMAIL_CONFIRMATION_EXPIRES_IN_MS
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: EMAIL_CONFIRMATION_EXPIRES_IN_MS
+             - name: NODE_MAILER_EMAIL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: NODE_MAILER_EMAIL
+             - name: NODE_MAILER_PASSWORD
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: NODE_MAILER_PASSWORD
+             - name: RECAPTCHA_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: RECAPTCHA_SECRET
+             - name: RECAPTCHA_MIN_SCORE
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: RECAPTCHA_MIN_SCORE
+             - name: GITHUB_CLIENT_ID
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: GITHUB_CLIENT_ID
+             - name: GITHUB_CLIENT_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: GITHUB_CLIENT_SECRET
+             - name: GITHUB_CALLBACK_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: GITHUB_CALLBACK_URL
+             - name: FRONTEND_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: FRONTEND_URL
+             - name: GOOGLE_CLIENT_ID
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: GOOGLE_CLIENT_ID
+             - name: GOOGLE_CLIENT_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: GOOGLE_CLIENT_SECRET
+             - name: GOOGLE_CALLBACK_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: GOOGLE_CALLBACK_URL
+             - name: OAUTH_CODE_EXPIRES_IN_MS
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: OAUTH_CODE_EXPIRES_IN_MS
+             - name: PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: PORT

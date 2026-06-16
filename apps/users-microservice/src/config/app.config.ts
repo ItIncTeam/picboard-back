@@ -1,0 +1,246 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+/*import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { configValidationUtility } from './config-validation.utility';*/
+/*//dimych
+export enum Environments {
+  DEVELOPMENT = 'development',
+  STAGING = 'staging',
+  PRODUCTION = 'production',
+  TESTING = 'testing',
+}
+
+@Injectable()
+export class AppConfig {
+  constructor(private configService: ConfigService) {
+    configValidationUtility.validateConfig(this);
+  }
+  @IsNumber(
+    {},
+    {
+      message: 'Set env variable PORT, example: 3000',
+    },
+  )
+  port: number = Number(this.configService.get('PORT'));
+
+  @IsNotEmpty({
+    message: 'Set env variable DATABASE_URL',
+  })
+  databaseUrl: string = this.configService.get('DATABASE_URL');
+
+  @IsNotEmpty({
+    message: 'Set env variable DATABASE_DIRECT_URL',
+  })
+  databaseDirectUrl: string = this.configService.get('DATABASE_DIRECT_URL');
+
+  @IsEnum(Environments, {
+    message:
+      'Set correct NODE_ENV value, available values: ' +
+      configValidationUtility.getEnumValues(Environments).join(', '),
+  })
+  env: string = this.configService.get('NODE_ENV');
+
+  /*  @IsBoolean({
+    message:
+      'Set env variable IS_SWAGGER_ENABLED to enable/disable Swagger, example: true, available values: true, false',
+  })
+  isSwaggerEnabled: boolean = configValidationUtility.convertToBoolean(
+    this.configService.get('IS_SWAGGER_ENABLED'),
+  );*/
+
+/*@IsBoolean({
+    message:
+      'Set env variable INCLUDE_TESTING_MODULE to enable/disable Dangerous for production TestingModule, example: true, available values: true, false, 0, 1',
+  })
+  includeTestingModule: boolean = configValidationUtility.convertToBoolean(
+    this.configService.get('INCLUDE_TESTING_MODULE'),
+  );*/
+// }*/
+
+@Injectable()
+export class AppConfig {
+  constructor(private readonly configService: ConfigService) {}
+
+  get port(): number {
+    const value = this.configService.get<string>('PORT');
+    if (!value) throw new Error('PORT is not defined');
+    return Number(value);
+  }
+
+  get rabbitMqUrl(): string {
+    const value = this.configService.get<string>('RABBITMQ_URL');
+    if (!value) throw new Error('RABBITMQ_URL is not defined');
+    return value;
+  }
+
+  get rabbitMqQueue(): string {
+    const value = this.configService.get<string>('RABBITMQ_QUEUE');
+    if (!value) throw new Error('RABBITMQ_QUEUE is not defined');
+    return value;
+  }
+
+  get databaseUrl(): string {
+    const value = this.configService.get<string>('DATABASE_URL');
+    if (!value) throw new Error('DATABASE_URL is not defined');
+    return value;
+  }
+
+  get databaseDirectUrl(): string {
+    const value = this.configService.get<string>('DATABASE_DIRECT_URL');
+    if (!value) throw new Error('DATABASE_DIRECT_URL is not defined');
+    return value;
+  }
+
+  get jwtAccessSecret(): string {
+    const value = this.configService.get<string>('JWT_ACCESS_SECRET');
+    if (!value) throw new Error('JWT_ACCESS_SECRET is not defined');
+    return value;
+  }
+
+  get jwtAccessExpiresIn(): any {
+    const value = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN');
+    if (!value) {
+      throw new Error('JWT_ACCESS_EXPIRES_IN is not defined');
+    }
+    return value;
+  }
+
+  get jwtRefreshSecret(): string {
+    const value = this.configService.get<string>('JWT_REFRESH_SECRET');
+    if (!value) throw new Error('JWT_REFRESH_SECRET is not defined');
+    return value;
+  }
+
+  get jwtRefreshExpiresIn(): any {
+    const value = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
+    if (!value) {
+      throw new Error('JWT_REFRESH_EXPIRES_IN is not defined');
+    }
+    return value;
+  }
+
+  get nodeEnv(): string {
+    const value = this.configService.get<string>('NODE_ENV');
+    if (!value) {
+      throw new Error('NODE_ENV is not defined');
+    }
+    return value;
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
+  }
+
+  get emailConfirmationExpiresInMs(): number {
+    const value = this.configService.get<string>(
+      'EMAIL_CONFIRMATION_EXPIRES_IN_MS',
+    );
+    if (!value)
+      throw new Error('EMAIL_CONFIRMATION_EXPIRES_IN_MS is not defined');
+    return Number(value);
+  }
+
+  get nodeMailerEmail(): string {
+    const value = this.configService.get<string>('NODE_MAILER_EMAIL');
+    if (!value) {
+      throw new Error('NODE_MAILER_EMAIL is not defined');
+    }
+    return value;
+  }
+
+  get nodeMailerPassword(): string {
+    const value = this.configService.get<string>('NODE_MAILER_PASSWORD');
+    if (!value) {
+      throw new Error('NODE_MAILER_PASSWORD is not defined');
+    }
+    return value;
+  }
+
+  get recaptchaSecret(): string {
+    const value = this.configService.get<string>('RECAPTCHA_SECRET');
+    if (!value) {
+      throw new Error('RECAPTCHA_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get recaptchaMinScore(): number {
+    const value = this.configService.get<string>('RECAPTCHA_MIN_SCORE');
+    if (!value) throw new Error('RECAPTCHA_MIN_SCORE is not defined');
+    return Number(value);
+  }
+
+  get frontendUrl(): string {
+    const value = this.configService.get<string>('FRONTEND_URL');
+    if (!value) {
+      throw new Error('FRONTEND_URL is not defined');
+    }
+    return value;
+  }
+
+  get githubClientId(): string {
+    const value = this.configService.get<string>('GITHUB_CLIENT_ID');
+    if (!value) throw new Error('GITHUB_CLIENT_ID is not defined');
+    return value;
+  }
+
+  get githubClientSecret(): string {
+    const value = this.configService.get<string>('GITHUB_CLIENT_SECRET');
+    if (!value) throw new Error('GITHUB_CLIENT_SECRET is not defined');
+    return value;
+  }
+
+  get githubCallbackUrl(): string {
+    const value = this.configService.get<string>('GITHUB_CALLBACK_URL');
+    if (!value) throw new Error('GITHUB_CALLBACK_URL is not defined');
+    return value;
+  }
+
+  get googleClientId(): string {
+    const value = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    if (!value) {
+      throw new Error('GOOGLE_CLIENT_ID is not defined');
+    }
+    return value;
+  }
+
+  get googleCallbackUrl(): string {
+    const value = this.configService.get<string>('GOOGLE_CALLBACK_URL');
+    if (!value) {
+      throw new Error('GOOGLE_CALLBACK_URL is not defined');
+    }
+    return value;
+  }
+
+  get googleClientSecret(): string {
+    const value = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+    if (!value) {
+      throw new Error('GOOGLE_CLIENT_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get oauthCodeExpiresInMs(): number {
+    const value = this.configService.get<string>('OAUTH_CODE_EXPIRES_IN_MS');
+    if (!value) throw new Error('OAUTH_CODE_EXPIRES_IN_MS is not defined');
+
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error('OAUTH_CODE_EXPIRES_IN_MS must be a positive integer');
+    }
+
+    return parsed;
+  }
+
+  get tcpPort(): number {
+    const value = this.configService.get<string>('TCP_PORT');
+    if (!value) throw new Error('TCP_PORT is not defined');
+    return Number(value);
+  }
+
+  get tcpHost(): number {
+    const value = this.configService.get<string>('TCP_HOST');
+    if (!value) throw new Error('TCP_HOST is not defined');
+    return Number(value);
+  }
+}

@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../apps/users/src/generated/prisma/users-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LegalDocumentType {
+  TERMS
+  PRIVACY
+}
+
+enum ConsentAction {
+  ACCEPTED
+  WITHDRAWN
+}
+
+model User {
+  id                      String         @id @default(uuid()) @db.Uuid
+  email                   String         @unique
+  username                String         @unique
+  passwordHash            String?
+  confirmationCode        String?
+  confirmationCodeExpDate DateTime?      @db.Timestamptz(6)
+  isConfirmed             Boolean        @default(false)
+  displayName             String?
+  bio                     String?
+  profilePictureFileId    String?        @db.Uuid
+  createdAt               DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime       @updatedAt @db.Timestamptz(6)
+
+  oauthAccount            OAuthAccount[]
+  refreshToken            RefreshToken[]
+  consents                UserConsent[]
+  oauthExchangeCodes      OAuthExchangeCode[]
+}
+
+model UserConsent {
+  id                String               @id @default(uuid()) @db.Uuid
+  userId            String               @db.Uuid
+  type              LegalDocumentType
+  action            ConsentAction        @default(ACCEPTED)
+  createdAt         DateTime             @default(now())
+
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("user_consents")
+}
+
+model OAuthAccount {
+  id         String  @id @default(uuid()) @db.Uuid
+  userId     String  @db.Uuid
+  provider   String // 'google' or 'github'
+  providerId String
+  username   String?
+  email      String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
+
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId]) // relation scalar fields used in joins/lookups should be indexed for performance as data grows
+}
+
+model OAuthExchangeCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  codeHash   String    @unique
+  userId     String    @db.Uuid
+  provider   String
+  expiresAt  DateTime  @db.Timestamptz(6)
+  usedAt     DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("oauth_exchange_code")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String   @unique
+  userId    String   @db.Uuid
+  device    String?
+  expiresAt DateTime @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

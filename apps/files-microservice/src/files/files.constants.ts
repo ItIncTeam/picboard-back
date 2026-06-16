@@ -1,0 +1,1 @@
+export const FILES_RMQ_CLIENT = 'FILES_RMQ_CLIENT';

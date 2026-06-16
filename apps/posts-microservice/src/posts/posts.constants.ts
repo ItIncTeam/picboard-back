@@ -1,0 +1,1 @@
+export const POSTS_RMQ_CLIENT = 'POSTS_RMQ_CLIENT';
