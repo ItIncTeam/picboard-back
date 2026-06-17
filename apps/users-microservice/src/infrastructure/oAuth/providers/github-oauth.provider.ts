@@ -1,24 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AppConfig } from '../../config/app.config';
-
-export type GithubUser = {
-  id: number;
-  login: string;
-  email: string;
-  isVerified: boolean;
-  name?: string | null;
-  avatarUrl?: string | null;
-};
+import { AppConfig } from '../../../config/app.config';
+import {
+  OAuthProvider,
+  OAuthUserProfile,
+} from '../../../domain/services/oauth-provider';
 
 @Injectable()
-export class GithubOAuthService {
-  private readonly logger = new Logger(GithubOAuthService.name);
+export class GithubOAuthProvider implements OAuthProvider {
+  private readonly logger = new Logger(GithubOAuthProvider.name);
 
   constructor(private readonly appConfig: AppConfig) {}
 
-  /**
-   * Exchanges a temporary code from GitHub for an access_token
-   */
+  getLoginUrl(state: string): string {
+    const params = new URLSearchParams({
+      client_id: this.appConfig.githubClientId,
+      redirect_uri: this.appConfig.githubCallbackUrl,
+      state,
+      scope: 'read:user user:email',
+    });
+
+    return `https://github.com/login/oauth/authorize?${params}`;
+  }
+
   async exchangeCode(code: string): Promise<string> {
     const res = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -47,10 +50,7 @@ export class GithubOAuthService {
     return data.access_token;
   }
 
-  /**
-   * Fetches the GitHub user profile
-   */
-  async getUserProfile(githubToken: string): Promise<GithubUser> {
+  async getUserProfile(githubToken: string): Promise<OAuthUserProfile> {
     const userRes = await fetch('https://api.github.com/user', {
       headers: {
         Authorization: `Bearer ${githubToken}`,
@@ -66,8 +66,6 @@ export class GithubOAuthService {
       avatar_url?: string | null;
     };
 
-    // Always fetch the emails list to check for verified status
-    // Email from /user may be null (if hidden in settings) and doesn't guarantee verified
     const verifiedEmail = await this.fetchVerifiedEmail(githubToken);
 
     if (!verifiedEmail) {
@@ -75,27 +73,23 @@ export class GithubOAuthService {
         `GitHub user ${githubUser.login} has no verified public email`,
       );
       return {
-        id: githubUser.id,
-        login: githubUser.login,
-        email: githubUser.email ? githubUser.email : 'verified_email_required',
-        isVerified: false,
+        provider: 'github',
+        providerId: String(githubUser.id),
+        email: '',
+        emailVerified: false,
       };
     }
 
     return {
-      id: githubUser.id,
-      login: githubUser.login,
+      provider: 'github',
+      providerId: String(githubUser.id),
       email: verifiedEmail,
-      isVerified: true,
+      emailVerified: true,
       name: githubUser.name,
       avatarUrl: githubUser.avatar_url,
     };
   }
 
-  /**
-   * Fetches the user's email list and returns the first verified primary email
-   * GitHub API: https://docs.github.com/en/rest/users/emails
-   */
   private async fetchVerifiedEmail(
     githubToken: string,
   ): Promise<string | null> {
@@ -117,7 +111,6 @@ export class GithubOAuthService {
       verified: boolean;
     }>;
 
-    // Only accept primary + verified email
     const verified = emails.find((e) => e.primary && e.verified);
     return verified?.email ?? null;
   }

@@ -38,21 +38,19 @@ import { CreateOAuthExchangeCodeUseCase } from '../application/use-cases/create-
 import { CompleteGoogleOAuthLoginUseCase } from '../application/use-cases/complete-google-oAuth-login/complete-google-oAuth-login.use.case';
 import { OAuthAccountsRepository } from '../domain/repositories/oauth-account/oauth-accounts.repository';
 import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/repositories/prisma-oauth-account/prisma-oauth-accounts.repository';
-import { PrismaOAuthExchangeCodesRepository } from '../infrastructure/prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';
+/*import { PrismaOAuthExchangeCodesRepository } from '../infrastructure/prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';*/
 import { OAuthExchangeCodesRepository } from '../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
 import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use.case';
 import { UsernameGeneratorService } from '../infrastructure/googleOAuth/username-generator.service';
 
-/*import { OAuthModule } from '../infrastructure/githubOAuth/oauth.module';*/
-import { GitHubOAuthController } from '../infrastructure/githubOAuth/github-oauth.controller';
-import { GithubOAuthService } from '../infrastructure/githubOAuth/github-oauth.service';
+import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
 
 @Module({
   imports: [
     AppConfigModule,
     PrismaModule,
     CqrsModule,
-    /*OAuthModule,*/
+    OAuthModule,
     /*RmqModule.registerAsync({
       name: USERS_RMQ_CLIENT,
       imports: [AppConfigModule],
@@ -86,9 +84,8 @@ import { GithubOAuthService } from '../infrastructure/githubOAuth/github-oauth.s
       }),
     }),
   ],
-  controllers: [GoogleOAuthController, GitHubOAuthController],
+  controllers: [GoogleOAuthController],
   providers: [
-    GithubOAuthService,
     UsersResolver,
     UsersService,
     AuthResolver,
@@ -119,10 +116,6 @@ import { GithubOAuthService } from '../infrastructure/githubOAuth/github-oauth.s
     {
       provide: OAuthAccountsRepository,
       useClass: PrismaOAuthAccountsRepository,
-    },
-    {
-      provide: OAuthExchangeCodesRepository,
-      useClass: PrismaOAuthExchangeCodesRepository,
     },
     {
       provide: RefreshTokenRepository,

@@ -100,8 +100,6 @@ export class AuthResolver {
         id: result.user.id,
         email: result.user.email,
         username: result.user.username,
-        /*confirmationCode: result.user.confirmationCode,
-        confirmationCodeExpDate: result.user.confirmationCodeExpDate,*/
         isConfirmed: result.user.isConfirmed,
         /*displayName: undefined,
         bio: undefined,
