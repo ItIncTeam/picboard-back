@@ -61,7 +61,7 @@ export class CompleteGoogleOAuthUseCase implements ICommandHandler<CompleteGoogl
       throw new UnauthorizedException(
         `Unable to fetch Google profile: ${errorBody}`,
       );
-    }
+    } //todo: handle this error
 
     type GoogleUserInfo = {
       sub: string;

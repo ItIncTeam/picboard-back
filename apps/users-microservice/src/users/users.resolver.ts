@@ -29,6 +29,7 @@ export class UsersResolver {
     return this.usersService.me(reqUser.userId);
   }
 
+  //todo: @Parent?
   @ResolveReference()
   resolveReference(reference: { __typename: string; id: string }) {
     return this.usersService.findById(reference.id);
