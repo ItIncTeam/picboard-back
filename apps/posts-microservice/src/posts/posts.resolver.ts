@@ -1,48 +1,73 @@
 import {
   Args,
+  Context,
   Mutation,
-  Parent,
   Query,
-  ResolveField,
   ResolveReference,
   Resolver,
+  ResolveField,
+  Parent,
 } from '@nestjs/graphql';
-import { Post } from './entities/post.entity';
+import { UseGuards } from '@nestjs/common';
+import { GqlJwtAuthGuard } from '@app/auth';
 import { PostsService } from './posts.service';
+import { PostEntity } from './entities/post.entity';
+import { PostConnection } from './entities/post-connection.entity';
 import { CreatePostInput } from './dto/create-post.input';
-import { User } from './entities/user.stub';
-import { FileAsset } from './entities/file-asset.stub';
+import { UpdatePostDescriptionInput } from './dto/update-post-description.input';
+import { DeletePostInput } from './dto/delete-post.input';
+import { ProfilePostsInput } from './dto/profile-posts.input';
 
-@Resolver(() => Post)
+@Resolver(() => PostEntity)
 export class PostsResolver {
   constructor(private readonly postsService: PostsService) {}
 
-  @Query(() => [Post])
+  @Query(() => [PostEntity])
   feed() {
     return this.postsService.feed();
   }
 
-  @Query(() => Post, { nullable: true })
+  @Query(() => PostEntity, { nullable: true })
   post(@Args('id') id: string) {
     return this.postsService.findById(id);
   }
 
-  @Mutation(() => Post)
-  createPost(@Args('input') input: CreatePostInput) {
-    return this.postsService.create(input);
+  @Query(() => PostConnection)
+  profilePosts(@Args('input') input: ProfilePostsInput) {
+    return this.postsService.profilePosts(input);
   }
 
-  @ResolveField(() => User)
-  author(@Parent() post: Post) {
-    return { id: post.authorId };
-    /*{ __typename: 'User', id: post.authorId };*/
+  @UseGuards(GqlJwtAuthGuard)
+  @Mutation(() => PostEntity)
+  createPost(@Args('input') input: CreatePostInput, @Context() context: any) {
+    const authHeader = context.req.headers?.authorization;
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : undefined;
+    return this.postsService.createPost(input, context.req.user.userId, token);
   }
 
-  @ResolveField(() => FileAsset, { nullable: true })
-  coverImage(@Parent() post: Post) {
-    return post.coverImageFileId
-      ? { __typename: 'FileAsset', id: post.coverImageFileId }
-      : null;
+  @UseGuards(GqlJwtAuthGuard)
+  @Mutation(() => PostEntity)
+  updatePostDescription(
+    @Args('input') input: UpdatePostDescriptionInput,
+    @Context() context: any,
+  ) {
+    return this.postsService.updatePostDescription(
+      input,
+      context.req.user.userId,
+    );
+  }
+
+  @UseGuards(GqlJwtAuthGuard)
+  @Mutation(() => Boolean)
+  deletePost(@Args('input') input: DeletePostInput, @Context() context: any) {
+    return this.postsService.deletePost(input, context.req.user.userId);
+  }
+
+  @ResolveField(() => String, { name: 'author' })
+  resolveAuthor(@Parent() post: PostEntity) {
+    return { __typename: 'User', id: post.ownerId };
   }
 
   @ResolveReference()
