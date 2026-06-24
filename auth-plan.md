@@ -385,11 +385,11 @@ apps/users-microservice/src/
     │   ├── auth-password.resolver.ts     // requestPasswordReset, resetPassword
     │   └── auth-session.resolver.ts      // login, refreshToken, logout, me
     ├── inputs/
-    │   ├── sign-up.input.ts
-    │   ├── sign-in.input.ts
-    │   ├── confirm-email.input.ts
-    │   ├── request-password-reset.input.ts
-    │   └── reset-password.input.ts
+    │   ├── sign-up.input.modelsts
+    │   ├── sign-in.input.modelsts
+    │   ├── confirm-email.input.modelsts
+    │   ├── request-password-reset.input.modelsts
+    │   └── reset-password.input.modelsts
     └── types/
         ├── user.type.ts
         ├── login-payload.type.ts         // accessToken + refreshToken + user
