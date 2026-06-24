@@ -3,10 +3,12 @@ import { configModule } from './dynamic-config.module';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
-import { IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
+import { IntrospectAndCompose } from '@apollo/gateway';
 import { AppConfig } from './config/app.config';
 import { AppConfigModule } from './config/app-config.module';
 import type { Response } from 'express';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { CookieForwardingDataSource } from './auth/authenticated-data-source';
 
 /**
  * Custom DataSource that forwards cookies from the client to the subgraph
@@ -16,7 +18,7 @@ import type { Response } from 'express';
  * - req.cookies in the subgraph is always empty (gateway doesn't forward cookies)
  * - res.cookie / res.clearCookie in the subgraph don't work (gateway doesn't forward Set-Cookie)
  */
-class CookieForwardingDataSource extends RemoteGraphQLDataSource {
+/*class CookieForwardingDataSource extends RemoteGraphQLDataSource {
   override willSendRequest({
     request,
     context,
@@ -51,17 +53,25 @@ class CookieForwardingDataSource extends RemoteGraphQLDataSource {
     }
     return response;
   }
-}
+}*/
 
 @Module({
   imports: [
     configModule,
     AppConfigModule,
+    JwtModule.registerAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        secret: appConfig.jwtAccessSecret,
+        signOptions: { expiresIn: appConfig.jwtAccessExpiresIn },
+      }),
+    }),
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
       imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (config: AppConfig) => ({
+      inject: [AppConfig, JwtService],
+      useFactory: (config: AppConfig, jwtService: JwtService) => ({
         server: {
           cors: true,
           context: ({ req, res }: { req: any; res: Response }) => ({
@@ -79,8 +89,12 @@ class CookieForwardingDataSource extends RemoteGraphQLDataSource {
               { name: 'files', url: config.filesGqlUrl },
             ],
           }),
-          buildService: ({ url }) =>
-            new CookieForwardingDataSource({ url }),
+          buildService: ({ url }) => {
+            if (!url) {
+              throw new Error('Subgraph URL is required');
+            }
+            return new CookieForwardingDataSource(jwtService, { url });
+          },
         },
       }),
     }),

@@ -8,19 +8,47 @@ datasource db {
   provider = "postgresql"
 }
 
-model FileAsset {
-  id         String   @id @default(uuid()) @db.Uuid
-  ownerId    String   @db.Uuid
-  purpose    String
-  bucket     String
-  objectKey  String   @unique
-  mimeType   String
-  size       Int
-  checksum   String?
-  status     String
-  url        String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+enum Purpose {
+  POST_IMAGE
+  BILL
+}
+
+enum Mime {
+  JPEG
+  PNG
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADED
+  READY
+  FAILED
+  DELETED
+}
+
+model File {
+  id           String      @id @default(uuid()) @db.Uuid
+  ownerId      String      @db.Uuid
+  originalName String
+  purpose      Purpose
+  mimeType     Mime
+  size         Int
+  storageKey   String       @unique
+  bucket       String
+  status       FileStatus  @default(PENDING)
+  checksum     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  uploadedAt   DateTime?
+  readyAt      DateTime?
+  failedAt     DateTime?
+  deletedAt    DateTime?
+  failedReason String?
 
   @@index([ownerId])
+  @@index([status])
+  @@index([ownerId, status])
+
+  @@map("file")
 }
