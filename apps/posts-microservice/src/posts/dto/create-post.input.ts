@@ -17,5 +17,5 @@ export class CreatePostInput {
   @Field({ nullable: true })
   @IsOptional()
   @MaxLength(POST_RULES.MAX_DESCRIPTION_LENGTH)
-  description?: string;
+  description?: string; //todo : обязательное поле?
 }

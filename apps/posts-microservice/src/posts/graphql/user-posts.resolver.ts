@@ -1,5 +1,5 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { PostsService } from './posts.service';
+import { PostsService } from '../posts.service';
 
 @Resolver('User')
 export class UserPostsResolver {

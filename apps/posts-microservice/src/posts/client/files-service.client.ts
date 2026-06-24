@@ -1,53 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { AppConfig } from '../../config/app.config';
+import { ClientProxy, ClientTCP } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
-export interface FileValidationResult {
-  fileId: string;
-  ownerId: string;
-  status: 'PENDING' | 'READY' | 'FAILED';
+export interface ValidateFilesResponse {
+  validFileIds: string[];
+  missingFileIds: string[];
+  notOwnedFileIds: string[];
+  notReadyFileIds: string[];
+  allValid: boolean;
 }
 
 @Injectable()
 export class FilesServiceClient {
-  constructor(private readonly appConfig: AppConfig) {}
+  private client: ClientProxy;
 
-  /**
-   * Валидация fileIds перед createPost.
-   * Вызывает ownedFilesByIds на files-service напрямую (НЕ через gateway).
-   * Проверяет: файлы существуют, принадлежат ownerId, статус READY.
-   * URL не возвращает — он резолвится через federation на query time.
-   */
+  constructor(private readonly appConfig: AppConfig) {
+    this.client = new ClientTCP({
+      port: 4000, //todo: вынести в .env
+      host: 'files-service', // todo: имя Docker-hostname, для локальной работы localhost
+    });
+  }
+
   async validateOwnedFiles(
     fileIds: string[],
     ownerId: string,
-  ): Promise<FileValidationResult[]> {
-    const query = `
-      query ($ids: [ID!]!) {
-        ownedFilesByIds(ids: $ids) {
-          fileId
-          ownerId
-          status
-        }
-      }
-    `;
-
-    const response = await fetch(this.appConfig.filesServiceUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, variables: { ids: fileIds } }),
-    });
-
-    const json = await response.json();
-    if (json.errors) {
-      throw new Error(`Files service error: ${JSON.stringify(json.errors)}`);
-    }
-
-    return json.data.ownedFilesByIds;
+  ): Promise<ValidateFilesResponse> {
+    return firstValueFrom(
+      this.client.send({ cmd: 'validate_for_post' }, { fileIds, ownerId }), // todo: взять из lib константанту FILES_TCP_PATTERNS взять input/output models
+    );
   }
 }
-
-//todo : **Важно:** файловый сервис проверяет `ownerId` внутри `ownedFilesByIds` — он использует JWT
-// из контекста запроса. Но здесь вызов идёт из сервиса-к-сервису, поэтому нужно либо пробрасывать токен,
-// либо использовать внутреннюю аутентификацию. Уточнить при реализации.

@@ -17,14 +17,14 @@ async function bootstrap() {
     }),
   );
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: [appConfig.rabbitMqUrl],
-      queue: appConfig.rabbitMqQueue,
-      queueOptions: { durable: true },
-    },
-  });
+  // app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.RMQ,
+  //   options: {
+  //     urls: [appConfig.rabbitMqUrl],
+  //     queue: appConfig.rabbitMqQueue,
+  //     queueOptions: { durable: true },
+  //   },
+  // });
 
   await app.startAllMicroservices();
   await app.listen(appConfig.port);

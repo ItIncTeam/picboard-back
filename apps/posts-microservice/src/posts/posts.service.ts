@@ -38,19 +38,21 @@ export class PostsService {
   }
 
   /** Создание поста с валидацией файлов через files-service */
-  async createPost(input: CreatePostInput, ownerId: string, token?: string) {
-    const files = await this.filesClient.validateOwnedFiles(
+  async createPost(input: CreatePostInput, ownerId: string) {
+    const result = await this.filesClient.validateOwnedFiles(
       input.fileIds,
       ownerId,
-      token,
     );
-    const fileMap = new Map(files.map((f) => [f.fileId, f]));
 
-    for (const fileId of input.fileIds) {
-      const file = fileMap.get(fileId);
-      if (!file) throw new Error(`File ${fileId} not found or access denied`);
-      if (file.status !== 'READY')
-        throw new Error(`File ${fileId} is not READY`);
+    if (!result.allValid) {
+      const errors: string[] = [];
+      if (result.missingFileIds.length)
+        errors.push(`not found: ${result.missingFileIds}`);
+      if (result.notOwnedFileIds.length)
+        errors.push(`not owned: ${result.notOwnedFileIds}`);
+      if (result.notReadyFileIds.length)
+        errors.push(`not ready: ${result.notReadyFileIds}}`);
+      throw new Error(`Files validation failed: ${errors.join('; ')}`);
     }
 
     const post = await this.prisma.$transaction(async (tx) => {

@@ -10,13 +10,13 @@ import {
 } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { GqlJwtAuthGuard } from '@app/auth';
-import { PostsService } from './posts.service';
-import { PostEntity } from './entities/post.entity';
-import { PostConnection } from './entities/post-connection.entity';
-import { CreatePostInput } from './dto/create-post.input';
-import { UpdatePostDescriptionInput } from './dto/update-post-description.input';
-import { DeletePostInput } from './dto/delete-post.input';
-import { ProfilePostsInput } from './dto/profile-posts.input';
+import { PostsService } from '../posts.service';
+import { PostEntity } from '../entities/post.entity';
+import { PostConnection } from '../entities/post-connection.entity';
+import { CreatePostInput } from '../dto/create-post.input';
+import { UpdatePostDescriptionInput } from '../dto/update-post-description.input';
+import { DeletePostInput } from '../dto/delete-post.input';
+import { ProfilePostsInput } from '../dto/profile-posts.input';
 
 @Resolver(() => PostEntity)
 export class PostsResolver {
@@ -37,14 +37,11 @@ export class PostsResolver {
     return this.postsService.profilePosts(input);
   }
 
+  // todo: переходим на получение UserId от gateway в декораторе @CurrentUserId()
   @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => PostEntity)
   createPost(@Args('input') input: CreatePostInput, @Context() context: any) {
-    const authHeader = context.req.headers?.authorization;
-    const token = authHeader?.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : undefined;
-    return this.postsService.createPost(input, context.req.user.userId, token);
+    return this.postsService.createPost(input, context.req.user.userId);
   }
 
   @UseGuards(GqlJwtAuthGuard)

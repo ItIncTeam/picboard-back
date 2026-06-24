@@ -1,13 +1,4 @@
-import {
-  Field,
-  ID,
-  Int,
-  ObjectType,
-  Parent,
-  ResolveField,
-  Resolver,
-} from '@nestjs/graphql';
-import { FileReference } from './file-reference.entity';
+import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
 export class PostAttachmentEntity {
@@ -16,12 +7,4 @@ export class PostAttachmentEntity {
 
   @Field(() => Int)
   sortOrder: number;
-}
-
-@Resolver(() => PostAttachmentEntity)
-export class PostAttachmentResolver {
-  @ResolveField(() => FileReference)
-  file(@Parent() attachment: PostAttachmentEntity) {
-    return { __typename: 'File', id: attachment.fileId };
-  }
 }

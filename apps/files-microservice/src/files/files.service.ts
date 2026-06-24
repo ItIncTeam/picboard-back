@@ -11,7 +11,7 @@ export class FilesService {
   constructor(
     private readonly prisma: FilesPrismaService,
     private readonly appConfig: AppConfig,
-    @Inject(FILES_RMQ_CLIENT) private readonly client: ClientProxy,
+    // @Inject(FILES_RMQ_CLIENT) private readonly client: ClientProxy,
   ) {}
 
   findById(id: string) {
