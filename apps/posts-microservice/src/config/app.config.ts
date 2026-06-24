@@ -48,4 +48,12 @@ export class AppConfig {
     }
     return value;
   }
+
+  get filesServiceUrl(): any {
+    const value = this.configService.get<string>('FILES_SERVICE_URL');
+    if (!value) {
+      throw new Error('FILES_SERVICE_URL is not defined');
+    }
+    return value;
+  }
 }

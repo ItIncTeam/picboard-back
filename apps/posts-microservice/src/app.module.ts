@@ -18,6 +18,7 @@ import { AppConfigModule } from './config/app-config.module';
       autoSchemaFile: {
         federation: 2,
       },
+      path: '/api/v1',
       sortSchema: true,
       playground: true,
       context: ({ req }) => ({ req }),

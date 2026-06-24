@@ -1,11 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-  SignInUserCommand,
-  SignInUserUseCase,
-} from './sign-in-user.use.case';
-import { CreateRefreshTokenCommand } from '../create-refresh-token/create-refresh-token.use-case';
+import { SignInUserCommand, SignInUserUseCase } from './sign-in-user.use.case';
+import { IssueSessionCommand } from '../issue-session/issue-session.use.case';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { PasswordHasher } from '../../../domain/services/password-hasher';
 import { TokenService } from '../../../domain/services/token.service';
@@ -39,7 +36,7 @@ describe('SignInUserUseCase', () => {
       findByUsername: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
-    } as jest.Mocked<UsersRepository>;
+    } as unknown as jest.Mocked<UsersRepository>;
 
     passwordHasher = {
       hash: jest.fn(),
@@ -75,7 +72,10 @@ describe('SignInUserUseCase', () => {
       usersRepository.findByEmail.mockResolvedValue(user);
       passwordHasher.compare.mockResolvedValue(true);
       tokenService.signAccessToken.mockResolvedValue('access-token-abc');
-      commandBus.execute.mockResolvedValue('refresh-token-xyz');
+      commandBus.execute.mockResolvedValue({
+        accessToken: 'access-token-abc',
+        refreshToken: 'refresh-token-xyz',
+      });
 
       const command = new SignInUserCommand({
         email: 'test@example.com',
@@ -95,12 +95,8 @@ describe('SignInUserUseCase', () => {
         'correct-password',
         user.passwordHash,
       );
-      expect(tokenService.signAccessToken).toHaveBeenCalledWith({
-        sub: user.id,
-        email: user.email,
-      });
       expect(commandBus.execute).toHaveBeenCalledWith(
-        new CreateRefreshTokenCommand(user.id, user.email),
+        new IssueSessionCommand(user.id, user.email),
       );
     });
   });
@@ -179,7 +175,10 @@ describe('SignInUserUseCase', () => {
 
   describe('OAuth account (no passwordHash)', () => {
     it('should throw UnauthorizedException when passwordHash is null', async () => {
-      const user = createUser({ passwordHash: null, _explicitPasswordHash: true });
+      const user = createUser({
+        passwordHash: null,
+        _explicitPasswordHash: true,
+      });
       usersRepository.findByEmail.mockResolvedValue(user);
 
       const command = new SignInUserCommand({

@@ -72,13 +72,11 @@ export class GoogleOAuthController {
     @Query('code') code?: string,
     @Query('state') state?: string,
     @Query('error') error?: string,
-    /*@Query('error_description') errorDescription?: string,*/
   ) {
     const savedState = req.cookies?.oauth_state;
     const verifier = req.cookies?.oauth_pkce_verifier;
 
     if (error) {
-      /*throw new BadRequestException(`Google OAuth error: ${error}`);*/
       res.clearCookie('oauth_state', { path: '/' });
       res.clearCookie('oauth_pkce_verifier', { path: '/' });
 
@@ -88,27 +86,23 @@ export class GoogleOAuthController {
     }
 
     if (!code) {
-      /*throw new BadRequestException('Missing OAuth callback parameters');*/
       return res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=no_code}`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=no_code`,
       );
     }
 
     if (!state || !savedState || state !== savedState) {
       return res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=invalid_state}`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=invalid_state`,
       );
-      /*throw new BadRequestException('Invalid OAuth state');*/
     }
 
     if (!verifier) {
-      /*throw new BadRequestException('Missing PKCE code verifier');*/
       return res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=no_pkce_verifier}`,
+        `${this.appConfig.frontendUrl}/auth/callback?error=no_pkce_verifier`,
       );
     }
 
-    /* try {*/
     const googleOAuthResult: GoogleOAuthOutput = await this.commandBus.execute(
       new CompleteGoogleOAuthCommand({
         code,
@@ -139,11 +133,6 @@ export class GoogleOAuthController {
     const loginResult: GoogleOAuthLoginOutput = await this.commandBus.execute(
       new CompleteGoogleOAuthLoginCommand(payload),
     );
-    /*if (loginResult.status === 'signed_in_existing_oauth') {
-      return res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=oauth_exists`,
-      );
-    } //todo: redirect logic: FRONTS REDIRECT TO SIGN IN AND USER IS LOGGED IN WITH ACCESS AND REFRESH TOKENS*/
 
     const exchangeCode: CreateOAuthExchangeCodeOutput =
       await this.commandBus.execute(
@@ -159,21 +148,5 @@ export class GoogleOAuthController {
     return res.redirect(
       `${this.appConfig.frontendUrl}/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
     );
-    /*} catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      /!*this.logger.error(GitHub OAuth error: ${message});*!/
-
-      const errorType = message.includes('verified')
-        ? 'email_not_verified'
-        : message.includes('No code')
-          ? 'no_code'
-          : message.includes('token exchange')
-            ? 'token_exchange'
-            : 'internal';
-
-      res.redirect(
-        `${this.appConfig.frontendUrl}/auth/callback?error=${errorType}`,
-      );
-    }*/
   }
 }

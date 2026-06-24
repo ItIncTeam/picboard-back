@@ -1,21 +1,24 @@
-import { Field, ID, ObjectType, Directive } from '@nestjs/graphql';
-import { User } from './user.stub';
+import { Directive, Field, ID, ObjectType } from '@nestjs/graphql';
+import { PostAttachmentEntity } from './post-attachment.entity';
 
 @ObjectType()
 @Directive('@key(fields: "id")')
-export class Post {
+export class PostEntity {
   @Field(() => ID)
   id: string;
 
   @Field()
-  authorId: string;
-
-  @Field()
-  text: string;
+  ownerId: string;
 
   @Field({ nullable: true })
-  coverImageFileId?: string;
+  description?: string;
 
-  @Field(() => User)
-  author: User;
+  @Field(() => [PostAttachmentEntity])
+  attachments: PostAttachmentEntity[];
+
+  @Field()
+  createdAt: Date;
+
+  @Field()
+  updatedAt: Date;
 }

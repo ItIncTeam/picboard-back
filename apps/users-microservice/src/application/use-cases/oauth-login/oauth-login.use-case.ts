@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { OAuthAccountsRepository } from '../../../domain/repositories/oauth-account/oauth-accounts.repository';
 import { OAuthAccountEntity } from '../../../domain/entities/oauth-account.entity';
+import { UserEntity } from '../../../domain/entities/user.entity';
 
 export class OAuthLoginCommand {
   constructor(
@@ -10,14 +11,12 @@ export class OAuthLoginCommand {
     public readonly providerId: string,
     public readonly email: string,
     public readonly username: string,
-    public readonly device?: string,
+    public readonly avatarUrl?: string | null,
   ) {}
 }
 
 export class OAuthLoginResult {
   userId: string;
-  isNewUser: boolean;
-  isNewOauth: boolean;
 }
 
 @CommandHandler(OAuthLoginCommand)
@@ -32,7 +31,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
   ) {}
 
   async execute(command: OAuthLoginCommand): Promise<OAuthLoginResult> {
-    // 1. Ищем существующий OAuth аккаунт
+    // 1. Look for an existing OAuth account
     const existingAccount: OAuthAccountEntity | null =
       await this.oauthAccountsRepository.findByProviderAndProviderId(
         command.provider,
@@ -42,30 +41,31 @@ export class OAuthLoginUseCase implements ICommandHandler<
     if (existingAccount) {
       return {
         userId: existingAccount.userId,
-        isNewUser: false,
-        isNewOauth: false,
       };
     }
 
-    // 2. Не найден — проверяем email
+    // 2. Not found — check by email
     const existingUser = await this.usersRepository.findByEmail(command.email);
 
     if (existingUser) {
-      // Email уже занят — привязываем OAuth к существующему аккаунту
-      // Это безопасно, т.к. email прошёл проверку verified через GithubOAuthService
+      // Email already taken — link OAuth to existing account
+      // Safe because the email was verified via GithubOAuthService
       await this.oauthAccountsRepository.create({
         userId: existingUser.id,
         provider: command.provider,
         providerId: command.providerId,
         username: command.username,
         email: command.email,
+        // avatarUrl: command.avatarUrl, // Todo: add avatarUrl to User schema
       });
 
-      return { userId: existingUser.id, isNewUser: false, isNewOauth: true };
+      return {
+        userId: existingUser.id,
+      };
     }
 
-    // 3. Email свободен — создаём нового пользователя
-    const newUser = await this.usersRepository.create({
+    // 3. Email is free — create a new user
+    const newUser: UserEntity = await this.usersRepository.create({
       email: command.email,
       username: command.username,
       passwordHash: null,
@@ -82,6 +82,8 @@ export class OAuthLoginUseCase implements ICommandHandler<
       email: command.email,
     });
 
-    return { userId: newUser.id, isNewUser: true, isNewOauth: true };
+    return {
+      userId: newUser.id,
+    };
   }
 }
