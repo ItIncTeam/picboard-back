@@ -27,18 +27,22 @@ export class CookieForwardingDataSource extends RemoteGraphQLDataSource {
       try {
         const payload = this.jwtService.verify(token);
         // Forward userId to all subgraphs
-        request.http?.headers.set('x-user-id', payload.userId);
-      } catch (error) {
+        request.http?.headers.set('authorization', authHeader);
+        request.http?.headers.set(
+          'x-user-id',
+          String(payload.userId ?? payload.sub) /*payload.userId*/,
+        );
+      } catch /*(error)*/ {
         throw new UnauthorizedException('Invalid or expired token');
       }
-    } else {
+    } /*else {
       throw new UnauthorizedException('No authorization header');
-    }
+    }*/
 
-    // Forward authorization header (existing logic)
+    /*// Forward authorization header (existing logic)
     if (authHeader) {
       request.http?.headers.set('authorization', authHeader);
-    }
+    }*/
 
     // Forward cookies from the client to the subgraph
     const cookie = context.req?.headers?.cookie;

@@ -69,7 +69,7 @@ import { CookieForwardingDataSource } from './auth/authenticated-data-source';
     }),
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
-      imports: [AppConfigModule],
+      imports: [AppConfigModule, JwtModule],
       inject: [AppConfig, JwtService],
       useFactory: (config: AppConfig, jwtService: JwtService) => ({
         server: {
