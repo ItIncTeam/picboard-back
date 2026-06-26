@@ -38,13 +38,13 @@ export class PostsResolver {
   }
 
   // todo: переходим на получение UserId от gateway в декораторе @CurrentUserId()
-  @UseGuards(GqlJwtAuthGuard)
+  // @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => PostEntity)
   createPost(@Args('input') input: CreatePostInput, @Context() context: any) {
     return this.postsService.createPost(input, context.req.user.userId);
   }
 
-  @UseGuards(GqlJwtAuthGuard)
+  // @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => PostEntity)
   updatePostDescription(
     @Args('input') input: UpdatePostDescriptionInput,
@@ -56,7 +56,7 @@ export class PostsResolver {
     );
   }
 
-  @UseGuards(GqlJwtAuthGuard)
+  // @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => Boolean)
   deletePost(@Args('input') input: DeletePostInput, @Context() context: any) {
     return this.postsService.deletePost(input, context.req.user.userId);

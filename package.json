@@ -8,6 +8,9 @@
   "scripts": {
     "build": "nest build",
     "build:users": "nest build users-microservice",
+    "build:posts": "nest build posts-microservice",
+    "build:files": "nest build files-microservice",
+    "build:gateway": "nest build gateway-microservice",
     "start:dev:all": "cross-env NODE_ENV=development nest start users-microservice --watch && cross-env NODE_ENV=development nest start posts-microservice --watch && cross-env NODE_ENV=development nest start files-microservice --watch && cross-env NODE_ENV=development nest start gateway --watch",
     "start:dev:users": "cross-env NODE_ENV=development nest start users-microservice --watch",
     "start:dev:posts": "cross-env NODE_ENV=development nest start posts-microservice --watch",
