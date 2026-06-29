@@ -5,41 +5,45 @@ import { ConfigService } from '@nestjs/config';
 export class AppConfig {
   constructor(private readonly configService: ConfigService) {}
 
+  private required(key: string): string {
+    const value = this.configService.get<string>(key);
+    if (!value) throw new Error(`${key} is not defined`);
+    return value;
+  }
+
   get port(): number {
-    const value = this.configService.get<string>('PORT');
-    if (!value) throw new Error('PORT is not defined');
-    return Number(value);
+    return Number(this.required('PORT'));
   }
 
   get usersGqlUrl(): string {
-    const value = this.configService.get<string>('USERS_GQL_URL');
-    if (!value) throw new Error('USERS_GQL_URL is not defined');
-    return value;
+    return this.required('USERS_GQL_URL');
   }
 
   get postsGqlUrl(): string {
-    const value = this.configService.get<string>('POSTS_GQL_URL');
-    if (!value) throw new Error('POSTS_GQL_URL is not defined');
-    return value;
+    return this.required('POSTS_GQL_URL');
   }
 
   get filesGqlUrl(): string {
-    const value = this.configService.get<string>('FILES_GQL_URL');
-    if (!value) throw new Error('FILES_GQL_URL is not defined');
-    return value;
+    return this.required('FILES_GQL_URL');
   }
 
   get jwtAccessSecret(): string {
-    const value = this.configService.get<string>('JWT_ACCESS_SECRET');
-    if (!value) throw new Error('JWT_ACCESS_SECRET is not defined');
-    return value;
+    return this.required('JWT_ACCESS_SECRET');
   }
 
-  get jwtAccessExpiresIn(): any {
-    const value = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN');
-    if (!value) {
-      throw new Error('JWT_ACCESS_EXPIRES_IN is not defined');
-    }
-    return value;
+  get jwtAccessExpiresIn(): string {
+    return this.required('JWT_ACCESS_EXPIRES_IN');
+  }
+
+  get usersSubgraphSecret(): string {
+    return this.required('USERS_SUBGRAPH_SECRET');
+  }
+
+  get postsSubgraphSecret(): string {
+    return this.required('POSTS_SUBGRAPH_SECRET');
+  }
+
+  get filesSubgraphSecret(): string {
+    return this.required('FILES_SUBGRAPH_SECRET');
   }
 }

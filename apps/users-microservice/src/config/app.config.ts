@@ -232,6 +232,12 @@ export class AppConfig {
     return parsed;
   }
 
+  get usersSubgraphSecret(): string {
+    const value = this.configService.get<string>('USERS_SUBGRAPH_SECRET');
+    if (!value) throw new Error('USERS_SUBGRAPH_SECRET is not defined');
+    return value;
+  }
+
   get tcpPort(): number {
     const value = this.configService.get<string>('TCP_PORT');
     if (!value) throw new Error('TCP_PORT is not defined');

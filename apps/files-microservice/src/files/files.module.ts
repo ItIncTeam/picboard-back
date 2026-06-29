@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FilesResolver } from '../graphql/resolvers/files.resolver';
-/*import { RmqModule } from '@app/rmq';
-import { FILES_RMQ_CLIENT } from './files.constants';*/
 import { AppConfigModule } from '../config/app-config.module';
-/*import { AppConfig } from '../config/app.config';*/
 import { PrismaModule } from '../infrastructure/prisma/prisma.module';
 import { FilesRepository } from '../domain/repositories/files/files.repository';
 import { PrismaFilesRepository } from '../infrastructure/prisma/repositories/prisma-files/prisma-files.repository';

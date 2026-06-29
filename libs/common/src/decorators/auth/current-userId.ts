@@ -6,10 +6,10 @@ import {
 import { GqlExecutionContext } from '@nestjs/graphql';
 
 export const CurrentUserId = createParamDecorator(
-  (data: unknown, context: ExecutionContext) => {
+  (_data: unknown, context: ExecutionContext): string => {
     const ctx = GqlExecutionContext.create(context);
     const gqlContext = ctx.getContext();
-    const userId = gqlContext.req?.headers?.['x-user-id'];
+    const userId = gqlContext.auth?.userId;
 
     if (!userId) {
       throw new UnauthorizedException('User not authenticated');

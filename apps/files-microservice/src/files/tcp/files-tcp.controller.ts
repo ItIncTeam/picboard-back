@@ -122,49 +122,4 @@ export class CreatePostUseCase {
     // 3. persist sortOrder, etc.
   }
 }*/
-
-  /*@Post('validate-for-post')
-  async validateFilesForPost(@Body() body: ValidateFilesForPostBody) {
-    const files = await this.filesRepository.findByIds(body.fileIds);
-
-    const validFileIds: string[] = [];
-    const missingFileIds: string[] = [];
-    const notOwnedFileIds: string[] = [];
-    const notReadyFileIds: string[] = [];
-
-    for (const file of files) {
-      if (!file) {
-        missingFileIds.push(fileId);
-        continue;
-      }
-
-      if (file.ownerId !== body.ownerId) {
-        notOwnedFileIds.push(fileId);
-        continue;
-      }
-
-      if (file.status !== FileStatus.READY) {
-        notReadyFileIds.push(fileId);
-        continue;
-      }
-
-      if (body.purpose && file.purpose !== body.purpose) {
-        notReadyFileIds.push(fileId);
-        continue;
-      }
-
-      validFileIds.push(fileId);
-    }
-
-    return {
-      validFileIds,
-      missingFileIds,
-      notOwnedFileIds,
-      notReadyFileIds,
-      allValid:
-        missingFileIds.length === 0 &&
-        notOwnedFileIds.length === 0 &&
-        notReadyFileIds.length === 0,
-    };
-  }*/
 }
