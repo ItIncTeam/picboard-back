@@ -1,6 +1,7 @@
 export * from './common.module';
 export * from './decorators/transform/trim';
 export * from './decorators/metadata/recaptcha';
+export * from './decorators/current-user.decorator';
 export * from './guards/recaptcha.guard';
 export * from './validation/create-validation-pipe';
 export * from './validation/format-validation-errors';
@@ -8,3 +9,4 @@ export * from './validation/types/validation-error-item.type';
 export * from './filters/map-prisma-error-code';
 export * from './graphql/create-graphql-format-error';
 export * from './graphql/types/graphql-api-error.type';
+export * from './graphql/normalize-context';
