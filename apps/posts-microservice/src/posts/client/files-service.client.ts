@@ -1,14 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { AppConfig } from '../../config/app.config';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ClientProxy, ClientTCP } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout, TimeoutError } from 'rxjs';
+import { AppConfig } from '../../config/app.config';
 
-export interface ValidateFilesResponse {
+/** TCP-паттерн для валидации файлов — должен совпадать с files-service */
+export const FILES_TCP_PATTERNS = {
+  CHECK_OWNED_READY: { cmd: 'files.checkOwnedReady' },
+} as const;
+
+export interface CheckOwnedReadyResponse {
   validFileIds: string[];
-  missingFileIds: string[];
-  notOwnedFileIds: string[];
-  notReadyFileIds: string[];
-  allValid: boolean;
+  invalidFileIds: string[];
 }
 
 @Injectable()
@@ -17,17 +19,39 @@ export class FilesServiceClient {
 
   constructor(private readonly appConfig: AppConfig) {
     this.client = new ClientTCP({
-      port: 4000, //todo: вынести в .env
-      host: 'files-service', // todo: имя Docker-hostname, для локальной работы localhost
+      port: appConfig.filesTcpPort,
+      host: appConfig.filesTcpHost,
     });
   }
 
   async validateOwnedFiles(
     fileIds: string[],
     ownerId: string,
-  ): Promise<ValidateFilesResponse> {
-    return firstValueFrom(
-      this.client.send({ cmd: 'validate_for_post' }, { fileIds, ownerId }), // todo: взять из lib константанту FILES_TCP_PATTERNS взять input/output models
-    );
+  ): Promise<CheckOwnedReadyResponse> {
+    try {
+      return await firstValueFrom(
+        this.client
+          .send<CheckOwnedReadyResponse>(FILES_TCP_PATTERNS.CHECK_OWNED_READY, {
+            ownerId,
+            fileIds,
+          })
+          .pipe(timeout(5000)),
+      );
+    } catch (error) {
+      if (error instanceof TimeoutError) {
+        throw new BadRequestException('Files service timeout');
+      }
+      throw new BadRequestException('Files service unavailable');
+    }
+  }
+
+  async assertAllOwnedReady(fileIds: string[], ownerId: string): Promise<void> {
+    const result = await this.validateOwnedFiles(fileIds, ownerId);
+
+    if (result.invalidFileIds.length > 0) {
+      throw new BadRequestException(
+        `Invalid file ids: ${result.invalidFileIds.join(', ')}`,
+      );
+    }
   }
 }

@@ -1,6 +1,6 @@
 //configModule from './dynamic-config.module' HAS TO BE IMPORTED ON TOP OF EVERYTHING!
 import { configModule } from './dynamic-config.module';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import {
   ApolloFederationDriver,
@@ -8,6 +8,8 @@ import {
 } from '@nestjs/apollo';
 import { PostsModule } from './posts/posts.module';
 import { AppConfigModule } from './config/app-config.module';
+import { SubgraphGatewayAuthMiddleware } from './common/subgraph-gateway-auth.middleware';
+import { normalizeContext } from '@app/common';
 
 @Module({
   imports: [
@@ -21,9 +23,13 @@ import { AppConfigModule } from './config/app-config.module';
       path: '/api/v1',
       sortSchema: true,
       playground: true,
-      context: ({ req }) => ({ req }),
+      context: ({ req }) => normalizeContext(req),
     }),
     PostsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): any {
+    consumer.apply(SubgraphGatewayAuthMiddleware).forRoutes('*');
+  }
+}
