@@ -1,15 +1,10 @@
 import {
   Args,
-  Context,
   Mutation,
   Query,
   ResolveReference,
   Resolver,
-  ResolveField,
-  Parent,
 } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
-import { GqlJwtAuthGuard } from '@app/auth';
 import { PostsService } from '../posts.service';
 import { PostEntity } from '../entities/post.entity';
 import { PostConnection } from '../entities/post-connection.entity';
@@ -17,6 +12,7 @@ import { CreatePostInput } from '../dto/create-post.input';
 import { UpdatePostDescriptionInput } from '../dto/update-post-description.input';
 import { DeletePostInput } from '../dto/delete-post.input';
 import { ProfilePostsInput } from '../dto/profile-posts.input';
+import type { AuthUser, CurrentUser } from '@app/common';
 
 @Resolver(() => PostEntity)
 export class PostsResolver {
@@ -38,33 +34,28 @@ export class PostsResolver {
   }
 
   // todo: переходим на получение UserId от gateway в декораторе @CurrentUserId()
-  // @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => PostEntity)
-  createPost(@Args('input') input: CreatePostInput, @Context() context: any) {
-    return this.postsService.createPost(input, context.req.user.userId);
+  createPost(
+    @Args('input') input: CreatePostInput,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.postsService.createPost(input, user.userId);
   }
 
-  // @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => PostEntity)
   updatePostDescription(
     @Args('input') input: UpdatePostDescriptionInput,
-    @Context() context: any,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.postsService.updatePostDescription(
-      input,
-      context.req.user.userId,
-    );
+    return this.postsService.updatePostDescription(input, user.userId);
   }
 
-  // @UseGuards(GqlJwtAuthGuard)
   @Mutation(() => Boolean)
-  deletePost(@Args('input') input: DeletePostInput, @Context() context: any) {
-    return this.postsService.deletePost(input, context.req.user.userId);
-  }
-
-  @ResolveField(() => String, { name: 'author' })
-  resolveAuthor(@Parent() post: PostEntity) {
-    return { __typename: 'User', id: post.ownerId };
+  deletePost(
+    @Args('input') input: DeletePostInput,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.postsService.deletePost(input, user.userId);
   }
 
   @ResolveReference()

@@ -10,3 +10,4 @@ export * from './validation/types/validation-error-item.type';
 export * from './filters/map-prisma-error-code';
 export * from './graphql/create-graphql-format-error';
 export * from './graphql/types/graphql-api-error.type';
+export * from './graphql/normalize-context';
