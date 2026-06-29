@@ -6,55 +6,10 @@ import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
 import { IntrospectAndCompose } from '@apollo/gateway';
 import { AppConfig } from './config/app.config';
 import { AppConfigModule } from './config/app-config.module';
-import type { Response } from 'express';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { CookieForwardingDataSource } from './auth/authenticated-data-source';
+import { PicboardDataSource } from './auth/picboard-data-source';
 
-/**
- * Custom DataSource that forwards cookies from the client to the subgraph
- * and Set-Cookie from the subgraph back to the client.
- *
- * Without this:
- * - req.cookies in the subgraph is always empty (gateway doesn't forward cookies)
- * - res.cookie / res.clearCookie in the subgraph don't work (gateway doesn't forward Set-Cookie)
- */
-/*class CookieForwardingDataSource extends RemoteGraphQLDataSource {
-  override willSendRequest({
-    request,
-    context,
-  }: {
-    request: any;
-    context: any;
-  }) {
-    // Forward authorization header (existing logic)
-    const auth = context.token ?? context.req?.headers?.authorization;
-    if (auth) {
-      request.http?.headers.set('authorization', auth);
-    }
-
-    // Forward cookies from the client to the subgraph
-    const cookie = context.req?.headers?.cookie;
-    if (cookie) {
-      request.http?.headers.set('cookie', cookie);
-    }
-  }
-
-  override didReceiveResponse({
-    response,
-    context,
-  }: {
-    response: any;
-    context: any;
-  }) {
-    // Forward Set-Cookie from the subgraph back to the client
-    const setCookie = response.http?.headers?.get('set-cookie');
-    if (setCookie && context.res) {
-      context.res.setHeader('set-cookie', setCookie);
-    }
-    return response;
-  }
-}*/
-
+//This gateway module keeps JWT verification centralized and sends a distinct gateway secret to each subgraph.
 @Module({
   imports: [
     configModule,
@@ -64,36 +19,48 @@ import { CookieForwardingDataSource } from './auth/authenticated-data-source';
       inject: [AppConfig],
       useFactory: (appConfig: AppConfig) => ({
         secret: appConfig.jwtAccessSecret,
-        signOptions: { expiresIn: appConfig.jwtAccessExpiresIn },
       }),
     }),
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
       imports: [AppConfigModule, JwtModule],
       inject: [AppConfig, JwtService],
-      useFactory: (config: AppConfig, jwtService: JwtService) => ({
+      useFactory: (appConfig: AppConfig, jwtService: JwtService) => ({
         server: {
-          cors: true,
-          context: ({ req, res }: { req: any; res: Response }) => ({
-            req,
-            res,
-            user: req.user ?? null,
-            token: req.headers.authorization ?? null,
-          }),
+          path: '/api/v1',
+          cors: {
+            origin: ['https://picboard.space', 'http://localhost:3000'],
+            credentials: true,
+            methods: ['POST', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+          },
+          context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
         },
         gateway: {
           supergraphSdl: new IntrospectAndCompose({
             subgraphs: [
-              { name: 'users', url: config.usersGqlUrl },
-              { name: 'posts', url: config.postsGqlUrl },
-              { name: 'files', url: config.filesGqlUrl },
+              { name: 'users', url: appConfig.usersGqlUrl },
+              { name: 'posts', url: appConfig.postsGqlUrl },
+              { name: 'files', url: appConfig.filesGqlUrl },
             ],
           }),
-          buildService: ({ url }) => {
+          buildService: ({ name, url }) => {
             if (!url) {
               throw new Error('Subgraph URL is required');
             }
-            return new CookieForwardingDataSource(jwtService, { url });
+
+            const secretMap: Record<string, string> = {
+              users: appConfig.usersSubgraphSecret,
+              posts: appConfig.postsSubgraphSecret,
+              files: appConfig.filesSubgraphSecret,
+            };
+
+            const secret = secretMap[name];
+            if (!secret) {
+              throw new Error(`Missing subgraph secret for ${name}`);
+            }
+
+            return new PicboardDataSource(jwtService, secret, { url });
           },
         },
       }),

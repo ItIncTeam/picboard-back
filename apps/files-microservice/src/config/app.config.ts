@@ -90,4 +90,24 @@ export class AppConfig {
     }
     return value;
   }
+
+  get filesSubgraphSecret(): string {
+    const value = this.configService.get<string>('FILES_SUBGRAPH_SECRET');
+    if (!value) {
+      throw new Error('FILES_SUBGRAPH_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get nodeEnv(): string {
+    const value = this.configService.get<string>('NODE_ENV');
+    if (!value) {
+      throw new Error('NODE_ENV is not defined');
+    }
+    return value;
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
+  }
 }
