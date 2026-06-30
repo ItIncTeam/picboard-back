@@ -72,7 +72,7 @@ export class FilesResolver {
   // resolve url field on File entity
   // field resolver for url - called when frontend accesses file.url
   @ResolveField(() => String)
-  async url(@Parent() file: File): Promise<string> {
+  url(@Parent() file: File): Promise<string> {
     return this.commandBus.execute(new ResolveFileUrlCommand(file));
   }
 }

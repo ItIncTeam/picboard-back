@@ -35,6 +35,11 @@ import { PicboardDataSource } from './auth/picboard-data-source';
             allowedHeaders: ['Content-Type', 'Authorization'],
           },
           context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
+          /*context: ({ req, res }: { req: any; res: any }) => {
+            console.log('gateway context auth', req.headers.authorization);
+            console.log('gateway context cookie', req.headers.cookie);
+            return { req, res };
+          },*/
         },
         gateway: {
           supergraphSdl: new IntrospectAndCompose({
@@ -60,7 +65,12 @@ import { PicboardDataSource } from './auth/picboard-data-source';
               throw new Error(`Missing subgraph secret for ${name}`);
             }
 
-            return new PicboardDataSource(jwtService, secret, { url });
+            return new PicboardDataSource(
+              jwtService,
+              secret,
+              { url },
+              appConfig,
+            );
           },
         },
       }),

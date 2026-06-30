@@ -116,6 +116,7 @@ export class InitiateUploadBatchUseCase implements ICommandHandler<
 
       return signedItems;
     } catch (error) {
+      //todo
       // If S3 fails, files are already in DB as PENDING
       // You could mark them as FAILED or delete them
       this.logger.error('Failed to generate presigned URLs', error);

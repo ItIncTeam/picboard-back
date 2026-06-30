@@ -2,16 +2,20 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { ClientProxy, ClientTCP } from '@nestjs/microservices';
 import { firstValueFrom, timeout, TimeoutError } from 'rxjs';
 import { AppConfig } from '../../config/app.config';
+import {
+  CheckOwnedReadyFilesResponse,
+  FILES_TCP_PATTERNS,
+} from '@app/contracts';
 
 /** TCP-паттерн для валидации файлов — должен совпадать с files-service */
-export const FILES_TCP_PATTERNS = {
+/*export const FILES_TCP_PATTERNS = {
   CHECK_OWNED_READY: { cmd: 'files.checkOwnedReady' },
 } as const;
 
 export interface CheckOwnedReadyResponse {
   validFileIds: string[];
   invalidFileIds: string[];
-}
+}*/
 
 @Injectable()
 export class FilesServiceClient {
@@ -27,14 +31,17 @@ export class FilesServiceClient {
   async validateOwnedFiles(
     fileIds: string[],
     ownerId: string,
-  ): Promise<CheckOwnedReadyResponse> {
+  ): Promise<CheckOwnedReadyFilesResponse> {
     try {
       return await firstValueFrom(
         this.client
-          .send<CheckOwnedReadyResponse>(FILES_TCP_PATTERNS.CHECK_OWNED_READY, {
-            ownerId,
-            fileIds,
-          })
+          .send<CheckOwnedReadyFilesResponse>(
+            FILES_TCP_PATTERNS.CHECK_OWNED_READY,
+            {
+              ownerId,
+              fileIds,
+            },
+          )
           .pipe(timeout(5000)),
       );
     } catch (error) {

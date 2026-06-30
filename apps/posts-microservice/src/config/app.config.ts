@@ -49,6 +49,14 @@ export class AppConfig {
     return value;
   }
 
+  get postsSubgraphSecret(): string {
+    const value = this.configService.get<string>('POSTS_SUBGRAPH_SECRET');
+    if (!value) {
+      throw new Error('POSTS_SUBGRAPH_SECRET is not defined');
+    }
+    return value;
+  }
+
   get routerSecret(): string {
     const value = this.configService.get<string>('ROUTER_SECRET');
     if (!value) {

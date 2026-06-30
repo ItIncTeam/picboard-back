@@ -1,4 +1,5 @@
 import { FileStatus } from '../../../domain/enums/file-status.enum';
+import { Mime } from '../../../domain/enums/file-mime';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   BadRequestException,
@@ -75,6 +76,15 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
           bucket: file.bucket,
           key: file.storageKey,
         });
+        /*console.log(objectMetadata);
+        {
+          key: 'post_image/790bcb34-1180-4498-aa91-47761b71e0c3/2026/06/a6129cd7-306c-47e7-b147-0c70fec91872',
+            size: 78350,
+          mimeType: 'image/png',
+          lastModified: 2026-06-30T12:38:24.000Z,
+          eTag: '"74f092f2730dbba49580c33ddeeeaae2"',
+          checksum: ''
+        }*/
 
         if (!objectMetadata) {
           this.logger.warn(`File ${file.id} not found in S3`);
@@ -102,9 +112,27 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
         }
 
         // Check ContentType matches declared mimeType
+        function toMimeEnum(value: string | null | undefined): Mime | null {
+          if (!value) return null;
+
+          switch (value.toLowerCase()) {
+            case 'image/png':
+            case 'png':
+              return Mime.PNG;
+
+            case 'image/jpeg':
+            case 'image/jpg':
+            case 'jpeg':
+            case 'jpg':
+              return Mime.JPEG;
+
+            default:
+              return null;
+          }
+        }
         if (
           objectMetadata.mimeType &&
-          objectMetadata.mimeType !== file.mimeType
+          toMimeEnum(objectMetadata.mimeType) !== file.mimeType
         ) {
           this.logger.warn(
             `File ${file.id} MIME mismatch: ${file.mimeType} vs ${objectMetadata.mimeType}`,

@@ -44,7 +44,7 @@ export class PostsService {
       ownerId,
     );
 
-    if (!result.allValid) {
+    /*if (!result.allValid) {
       const errors: string[] = [];
       if (result.missingFileIds.length)
         errors.push(`not found: ${result.missingFileIds}`);
@@ -53,6 +53,9 @@ export class PostsService {
       if (result.notReadyFileIds.length)
         errors.push(`not ready: ${result.notReadyFileIds}}`);
       throw new Error(`Files validation failed: ${errors.join('; ')}`);
+    }*/
+    if (result.invalidFileIds.length > 0) {
+      throw new Error(`Files validation failed`);
     }
 
     const post = await this.prisma.$transaction(async (tx) => {

@@ -8,13 +8,24 @@ import {
 } from '@nestjs/apollo';
 import { PostsModule } from './posts/posts.module';
 import { AppConfigModule } from './config/app-config.module';
-import { SubgraphGatewayAuthMiddleware } from './common/subgraph-gateway-auth.middleware';
-import { normalizeContext } from '@app/common';
+import {
+  normalizeContext,
+  SubgraphAuthModule,
+  SubgraphGatewayAuthMiddleware,
+} from '@app/common';
+import { AppConfig } from './config/app.config';
 
 @Module({
   imports: [
     configModule,
     AppConfigModule,
+    SubgraphAuthModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        secret: appConfig.postsSubgraphSecret,
+      }),
+    }),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: {
@@ -29,7 +40,7 @@ import { normalizeContext } from '@app/common';
   ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): any {
+  configure(consumer: MiddlewareConsumer) {
     consumer.apply(SubgraphGatewayAuthMiddleware).forRoutes('*');
   }
 }

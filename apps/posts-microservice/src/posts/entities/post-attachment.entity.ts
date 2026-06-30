@@ -1,4 +1,5 @@
 import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
+import { FileReference } from './file-reference.entity';
 
 @ObjectType()
 export class PostAttachmentEntity {
@@ -7,4 +8,7 @@ export class PostAttachmentEntity {
 
   @Field(() => Int)
   sortOrder: number;
+
+  @Field(() => FileReference)
+  file: FileReference;
 }

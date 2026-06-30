@@ -12,7 +12,7 @@ import { CreatePostInput } from '../dto/create-post.input';
 import { UpdatePostDescriptionInput } from '../dto/update-post-description.input';
 import { DeletePostInput } from '../dto/delete-post.input';
 import { ProfilePostsInput } from '../dto/profile-posts.input';
-import type { AuthUser, CurrentUser } from '@app/common';
+import { CurrentUserId } from '@app/common';
 
 @Resolver(() => PostEntity)
 export class PostsResolver {
@@ -37,25 +37,25 @@ export class PostsResolver {
   @Mutation(() => PostEntity)
   createPost(
     @Args('input') input: CreatePostInput,
-    @CurrentUser() user: AuthUser,
+    @CurrentUserId() userId: string,
   ) {
-    return this.postsService.createPost(input, user.userId);
+    return this.postsService.createPost(input, userId);
   }
 
   @Mutation(() => PostEntity)
   updatePostDescription(
     @Args('input') input: UpdatePostDescriptionInput,
-    @CurrentUser() user: AuthUser,
+    @CurrentUserId() userId: string,
   ) {
-    return this.postsService.updatePostDescription(input, user.userId);
+    return this.postsService.updatePostDescription(input, userId);
   }
 
   @Mutation(() => Boolean)
   deletePost(
     @Args('input') input: DeletePostInput,
-    @CurrentUser() user: AuthUser,
+    @CurrentUserId() userId: string,
   ) {
-    return this.postsService.deletePost(input, user.userId);
+    return this.postsService.deletePost(input, userId);
   }
 
   @ResolveReference()

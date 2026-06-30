@@ -1,4 +1,4 @@
-import {
+/*import {
   Injectable,
   NestMiddleware,
   UnauthorizedException,
@@ -19,4 +19,4 @@ export class SubgraphGatewayAuthMiddleware implements NestMiddleware {
 
     next();
   }
-}
+}*/

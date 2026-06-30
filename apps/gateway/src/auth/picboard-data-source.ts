@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RemoteGraphQLDataSource } from '@apollo/gateway';
+import { AppConfig } from '../config/app.config';
 
 //This datasource always authenticates the gateway to the subgraph, and only verifies a user token when one is actually present.
 type GatewayReqHeaders = Record<string, string | string[] | undefined>;
@@ -28,6 +29,7 @@ export class PicboardDataSource extends RemoteGraphQLDataSource {
     private readonly jwtService: JwtService,
     private readonly routerSecret: string,
     options: { url: string },
+    private readonly appConfig: AppConfig,
   ) {
     super(options);
   }
@@ -39,19 +41,28 @@ export class PicboardDataSource extends RemoteGraphQLDataSource {
     request: any;
     context: GatewayContext;
   }) {
+    /*console.log('willSendRequest fired');
+    console.log('context headers', context?.req?.headers);*/
+
     request.http?.headers.set('Router-Authorization', this.routerSecret);
 
     const rawAuthHeader = context?.req?.headers?.authorization;
     const authHeader = Array.isArray(rawAuthHeader)
       ? rawAuthHeader[0]
       : rawAuthHeader;
+    /*console.log('authHeader in datasource', authHeader);*/
 
     if (authHeader) {
       const token = authHeader.replace(/^Bearer\s+/i, ''); // Remove 'Bearer '
       let payload: JwtPayload;
 
       try {
-        payload = this.jwtService.verify(token);
+        /*payload = this.jwtService.verify(token);*/
+        payload = this.jwtService.verify(token, {
+          secret: this.appConfig.jwtAccessSecret, //when logged, appears twice, why?
+          /*algorithms: ['HS256'],*/
+        });
+        /*console.log('verified in gateway', payload);*/
       } catch {
         throw new UnauthorizedException('Invalid or expired token');
       }
