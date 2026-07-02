@@ -27,7 +27,7 @@ export class File {
   @Field(() => FileStatus)
   status: FileStatus;
 
-  storageKey: string; // Internal field - not exposed to gateway
+  storageKey: string; // internal field - not exposed to gateway
 
   @Field()
   url?: string;

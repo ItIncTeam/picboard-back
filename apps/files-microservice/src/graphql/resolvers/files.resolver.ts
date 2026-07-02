@@ -8,11 +8,11 @@ import {
 } from '@nestjs/graphql';
 import { File } from '../types/file.type';
 import { InitiateUploadInput } from '../inputs/initiate-upload.input';
-import { InitiateUploadPayload } from '../types/initiateUpload.payload';
+import { InitiateUploadPayload } from '../types/payloads/initiate-upload.payload';
 import { CommandBus } from '@nestjs/cqrs';
 import { InitiateUploadBatchCommand } from '../../application/use-cases/initiate-upload/initiate-upload-batch.use.case';
 import { CurrentUserId } from '@app/common';
-import { CompleteUploadPayload } from '../types/complete-upload.payload';
+import { CompleteUploadPayload } from '../types/payloads/complete-upload.payload';
 import { CompleteUploadInput } from '../inputs/complete-upload.input';
 import { CompleteUploadBatchCommand } from '../../application/use-cases/complete-upload/complete-upload-batch.use.case';
 import { Logger, NotFoundException } from '@nestjs/common';
