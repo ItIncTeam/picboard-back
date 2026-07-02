@@ -1,4 +1,4 @@
-import { Field, ID, ObjectType, Directive } from '@nestjs/graphql';
+import { Field, ID, ObjectType, Directive, Int } from '@nestjs/graphql';
 import { Purpose } from '../../domain/enums/file-purpose.enum';
 import { FileStatus } from '../../domain/enums/file-status.enum';
 import { Mime } from '../../domain/enums/file-mime';
@@ -21,13 +21,12 @@ export class File {
   @Field(() => Mime)
   mimeType: Mime;
 
-  @Field()
+  @Field(() => Int)
   size: number;
 
   @Field(() => FileStatus)
   status: FileStatus;
 
-  @Field()
   storageKey: string; // Internal field - not exposed to gateway
 
   @Field()

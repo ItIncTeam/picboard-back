@@ -25,6 +25,6 @@ export class InitiateUploadInput {
   mimeType: Mime;
 
   @Field(() => Int)
-  @Max(20_000_000_000) //20MB
+  @Max(20_971_520) //20MB
   size: number;
 }
