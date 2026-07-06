@@ -9,6 +9,6 @@ export class PostAttachmentEntity {
   @Field(() => Int)
   sortOrder: number;
 
-  @Field(() => FileReference)
-  file: FileReference;
+  @Field(() => FileReference, { nullable: true })
+  file: FileReference | null;
 }

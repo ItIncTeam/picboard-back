@@ -1,6 +1,6 @@
 import { Field, ID, InputType, Int } from '@nestjs/graphql';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { POST_RULES } from '../posts.constants';
+import { POST_RULES } from '../../posts.constants';
 
 @InputType()
 export class ProfilePostsInput {

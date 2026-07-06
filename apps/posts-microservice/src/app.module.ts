@@ -14,6 +14,7 @@ import {
   SubgraphGatewayAuthMiddleware,
 } from '@app/common';
 import { AppConfig } from './config/app.config';
+import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 
 @Module({
   imports: [
@@ -34,7 +35,10 @@ import { AppConfig } from './config/app.config';
       path: '/api/v1',
       sortSchema: true,
       playground: true,
-      context: ({ req }) => normalizeContext(req),
+      context: ({ req, res }) => ({
+      dataloaderFactory: new DataloaderFactory(),
+      ...normalizeContext(req, res),
+      }),
     }),
     PostsModule,
   ],

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsersResolver } from './users.resolver';
-import { UsersService } from './users.service';
+
 import { JwtModule } from '@nestjs/jwt';
 import { AppConfigModule } from '../config/app-config.module';
 import { AppConfig } from '../config/app.config';
@@ -87,7 +87,6 @@ import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
   controllers: [GoogleOAuthController],
   providers: [
     UsersResolver,
-    UsersService,
     AuthResolver,
     SignUpUserUseCase,
     SignInUserUseCase,

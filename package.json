@@ -86,6 +86,7 @@
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
     "cross-env": "^10.1.0",
+    "dataloader": "^2.2.3",
     "dotenv": "^17.4.2",
     "graphql": "^16.11.0",
     "node-fetch": "^3.3.2",

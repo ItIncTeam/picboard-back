@@ -14,11 +14,13 @@ import { FilesModule } from './files/files.module';
 import { File } from '../src/graphql/types/file.type';
 import {
   createGraphqlFormatError,
+  normalizeContext,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
 } from '@app/common';
 import { AppConfigModule } from './config/app-config.module';
 import { AppConfig } from './config/app.config';
+import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 
 @Module({
   imports: [
@@ -47,19 +49,8 @@ import { AppConfig } from './config/app.config';
         sortSchema: true,
         playground: true /*!appConfig.isProduction*/,
         context: ({ req, res }) => ({
-          req,
-          res,
-          auth: {
-            userId: req.headers['x-user-id']
-              ? String(req.headers['x-user-id'])
-              : null,
-            role: req.headers['x-user-role']
-              ? String(req.headers['x-user-role'])
-              : null,
-            sessionId: req.headers['x-session-id']
-              ? String(req.headers['x-session-id'])
-              : null,
-          },
+          dataloaderFactory: new DataloaderFactory(),
+          ...normalizeContext(req, res),
         }),
         formatError: createGraphqlFormatError(appConfig.isProduction),
       }),

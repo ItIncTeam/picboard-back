@@ -5,6 +5,7 @@ import {
   Resolver,
   ResolveField,
   Parent,
+  Context,
 } from '@nestjs/graphql';
 import { File } from '../types/file.type';
 import { InitiateUploadInput } from '../inputs/initiate-upload.input';
@@ -18,6 +19,7 @@ import { CompleteUploadBatchCommand } from '../../application/use-cases/complete
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ResolveFileUrlCommand } from '../../application/use-cases/resolve-file-url/resolve-file-url.use.case';
 import { FilesRepository } from '../../domain/repositories/files/files.repository';
+import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 
 @Resolver(() => File)
 export class FilesResolver {
@@ -53,26 +55,52 @@ export class FilesResolver {
   }
 
   //resolve entire File entity by @key (from gateway)
+  //return file or null now
   @ResolveReference()
-  async resolveFile(reference: {
-    __typename: string;
-    id: string;
-  }): Promise<File> {
+  async resolveFile(
+    reference: {
+      __typename: string;
+      id: string;
+    },
+    @Context() context: { dataloaderFactory: DataloaderFactory },
+  ): Promise<File | null> {
     this.logger.debug(`Resolving File reference. fileId=${reference.id}`);
 
-    const file = await this.filesRepository.findById(reference.id);
-    if (!file) {
-      this.logger.warn(`Referenced file not found. fileId=${reference.id}`);
-      throw new NotFoundException('File not found');
+    if (!reference?.id) {
+      return null;
     }
 
-    return file;
+    const loader = context.dataloaderFactory.create<string, File | null>(
+      'files',
+      async (ids: string[]) => {
+        const files = await this.filesRepository.findByIds(ids);
+        const fileMap = new Map(files.map((f) => [f.id, f]));
+        return ids.map((id) => {
+          const file = fileMap.get(id);
+          if (!file) {
+            this.logger.warn(`Referenced file not found. fileId=${id}`);
+          }
+          return file ?? null;
+        });
+      },
+    );
+    return loader.load(reference.id);
+
+    // const file = await this.filesRepository.findById(reference.id);
+    // if (!file) {
+    //   this.logger.warn(`Referenced file not found. fileId=${reference.id}`);
+    //   throw new NotFoundException('File not found');
+    // }
+    //
+    // return file;
   }
 
   // resolve url field on File entity
   // field resolver for url - called when frontend accesses file.url
-  @ResolveField(() => String)
-  url(@Parent() file: File): Promise<string> {
+  @ResolveField(() => String, { nullable: true })
+  url(@Parent() file: File): Promise<string> | null {
+    //todo: think adout it
+    if (!file) return null;
     return this.commandBus.execute(new ResolveFileUrlCommand(file));
   }
 }

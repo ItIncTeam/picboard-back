@@ -63,6 +63,26 @@ export function mapCreateUserDataToPrisma(data: CreateUserData): Prisma.UserCrea
 export class PrismaUsersRepository implements UsersRepository {
   constructor(private readonly prisma: UsersPrismaService) {}
 
+  async findByIds(ids: string[]): Promise<UserEntity[]> {
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+    });
+
+    return users.map(
+      (user) =>
+        new UserEntity(
+          user.id,
+          user.email,
+          user.username,
+          user.passwordHash,
+          user.createdAt,
+          user.confirmationCode,
+          user.confirmationCodeExpDate,
+          user.isConfirmed,
+        ),
+    );
+  }
+
   async findById(id: string): Promise<UserEntity | null> {
     const user: User | null = await this.prisma.user.findUnique({
       where: { id },

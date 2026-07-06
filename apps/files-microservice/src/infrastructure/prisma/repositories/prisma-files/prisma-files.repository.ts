@@ -123,6 +123,15 @@ export class PrismaFilesRepository implements FilesRepository {
     return this.toEntity(file);
   }
 
+  async findByIds(ids: string[]): Promise<FileEntity[]> {
+    const files = await this.prisma.file.findMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+    return files.map((file) => this.toEntity(file));
+  }
+
   private toEntity(file: any): FileEntity {
     return {
       id: file.id,

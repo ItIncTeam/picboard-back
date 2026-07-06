@@ -18,4 +18,5 @@ export abstract class FilesRepository {
     timestamp?: Date | null,
   ): Promise<FileEntity>;
   abstract findById(id: string): Promise<FileEntity>;
+  abstract findByIds(ids: string[]): Promise<FileEntity[]>;
 }

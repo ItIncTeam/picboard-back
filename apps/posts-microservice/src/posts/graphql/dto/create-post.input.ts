@@ -5,7 +5,7 @@ import {
   IsOptional,
   MaxLength,
 } from 'class-validator';
-import { POST_RULES } from '../posts.constants';
+import { POST_RULES } from '../../posts.constants';
 
 @InputType()
 export class CreatePostInput {

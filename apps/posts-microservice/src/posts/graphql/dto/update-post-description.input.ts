@@ -1,6 +1,6 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-import { POST_RULES } from '../posts.constants';
+import { POST_RULES } from '../../posts.constants';
 
 @InputType()
 export class UpdatePostDescriptionInput {

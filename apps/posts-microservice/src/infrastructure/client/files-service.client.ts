@@ -1,10 +1,11 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ClientProxy, ClientTCP } from '@nestjs/microservices';
 import { firstValueFrom, timeout, TimeoutError } from 'rxjs';
 import { AppConfig } from '../../config/app.config';
 import {
   CheckOwnedReadyFilesResponse,
   FILES_TCP_PATTERNS,
+  SoftDeleteFilesInput,
 } from '@app/contracts';
 
 /** TCP-паттерн для валидации файлов — должен совпадать с files-service */
@@ -20,6 +21,7 @@ export interface CheckOwnedReadyResponse {
 @Injectable()
 export class FilesServiceClient {
   private client: ClientProxy;
+  private readonly logger = new Logger(FilesServiceClient.name);
 
   constructor(private readonly appConfig: AppConfig) {
     this.client = new ClientTCP({
@@ -28,7 +30,7 @@ export class FilesServiceClient {
     });
   }
 
-  async validateOwnedFiles(
+  private async validateOwnedFiles(
     fileIds: string[],
     ownerId: string,
   ): Promise<CheckOwnedReadyFilesResponse> {
@@ -52,7 +54,25 @@ export class FilesServiceClient {
     }
   }
 
-  async assertAllOwnedReady(fileIds: string[], ownerId: string): Promise<void> {
+  async markFilesDeleted(data: SoftDeleteFilesInput): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.client
+          .send(FILES_TCP_PATTERNS.MARK_FILES_DELETED, {
+            ownerId: data.ownerId,
+            filesIds: data.fileIds,
+          })
+          .pipe(timeout(5000)),
+      );
+    } catch (error) {
+      this.logger.error('Failed to mark files as deleted', error);
+    }
+  }
+
+  async assertAllOwnedReadyOrException(
+    fileIds: string[],
+    ownerId: string,
+  ): Promise<void> {
     const result = await this.validateOwnedFiles(fileIds, ownerId);
 
     if (result.invalidFileIds.length > 0) {

@@ -1,12 +1,13 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { PostsService } from '../posts.service';
+import { PostsRepository } from '../../domain/repositories/posts.repository';
+import { User } from '../entities/user.stub';
 
 @Resolver('User')
 export class UserPostsResolver {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsRepository: PostsRepository) {}
 
   @ResolveField('posts')
-  async getPosts(@Parent() user: any) {
-    return this.postsService.findByOwnerId(user.id);
+  async getPosts(@Parent() user: User) {
+    return this.postsRepository.findByOwnerId(user.id);
   }
 }
