@@ -385,11 +385,11 @@ apps/users-microservice/src/
     │   ├── auth-password.resolver.ts     // requestPasswordReset, resetPassword
     │   └── auth-session.resolver.ts      // login, refreshToken, logout, me
     ├── inputs/
-    │   ├── sign-up.input.ts
-    │   ├── sign-in.input.ts
-    │   ├── confirm-email.input.ts
-    │   ├── request-password-reset.input.ts
-    │   └── reset-password.input.ts
+    │   ├── sign-up.input.modelsts
+    │   ├── sign-in.input.modelsts
+    │   ├── confirm-email.input.modelsts
+    │   ├── request-password-reset.input.modelsts
+    │   └── reset-password.input.modelsts
     └── types/
         ├── user.type.ts
         ├── login-payload.type.ts         // accessToken + refreshToken + user
@@ -530,3 +530,194 @@ mutation {
 ```
 
 Не блокирует OAuth — можно делать после.
+
+---
+
+## Рефакторинг OAuth (добавить как Фазу 8)
+
+### Текущая проблема
+
+Логика дублируется между GitHub и Google контроллерами:
+
+| Операция | GitHub | Google |
+|----------|--------|--------|
+| state (CSRF) | ✅ в контроллере | ✅ в контроллере |
+| PKCE | — | ✅ в контроллере |
+| exchangeCode (API) | ✅ `GithubOAuthService` | ✅ `CompleteGoogleOAuthUseCase` |
+| getUserProfile | ✅ `GithubOAuthService` | ✅ `CompleteGoogleOAuthUseCase` |
+| login/register | ✅ `OAuthLoginUseCase` | ✅ `CompleteGoogleOAuthLoginUseCase` |
+| create exchangeCode | ✅ `CreateOAuthExchangeCodeCommand` | ✅ `CreateOAuthExchangeCodeCommand` |
+| redirect | ✅ в контроллере | ✅ в контроллере |
+
+---
+
+### Цель
+
+```
+Контроллеры (тонкие)
+  └→ OAuthService (оркестратор)
+       ├→ GithubOAuthProvider / GoogleOAuthProvider (API-вызовы)
+       └→ Use Cases (бизнес-логика)
+```
+
+---
+
+#### Шаг 1. Создать OAuthProvider — абстракцию для API провайдера
+
+```typescript
+// domain/services/oauth-provider.ts
+export abstract class OAuthProvider {
+  abstract getLoginUrl(state: string, verifier?: string): string;
+  abstract exchangeCode(code: string, verifier?: string): Promise<string>;
+  abstract getUserProfile(token: string): Promise<OAuthUserProfile>;
+}
+
+export type OAuthUserProfile = {
+  provider: string;
+  providerId: string;
+  email: string;
+  emailVerified: boolean;
+  name?: string | null;
+  avatarUrl?: string | null;
+};
+```
+
+Две реализации:
+
+```
+infrastructure/oauth/providers/
+  ├── github-oauth.provider.ts    — GitHub API
+  └── google-oauth.provider.ts    — Google API + PKCE
+```
+
+В каждом:
+- `getLoginUrl()` — формирует URL с параметрами (scope, state, code_challenge и т.д.)
+- `exchangeCode()` — обмен code на access_token
+- `getUserProfile()` — запрос профиля (с проверкой verified email)
+
+---
+
+#### Шаг 2. Создать OAuthService — оркестратор
+
+```typescript
+// infrastructure/oauth/oauth.service.ts
+@Injectable()
+export class OAuthService {
+  constructor(
+    private readonly commandBus: CommandBus,
+  ) {}
+
+  async handleCallback(
+    provider: OAuthProvider,
+    code: string,
+  ): Promise<{ redirectUrl: string }> {
+    // 1. Обмен code на токен → профиль
+    const token = await provider.exchangeCode(code);
+    const profile = await provider.getUserProfile(token);
+
+    if (!profile.emailVerified) {
+      return { redirectUrl: '/auth/callback?error=unverified_email' };
+    }
+
+    // 2. Логин или регистрация
+    const loginResult = await this.commandBus.execute(
+      new OAuthLoginCommand(
+        profile.provider,
+        profile.providerId,
+        profile.email,
+        profile.name ?? profile.email.split('@')[0],
+        profile.avatarUrl,
+      ),
+    );
+
+    // 3. Генерация exchangeCode
+    const exchangeCode = await this.commandBus.execute(
+      new CreateOAuthExchangeCodeCommand({
+        userId: loginResult.userId,
+        provider: profile.provider,
+      }),
+    );
+
+    return {
+      redirectUrl: `/auth/callback?code=${encodeURIComponent(exchangeCode.code)}`,
+    };
+  }
+}
+```
+
+---
+
+#### Шаг 3. Упростить контроллеры
+
+```typescript
+// infrastructure/oauth/github-oauth.controller.ts
+@Controller('api/v1/auth/github')
+export class GitHubOAuthController {
+  constructor(
+    private readonly oauthService: OAuthService,
+    private readonly githubProvider: GithubOAuthProvider,
+  ) {}
+
+  @Get('login')
+  login(@Res() res: Response): void {
+    const state = randomUUID();
+    res.cookie('oauth_state', state, { httpOnly: true, ... });
+    res.redirect(this.githubProvider.getLoginUrl(state));
+  }
+
+  @Get('callback')
+  async callback(@Req() req: Request, @Res() res: Response): Promise<void> {
+    // CSRF проверка state
+    const result = await this.oauthService.handleCallback(
+      this.githubProvider,
+      code,
+    );
+    res.redirect(`${this.appConfig.frontendUrl}${result.redirectUrl}`);
+  }
+}
+```
+
+---
+
+#### Шаг 4. Что станет с текущими файлами
+
+| Файл | Действие |
+|------|----------|
+| `GithubOAuthService` (текущий) | Разделить на `GithubOAuthProvider` (API) и `OAuthService` (оркестрация) |
+| `GithubOAuthController` | Упростить до вызова OAuthService |
+| `GoogleOAuthController` | Упростить до вызова OAuthService + PKCE |
+| `OAuthLoginUseCase` | Оставить, уже универсален |
+| `CreateOAuthExchangeCodeUseCase` | Оставить, уже универсален |
+| `oauth.module.ts` | Добавить провайдеры |
+
+---
+
+#### Схема после рефакторинга
+
+```
+GitHubOAuthController
+  └─ OAuthService.handleCallback(githubProvider, code)
+       ├─ githubProvider.exchangeCode(code)
+       ├─ githubProvider.getUserProfile(token)
+       ├─ OAuthLoginUseCase
+       └─ CreateOAuthExchangeCodeUseCase
+
+GoogleOAuthController
+  └─ OAuthService.handleCallback(googleProvider, code, verifier)
+       ├─ googleProvider.exchangeCode(code, verifier)
+       ├─ googleProvider.getUserProfile(token)
+       ├─ OAuthLoginUseCase
+       └─ CreateOAuthExchangeCodeUseCase
+```
+
+---
+
+#### Оценка
+
+| Шаг | Часы |
+|-----|------|
+| 1. OAuthProvider + реализации (GitHub/Google) | 2-3 |
+| 2. OAuthService (оркестратор) | 1 |
+| 3. Упрощение контроллеров | 1 |
+| 4. Тесты | 1 |
+| **Итого** | **~5-6 ч** |

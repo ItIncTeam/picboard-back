@@ -48,4 +48,32 @@ export class AppConfig {
     }
     return value;
   }
+
+  get postsSubgraphSecret(): string {
+    const value = this.configService.get<string>('POSTS_SUBGRAPH_SECRET');
+    if (!value) {
+      throw new Error('POSTS_SUBGRAPH_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get routerSecret(): string {
+    const value = this.configService.get<string>('ROUTER_SECRET');
+    if (!value) {
+      throw new Error('ROUTER_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get filesTcpHost(): string {
+    return this.configService.get<string>('FILES_TCP_HOST') ?? 'localhost';
+  }
+
+  get filesTcpPort(): number {
+    const value = this.configService.get<string>('FILES_TCP_PORT');
+    if (!value) {
+      throw new Error('FILES_TCP_PORT is not defined');
+    }
+    return Number(value);
+  }
 }

@@ -1,6 +1,11 @@
 //configModule from './dynamic-config.module' HAS TO BE IMPORTED ON TOP OF EVERYTHING!
 import { configModule } from './dynamic-config.module';
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import {
   ApolloFederationDriver,
@@ -9,13 +14,26 @@ import {
 import { UsersModule } from './users/users.module';
 import { AuthModule } from '@app/auth';
 import { AppConfigModule } from './config/app-config.module';
-import { createGraphqlFormatError } from '@app/common';
+import {
+  createGraphqlFormatError,
+  normalizeContext,
+  SubgraphAuthModule,
+  SubgraphGatewayAuthMiddleware,
+} from '@app/common';
 import { AppConfig } from './config/app.config';
+import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 
 @Module({
   imports: [
     configModule,
     AppConfigModule,
+    SubgraphAuthModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        secret: appConfig.usersSubgraphSecret,
+      }),
+    }),
     GraphQLModule.forRootAsync<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       imports: [AppConfigModule],
@@ -25,10 +43,13 @@ import { AppConfig } from './config/app.config';
           federation: 2,
         },
         path: '/api/v1',
-        introspection: true,
+        introspection: true /*!appConfig.isProduction*/,
         sortSchema: true,
-        playground: true,
-        context: ({ req, res }) => ({ req, res }),
+        playground: true /*!appConfig.isProduction*/,
+        context: ({ req, res }) => ({
+          dataloaderFactory: new DataloaderFactory(),
+          ...normalizeContext(req, res),
+        }),
         formatError: createGraphqlFormatError(appConfig.isProduction),
       }),
     }),
@@ -36,4 +57,10 @@ import { AppConfig } from './config/app.config';
     AuthModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(SubgraphGatewayAuthMiddleware)
+      .forRoutes({ path: 'api/v1', method: RequestMethod.ALL });
+  }
+}

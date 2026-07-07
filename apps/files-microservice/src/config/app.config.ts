@@ -11,6 +11,12 @@ export class AppConfig {
     return Number(value);
   }
 
+  get tcpPort(): number {
+    const value = this.configService.get<string>('TCP_PORT');
+    if (!value) throw new Error('TCP_PORT is not defined');
+    return Number(value);
+  }
+
   get rabbitMqUrl(): string {
     const value = this.configService.get<string>('RABBITMQ_URL');
     if (!value) throw new Error('RABBITMQ_URL is not defined');
@@ -35,10 +41,40 @@ export class AppConfig {
     return value;
   }
 
-  get minioBucket(): string {
-    const value = this.configService.get<string>('MINIO_BUCKET');
-    if (!value) throw new Error('MINIO_BUCKET is not defined');
+  get s3Bucket(): string {
+    const value = this.configService.get<string>('S3_BUCKET_NAME');
+    if (!value) throw new Error('S3_BUCKET_NAME is not defined');
     return value;
+  }
+
+  get s3AccessKeyId(): string {
+    const value = this.configService.get<string>('S3_ACCESS_KEY_ID');
+    if (!value) throw new Error('S3_ACCESS_KEY_ID is not defined');
+    return value;
+  }
+
+  get s3SecretAccessKeyId(): string {
+    const value = this.configService.get<string>('S3_SECRET_ACCESS_KEY_ID');
+    if (!value) throw new Error('S3_SECRET_ACCESS_KEY_ID is not defined');
+    return value;
+  }
+
+  get s3Endpoint(): string {
+    const value = this.configService.get<string>('S3_ENDPOINT');
+    if (!value) throw new Error('S3_ENDPOINT is not defined');
+    return value;
+  }
+
+  get s3Region(): string {
+    const value = this.configService.get<string>('S3_REGION');
+    if (!value) throw new Error('S3_REGION is not defined');
+    return value;
+  }
+
+  get s3UrlExpiresInSeconds(): number {
+    const value = this.configService.get<string>('S3_URL_EXPIRES_IN_SECONDS');
+    if (!value) throw new Error('S3_URL_EXPIRES_IN_SECONDS');
+    return Number(value);
   }
 
   get jwtAccessSecret(): string {
@@ -53,5 +89,25 @@ export class AppConfig {
       throw new Error('JWT_ACCESS_EXPIRES_IN is not defined');
     }
     return value;
+  }
+
+  get filesSubgraphSecret(): string {
+    const value = this.configService.get<string>('FILES_SUBGRAPH_SECRET');
+    if (!value) {
+      throw new Error('FILES_SUBGRAPH_SECRET is not defined');
+    }
+    return value;
+  }
+
+  get nodeEnv(): string {
+    const value = this.configService.get<string>('NODE_ENV');
+    if (!value) {
+      throw new Error('NODE_ENV is not defined');
+    }
+    return value;
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
   }
 }

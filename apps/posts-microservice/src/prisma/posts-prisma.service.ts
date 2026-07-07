@@ -24,3 +24,5 @@ export class PostsPrismaService
     await this.$disconnect();
   }
 }
+
+export { Prisma } from '../../../../prisma/apps/posts/src/generated/prisma/posts-client';

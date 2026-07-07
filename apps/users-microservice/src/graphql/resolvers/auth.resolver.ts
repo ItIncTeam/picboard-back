@@ -100,8 +100,6 @@ export class AuthResolver {
         id: result.user.id,
         email: result.user.email,
         username: result.user.username,
-        /*confirmationCode: result.user.confirmationCode,
-        confirmationCodeExpDate: result.user.confirmationCodeExpDate,*/
         isConfirmed: result.user.isConfirmed,
         /*displayName: undefined,
         bio: undefined,
@@ -196,14 +194,24 @@ export class AuthResolver {
   @Mutation(() => SignInPayload)
   async exchangeOAuthCode(
     @Args('input') input: OAuthExchangeCodeInput,
-    @Context('req') req: Request,
-    @Context('res') res: Response,
+    @Context() context: { req: Request; res: Response },
   ): Promise<SignInPayload> {
+    const rawClientIp = context.req.headers['x-client-ip'];
+    const rawClientUserAgent = context.req.headers['x-client-user-agent'];
+
+    const clientIp = Array.isArray(rawClientIp)
+      ? rawClientIp[0]
+      : (rawClientIp ?? 'unknown');
+
+    const clientUserAgent = Array.isArray(rawClientUserAgent)
+      ? rawClientUserAgent[0]
+      : (rawClientUserAgent ?? 'unknown');
+
     const result: ExchangeOAuthCodeResult = await this.commandBus.execute(
-      new OAuthExchangeCodeCommand(input.code, req.ip, req.get('user-agent')),
+      new OAuthExchangeCodeCommand(input.code, clientIp, clientUserAgent),
     );
 
-    res.cookie('refreshToken', result.refreshToken, {
+    context.res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: this.appConfig.nodeEnv === 'production',
       sameSite: 'lax',

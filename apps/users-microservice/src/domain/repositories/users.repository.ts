@@ -5,6 +5,8 @@ import { UpdateConfirmationData } from './update-confirmation-data.type';
 export abstract class UsersRepository {
   abstract findById(id: string): Promise<UserEntity | null>;
 
+  abstract findByIds(ids: string[]): Promise<UserEntity[]>;
+
   abstract findByUsername(username: string): Promise<UserEntity | null>;
 
   abstract findByEmail(email: string): Promise<UserEntity | null>;

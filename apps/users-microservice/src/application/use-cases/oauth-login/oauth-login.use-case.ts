@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../../domain/repositories/users.repository';
 import { OAuthAccountsRepository } from '../../../domain/repositories/oauth-account/oauth-accounts.repository';
 import { OAuthAccountEntity } from '../../../domain/entities/oauth-account.entity';
+import { UserEntity } from '../../../domain/entities/user.entity';
 
 export class OAuthLoginCommand {
   constructor(
@@ -64,7 +65,7 @@ export class OAuthLoginUseCase implements ICommandHandler<
     }
 
     // 3. Email is free — create a new user
-    const newUser = await this.usersRepository.create({
+    const newUser: UserEntity = await this.usersRepository.create({
       email: command.email,
       username: command.username,
       passwordHash: null,

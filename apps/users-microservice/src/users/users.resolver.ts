@@ -6,31 +6,57 @@ import {
   Context,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
-import { UsersService } from './users.service';
-import { UnauthorizedException, UseGuards } from '@nestjs/common';
-import { GqlJwtAuthGuard } from '@app/auth';
+import {
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
+import { UserEntity } from '../domain/entities/user.entity';
+import { UsersRepository } from '../domain/repositories/users.repository';
 
 @Resolver(() => User)
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  private readonly logger = new Logger(UsersResolver.name);
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   @Query(() => User, { nullable: true })
   user(@Args('id') id: string) {
-    return this.usersService.findById(id);
+    return this.usersRepository.findById(id);
   }
 
-  @UseGuards(GqlJwtAuthGuard)
-  @Query(() => User)
-  async me(@Context() context: any) {
-    const reqUser = context.req.user;
-    if (!reqUser?.userId) {
+  @Query(() => User, { nullable: true })
+  async me(@Context() context: { auth: { userId?: string } }) {
+    if (!context.auth?.userId) {
       throw new UnauthorizedException();
     }
-    return this.usersService.me(reqUser.userId);
+    return this.usersRepository.findById(context.auth.userId);
   }
 
   @ResolveReference()
-  resolveReference(reference: { __typename: string; id: string }) {
-    return this.usersService.findById(reference.id);
+  async resolveReference(
+    reference: { __typename: string; id: string },
+    @Context() context: { dataloaderFactory: DataloaderFactory },
+  ): Promise<UserEntity /* | null*/> {
+    if (!reference?.id) {
+      throw new NotFoundException('User ID was not provided');
+    }
+
+    const loader = context.dataloaderFactory.create<
+      string,
+      UserEntity /* | null*/
+    >('users', async (ids: string[]) => {
+      const users = await this.usersRepository.findByIds(ids);
+      const userMap = new Map(users.map((u) => [u.id, u]));
+      return ids.map((id) => {
+        const user = userMap.get(id);
+        if (!user) {
+          this.logger.warn(`Referenced user not found. userId=${id}`);
+          throw new NotFoundException('User not found');
+        }
+        return user /* ?? null*/;
+      });
+    });
+    return loader.load(reference.id);
   }
 }

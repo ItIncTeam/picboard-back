@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: DEPLOYMENT_NAME
+  namespace: NAMESPACE
+  labels:
+    app: PROJECT
+spec:
+  selector:
+    matchLabels:
+      project: PROJECT
+  template:
+    metadata:
+      namespace: NAMESPACE
+      labels:
+        project: PROJECT
+    spec:
+      containers:
+         - name: PROJECT
+           image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
+           securityContext:
+             allowPrivilegeEscalation: false
+             runAsNonRoot: true      # опционально, но хорошая практика
+             runAsUser: 1000         # опционально
+           ports:
+             - containerPort: PORT_CONTAINER
+           env:
+             - name: TCP_PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: TCP_PORT
+             - name: DATABASE_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: DATABASE_URL
+             - name: DATABASE_DIRECT_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: DATABASE_DIRECT_URL
+             - name: S3_BUCKET_NAME
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: S3_BUCKET_NAME
+             - name: S3_REGION
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: S3_REGION
+             - name: S3_ACCESS_KEY_ID
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: S3_ACCESS_KEY_ID
+             - name: S3_SECRET_ACCESS_KEY_ID
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: S3_SECRET_ACCESS_KEY_ID
+             - name: S3_URL_EXPIRES_IN_SECONDS
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: S3_URL_EXPIRES_IN_SECONDS
+             - name: FILES_SUBGRAPH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: FILES_SUBGRAPH_SECRET
+             - name: PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: files-micro-production-config-secret
+                   key: PORT

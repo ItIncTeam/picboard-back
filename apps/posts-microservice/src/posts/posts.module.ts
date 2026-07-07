@@ -1,27 +1,23 @@
 import { Module } from '@nestjs/common';
-import { PostsResolver } from './posts.resolver';
-import { PostsService } from './posts.service';
-import { RmqModule } from '@app/rmq';
+import { CqrsModule } from '@nestjs/cqrs';
+import { PostsResolver } from './graphql/posts.resolver';
 import { PostsEventsController } from './posts.events.controller';
-import { UserPostsResolver } from './user-posts.resolver';
 import { AppConfigModule } from '../config/app-config.module';
 import { AppConfig } from '../config/app.config';
 import { JwtModule } from '@nestjs/jwt';
-import { POSTS_RMQ_CLIENT } from './posts.constants';
 import { PrismaModule } from '../prisma/prisma.module';
+import { FilesServiceClient } from '../infrastructure/client/files-service.client';
+import { PostAttachmentResolver } from './graphql/post-attachment.resolver';
+import { PostsRepository } from '../domain/repositories/posts.repository';
+import { PrismaPostsRepository } from '../infrastructure/prisma/prisma-posts.repository';
+import { CreatePostUseCase } from '../application/use-cases/create-post/create-post.use.case';
+import { UpdatePostDescriptionUseCase } from '../application/use-cases/update-post-description/update-post-description.use.case';
+import { DeletePostUseCase } from '../application/use-cases/delete-post/delete-post.use.case';
 
 @Module({
   imports: [
     AppConfigModule,
-    RmqModule.registerAsync({
-      name: POSTS_RMQ_CLIENT,
-      imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (appConfig: AppConfig) => ({
-        url: appConfig.rabbitMqUrl,
-        queue: appConfig.rabbitMqQueue,
-      }),
-    }),
+    CqrsModule,
     JwtModule.registerAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -34,7 +30,18 @@ import { PrismaModule } from '../prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  providers: [PostsResolver, PostsService, UserPostsResolver],
+  providers: [
+    PostsResolver,
+    PostAttachmentResolver,
+    FilesServiceClient,
+    CreatePostUseCase,
+    UpdatePostDescriptionUseCase,
+    DeletePostUseCase,
+    {
+      provide: PostsRepository,
+      useClass: PrismaPostsRepository,
+    },
+  ],
   controllers: [PostsEventsController],
 })
 export class PostsModule {}
