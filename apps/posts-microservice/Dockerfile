@@ -1,35 +1,36 @@
 # Check out https://hub.docker.com/_/node to select a new base image
-FROM node:20.11-alpine
+FROM node:20.20.2-alpine
 ARG port
 ARG service
 ENV SERVICE=$service
 ENV PORT=$port
+ENV DATABASE_DIRECT_URL="postgresql://neondb_owner:npg_GoacVwi4b7dy@ep-broad-shadow-alxx727o.c-3.eu-central-1.aws.neon.tech/posts_db?sslmode=require&channel_binding=require"
 # Set to a non-root built-in user `node`
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
+#hardcoded pnpm version
+RUN npm install -g pnpm@10.13.1
 
 USER node
 
-# Create app directory (with user `node`)
 RUN mkdir -p /home/node/dist/${SERVICE}
-
 WORKDIR /home/node/dist/${SERVICE}
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
+
+COPY --chown=node package.json pnpm-lock.yaml pnpm-workspace.yaml nest-cli.json tsconfig.json ./
+COPY --chown=node apps ./apps
+COPY --chown=node libs ./libs
+COPY --chown=node prisma ./prisma
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm prisma:generate:posts:deployment
+RUN pnpm run build:posts
 
 
-
-COPY --chown=node package*.json ./
-
-RUN npm install
-
-# Bundle app source code
-COPY --chown=node . .
-
-RUN npm run build:${SERVICE}
-
-# Bind to all network interfaces so that it can be mapped to the host OS
 
 EXPOSE ${PORT}
 
-CMD npm run 'start:posts-microservice'
+CMD [ "pnpm", "start:prod:posts" ]
