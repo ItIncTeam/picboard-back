@@ -25,7 +25,6 @@ COPY --chown=node libs ./libs
 COPY --chown=node prisma ./prisma
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm prisma:generate:gateway:deployment
 RUN pnpm run build:gateway
 
 EXPOSE ${PORT}
