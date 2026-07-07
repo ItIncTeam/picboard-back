@@ -9,6 +9,8 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { PostEntity } from '../entities/post.entity';
 import { PostConnection } from '../entities/post-connection.entity';
+import { PostEdge } from '../entities/post-edge.entity';
+import { PageInfo } from '../entities/page-info.entity';
 import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostDescriptionInput } from './dto/update-post-description.input';
 import { DeletePostInput } from './dto/delete-post.input';
@@ -40,13 +42,26 @@ export class PostsResolver {
   }
 
   @Query(() => PostConnection)
-  async profilePosts(@Args('input') input: ProfilePostsInput) {
+  async profilePosts(@Args('input') input: ProfilePostsInput): Promise<PostConnection> {
     const limit = input.first ?? 8;
-    return this.postsRepository.findProfilePosts(
+    const result = await this.postsRepository.findProfilePosts(
       input.userId,
       limit,
       input.after ?? undefined,
     );
+
+    const edges: PostEdge[] = result.posts.map((post) => ({
+      cursor: `${post.createdAt.toISOString()}_${post.id}`,
+      node: post,
+    }));
+
+    const pageInfo: PageInfo = {
+      startCursor: edges[0]?.cursor,
+      endCursor: edges[edges.length - 1]?.cursor,
+      hasNextPage: result.hasNextPage,
+    };
+
+    return { edges, pageInfo };
   }
 
   @Mutation(() => PostEntity)

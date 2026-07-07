@@ -51,12 +51,19 @@ export class PrismaPostsRepository implements PostsRepository {
   ): Promise<{ posts: PostEntity[]; hasNextPage: boolean }> {
     const where: Prisma.PostWhereInput = { ownerId, deletedAt: null };
     if (cursor) {
-      where.createdAt = { lt: new Date(cursor) };
+      const [cursorDate, cursorId] = cursor.split('_');
+      where.OR = [
+        { createdAt: { lt: new Date(cursorDate) } },
+        {
+          createdAt: new Date(cursorDate),
+          id: { lt: cursorId },
+        },
+      ];
     }
 
     const posts = await this.prisma.post.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit + 1,
       include: { attachments: { orderBy: { sortOrder: 'asc' } } },
     });
