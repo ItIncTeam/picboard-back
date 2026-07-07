@@ -6,13 +6,18 @@ import {
   Context,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 import { UserEntity } from '../domain/entities/user.entity';
 import { UsersRepository } from '../domain/repositories/users.repository';
 
 @Resolver(() => User)
 export class UsersResolver {
+  private readonly logger = new Logger(UsersResolver.name);
   constructor(private readonly usersRepository: UsersRepository) {}
 
   @Query(() => User, { nullable: true })
@@ -32,19 +37,26 @@ export class UsersResolver {
   async resolveReference(
     reference: { __typename: string; id: string },
     @Context() context: { dataloaderFactory: DataloaderFactory },
-  ): Promise<UserEntity | null> {
+  ): Promise<UserEntity /* | null*/> {
     if (!reference?.id) {
-      return null;
+      throw new NotFoundException('User ID was not provided');
     }
 
-    const loader = context.dataloaderFactory.create<string, UserEntity | null>(
-      'users',
-      async (ids: string[]) => {
-        const users = await this.usersRepository.findByIds(ids);
-        const userMap = new Map(users.map((u) => [u.id, u]));
-        return ids.map((id) => userMap.get(id) ?? null);
-      },
-    );
+    const loader = context.dataloaderFactory.create<
+      string,
+      UserEntity /* | null*/
+    >('users', async (ids: string[]) => {
+      const users = await this.usersRepository.findByIds(ids);
+      const userMap = new Map(users.map((u) => [u.id, u]));
+      return ids.map((id) => {
+        const user = userMap.get(id);
+        if (!user) {
+          this.logger.warn(`Referenced user not found. userId=${id}`);
+          throw new NotFoundException('User not found');
+        }
+        return user /* ?? null*/;
+      });
+    });
     return loader.load(reference.id);
   }
 }

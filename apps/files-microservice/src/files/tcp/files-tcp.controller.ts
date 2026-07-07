@@ -6,6 +6,7 @@ import {
   CheckOwnedReadyFilesDto,
   CheckOwnedReadyFilesResponse,
   FILES_TCP_PATTERNS,
+  SoftDeleteFilesInput,
   SoftDeleteResponse,
 } from '@app/contracts';
 import { createRpcValidationPipe } from '@app/common/validation/create-rpc-validation-pipe';
@@ -51,7 +52,7 @@ export class FilesTcpController {
   //   );
   // }
 
-  @MessagePattern(FILES_PATTERNS.SOFT_DELETE_FILES)
+  @MessagePattern(FILES_TCP_PATTERNS.MARK_FILES_DELETED)
   @UsePipes(createRpcValidationPipe())
   async softDeleteMany(
     @Payload() payload: SoftDeleteFilesInput,

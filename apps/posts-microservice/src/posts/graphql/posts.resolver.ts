@@ -19,9 +19,11 @@ import { PostsRepository } from '../../domain/repositories/posts.repository';
 import { CreatePostCommand } from '../../application/use-cases/create-post/create-post.use.case';
 import { UpdatePostDescriptionCommand } from '../../application/use-cases/update-post-description/update-post-description.use.case';
 import { DeletePostCommand } from '../../application/use-cases/delete-post/delete-post.use.case';
+import { Logger, NotFoundException } from '@nestjs/common';
 
 @Resolver(() => PostEntity)
 export class PostsResolver {
+  private readonly logger = new Logger(PostsResolver.name);
   constructor(
     private readonly commandBus: CommandBus,
     private readonly postsRepository: PostsRepository,
@@ -78,19 +80,27 @@ export class PostsResolver {
   async resolveReference(
     reference: { __typename: string; id: string },
     @Context() context: { dataloaderFactory: DataloaderFactory },
-  ): Promise<PostEntity | null> {
+  ): Promise<PostEntity /* | null*/> {
     if (!reference?.id) {
-      return null;
+      /*return null;*/
+      throw new NotFoundException('Post ID was not provided');
     }
 
-    const loader = context.dataloaderFactory.create<string, PostEntity | null>(
-      'posts',
-      async (ids: string[]) => {
-        const posts = await this.postsRepository.findByIds(ids);
-        const postMap = new Map(posts.map((p) => [p.id, p]));
-        return ids.map((id) => postMap.get(id) ?? null);
-      },
-    );
+    const loader = context.dataloaderFactory.create<
+      string,
+      PostEntity /* | null*/
+    >('posts', async (ids: string[]) => {
+      const posts = await this.postsRepository.findByIds(ids);
+      const postMap = new Map(posts.map((p) => [p.id, p]));
+      return ids.map((id) => {
+        const post = postMap.get(id); /* ?? null)*/
+        if (!post) {
+          this.logger.warn(`Referenced post not found. postId=${id}`);
+          throw new NotFoundException('Post not found');
+        }
+        return post;
+      });
+    });
     return loader.load(reference.id);
   }
 }
