@@ -12,8 +12,6 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 #hardcoded pnpm version
 RUN npm install -g pnpm@10.13.1
 
-# Set to a non-root built-in user `node`
-
 USER node
 
 # Create app directory (with user `node`)
@@ -21,9 +19,7 @@ RUN mkdir -p /home/node/dist/${SERVICE}
 
 WORKDIR /home/node/dist/${SERVICE}
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
+
 
 
 COPY --chown=node package.json pnpm-lock.yaml pnpm-workspace.yaml nest-cli.json tsconfig.json ./
@@ -35,7 +31,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm prisma:generate:files:deployment
 RUN pnpm run build:files
 
-# Bind to all network interfaces so that it can be mapped to the host OS
+
 
 EXPOSE ${PORT}
 
