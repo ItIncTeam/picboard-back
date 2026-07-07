@@ -18,3 +18,7 @@ export class CheckOwnedReadyFilesResponse {
   validFileIds: string[];
   invalidFileIds: string[];
 }
+
+export class SoftDeleteResponse {
+  count: number;
+}

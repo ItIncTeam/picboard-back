@@ -137,4 +137,23 @@ export class PrismaFilesRepository implements FilesRepository {
       bucket: file.bucket,
     };
   }
+
+  async softDeleteMany(input: {
+    ownerId: string;
+    fileIds: string[];
+    deletedAt: Date;
+  }): Promise<number> {
+    const result = await this.prisma.file.updateMany({
+      where: {
+        id: { in: input.fileIds },
+        deletedAt: null,
+        ownerId: input.ownerId,
+      },
+      data: {
+        deletedAt: input.deletedAt,
+      },
+    });
+
+    return result.count;
+  }
 }

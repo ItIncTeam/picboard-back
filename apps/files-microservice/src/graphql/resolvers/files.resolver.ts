@@ -9,22 +9,23 @@ import {
 import { File } from '../types/file.type';
 import { InitiateUploadInput } from '../inputs/initiate-upload.input';
 import { InitiateUploadPayload } from '../types/payloads/initiate-upload.payload';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { InitiateUploadBatchCommand } from '../../application/use-cases/initiate-upload/initiate-upload-batch.use.case';
 import { CurrentUserId } from '@app/common';
 import { CompleteUploadPayload } from '../types/payloads/complete-upload.payload';
 import { CompleteUploadInput } from '../inputs/complete-upload.input';
 import { CompleteUploadBatchCommand } from '../../application/use-cases/complete-upload/complete-upload-batch.use.case';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ResolveFileUrlCommand } from '../../application/use-cases/resolve-file-url/resolve-file-url.use.case';
-import { FilesRepository } from '../../domain/repositories/files/files.repository';
+import { GetFileByIdQuery } from '../../application/handlers/get-file-by-id/get-file-by-id.handler';
+import { FileEntity } from '../../domain/entities/file.entity';
 
 @Resolver(() => File)
 export class FilesResolver {
   private readonly logger = new Logger(FilesResolver.name);
   constructor(
     private readonly commandBus: CommandBus,
-    private readonly filesRepository: FilesRepository,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @Mutation(() => [InitiateUploadPayload])
@@ -57,16 +58,10 @@ export class FilesResolver {
   async resolveFile(reference: {
     __typename: string;
     id: string;
-  }): Promise<File> {
+  }): Promise<FileEntity> {
     this.logger.debug(`Resolving File reference. fileId=${reference.id}`);
 
-    const file = await this.filesRepository.findById(reference.id);
-    if (!file) {
-      this.logger.warn(`Referenced file not found. fileId=${reference.id}`);
-      throw new NotFoundException('File not found');
-    }
-
-    return file;
+    return await this.queryBus.execute(new GetFileByIdQuery(reference.id));
   }
 
   // resolve url field on File entity
