@@ -120,6 +120,11 @@ spec:
                  secretKeyRef:
                    name: users-microservice-production-config-secret
                    key: OAUTH_CODE_EXPIRES_IN_MS
+             - name: USERS_SUBGRAPH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: USERS_SUBGRAPH_SECRET
              - name: PORT
                valueFrom:
                  secretKeyRef:

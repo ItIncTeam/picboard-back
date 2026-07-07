@@ -49,7 +49,7 @@
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start:dev": "nest start --watch",
     "prisma:generate:users:prod": "dotenv -e apps/users-microservice/src/env/.env.production -- prisma generate --config prisma/users/prisma.config.ts",
-    "prisma:generate:users:jenkins": "prisma generate --config prisma/users/prisma.config.ts",
+    "prisma:generate:users:deployment": "prisma generate --config prisma/users/prisma.config.ts",
     "prisma:generate:posts:deployment": "prisma generate --config prisma/posts/prisma.config.ts",
     "prisma:generate:files:deployment": "prisma generate --config prisma/files/prisma.config.ts",
     "start:debug": "nest start --debug --watch",
