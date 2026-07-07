@@ -19,4 +19,9 @@ export abstract class FilesRepository {
   ): Promise<FileEntity>;
   abstract findById(id: string): Promise<FileEntity>;
   abstract findByIds(ids: string[]): Promise<FileEntity[]>;
+  abstract softDeleteMany(input: {
+    ownerId: string;
+    fileIds: string[];
+    deletedAt: Date;
+  }): Promise<number>;
 }

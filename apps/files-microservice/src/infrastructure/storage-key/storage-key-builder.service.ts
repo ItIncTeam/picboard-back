@@ -18,17 +18,31 @@ export class StorageKeyBuilder {
 
   private extractExtension(originalName: string): string {
     const lastDotIndex = originalName.lastIndexOf('.');
-    if (lastDotIndex === -1) return '';
+
+    /*// rejects names with no dot at all
+    if (lastDotIndex === -1) return '';*/
+    // also rejects names that start with a dot, like .env or .bashrc
+    if (lastDotIndex <= 0) {
+      return '';
+    }
 
     const ext = originalName.slice(lastDotIndex).toLowerCase();
-    // Only allow alphanumeric + dot
-    if (!/^[.][a-z0-9]+$/.test(ext)) return '';
+
+    // only allow alphanumeric + dot
+    if (!/^\.[a-z0-9]+$/.test(ext)) {
+      return '';
+    }
+
+    // rejects extensions longer than 16 characters
+    if (ext.length > 16) {
+      return '';
+    }
 
     return ext;
   }
 
   private extractPurpose(purpose: Purpose): string {
-    const safe = purpose.toLowerCase();
+    const safe = String(purpose).toLowerCase();
     if (!/^[a-z0-9-_]+$/.test(safe)) {
       throw new BadRequestException('Invalid purpose');
     }

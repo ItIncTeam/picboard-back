@@ -29,3 +29,7 @@ export class SoftDeleteFilesInput {
   @IsString()
   ownerId: string;
 }
+
+export class SoftDeleteResponse {
+  count: number;
+}
