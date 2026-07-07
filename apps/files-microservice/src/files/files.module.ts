@@ -13,6 +13,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CompleteUploadBatchUseCase } from '../application/use-cases/complete-upload/complete-upload-batch.use.case';
 import { CheckOwnedReadyFilesHandler } from '../application/handlers/check-owned-ready-files/check-owned-ready-files.handler';
 import { ResolveFileUrlUseCase } from '../application/use-cases/resolve-file-url/resolve-file-url.use.case';
+import { GetFileByIdQueryHandler } from '../application/handlers/get-file-by-id/get-file-by-id.handler';
+import { SoftDeleteFilesUseCase } from '../application/use-cases/soft-delete-files/soft-delete-files.use.case';
 
 @Module({
   imports: [
@@ -35,7 +37,9 @@ import { ResolveFileUrlUseCase } from '../application/use-cases/resolve-file-url
     InitiateUploadBatchUseCase,
     CompleteUploadBatchUseCase,
     ResolveFileUrlUseCase,
+    SoftDeleteFilesUseCase,
     CheckOwnedReadyFilesHandler,
+    GetFileByIdQueryHandler,
     StorageKeyBuilder,
     {
       provide: FilesRepository,

@@ -1,5 +1,15 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsEnum, IsNotEmpty, IsString, Max, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { Purpose } from '../../domain/enums/file-purpose.enum';
 import { Mime } from '../../domain/enums/file-mime';
 
@@ -7,13 +17,16 @@ import { Mime } from '../../domain/enums/file-mime';
 export class InitiateUploadInput {
   @Field()
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   clientUploadId: string;
 
   @Field()
   @IsNotEmpty()
   @IsString()
   @MaxLength(255)
+  @Matches(/^[^\\/:*?"<>|\r\n\t]+$/, {
+    message: 'originalName contains invalid filename characters',
+  })
   originalName: string;
 
   @Field(() => Purpose)
@@ -25,6 +38,8 @@ export class InitiateUploadInput {
   mimeType: Mime;
 
   @Field(() => Int)
+  @IsInt()
+  @Min(1)
   @Max(20_971_520) //20MB
   size: number;
 }

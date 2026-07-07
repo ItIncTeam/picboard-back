@@ -29,6 +29,7 @@ export class File {
 
   storageKey: string; // internal field - not exposed to gateway
 
+  //todo should it be optional?
   @Field()
   url?: string;
 }

@@ -1,26 +1,44 @@
 import { Controller, Logger, UsePipes } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { QueryBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CheckOwnedReadyFilesQuery } from '../../application/handlers/check-owned-ready-files/check-owned-ready-files.handler';
 import {
   CheckOwnedReadyFilesDto,
   CheckOwnedReadyFilesResponse,
   FILES_TCP_PATTERNS,
+  SoftDeleteResponse,
 } from '@app/contracts';
 import { createRpcValidationPipe } from '@app/common/validation/create-rpc-validation-pipe';
+import { SoftDeleteFilesCommand } from '../../application/use-cases/soft-delete-files/soft-delete-files.use.case';
 
 @Controller()
 export class FilesTcpController {
   private readonly logger = new Logger(FilesTcpController.name);
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
+  ) {}
+
   @MessagePattern(FILES_TCP_PATTERNS.CHECK_OWNED_READY)
   @UsePipes(createRpcValidationPipe())
   async checkOwnedReady(
     @Payload() payload: CheckOwnedReadyFilesDto,
   ): Promise<CheckOwnedReadyFilesResponse> {
-    return await this.queryBus.execute(
+    const startedAt = Date.now();
+
+    this.logger.log(
+      `TCP CHECK_OWNED_READY received ownerId=${payload.ownerId} fileIdsCount=${payload.fileIds.length} fileIds=${JSON.stringify(payload.fileIds)}`,
+    );
+
+    const result = await this.queryBus.execute(
       new CheckOwnedReadyFilesQuery(payload.ownerId, payload.fileIds),
     );
+
+    this.logger.log(
+      `TCP CHECK_OWNED_READY completed ownerId=${payload.ownerId} requestedCount=${payload.fileIds.length} validCount=${result.validFileIds.length} invalidCount=${result.invalidFileIds.length} durationMs=${Date.now() - startedAt}`,
+    );
+
+    return result;
   }
 
   //todo: create use case
@@ -33,104 +51,25 @@ export class FilesTcpController {
   //   );
   // }
 
-  //todo remove
-  /* ILYA
-  * import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { FilesTcpClient } from './files-tcp.client';
+  @MessagePattern(FILES_PATTERNS.SOFT_DELETE_FILES)
+  @UsePipes(createRpcValidationPipe())
+  async softDeleteMany(
+    @Payload() payload: SoftDeleteFilesInput,
+  ): Promise<SoftDeleteResponse> {
+    const startedAt = Date.now();
 
-@Module({
-  imports: [
-    ClientsModule.register([
-      {
-        name: 'FILES_TCP_CLIENT',
-        transport: Transport.TCP,
-        options: {
-          host: process.env.FILES_MS_HOST,
-          port: Number(process.env.FILES_MS_TCP_PORT),
-        },
-      },
-    ]),
-  ],
-  providers: [FilesTcpClient],
-  exports: [FilesTcpClient],
-})
-export class FilesClientModule {}
-*
-* import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, TimeoutError, timeout } from 'rxjs';
-import {
-  CheckOwnedReadyFilesDto,
-  CheckOwnedReadyFilesResponse,
-  FILES_TCP_PATTERNS,
-} from '@app/contracts/files/check-owned-ready-files.contract';
+    this.logger.log(
+      `TCP SOFT_DELETE_FILES received ownerId=${payload.ownerId} fileIdsCount=${payload.fileIds.length}`,
+    );
 
-@Injectable()
-export class FilesTcpClient {
-  constructor(
-    @Inject('FILES_TCP_CLIENT')
-    private readonly client: ClientProxy,
-  ) {}
+    const result = await this.commandBus.execute(
+      new SoftDeleteFilesCommand(payload.ownerId, payload.fileIds),
+    );
 
-  async checkOwnedReadyFiles(
-    payload: CheckOwnedReadyFilesDto,
-  ): Promise<CheckOwnedReadyFilesResponse> {
-    try {
-      return await firstValueFrom(
-        this.client
-          .send<CheckOwnedReadyFilesResponse>(
-            FILES_TCP_PATTERNS.CHECK_OWNED_READY,
-            payload,
-          )
-          .pipe(timeout(5000)),
-      );
-    } catch (error) {
-      if (error instanceof TimeoutError) {
-        throw new ServiceUnavailableException('Files service timeout');
-      }
+    this.logger.log(
+      `TCP SOFT_DELETE_FILES completed ownerId=${payload.ownerId} requestedCount=${payload.fileIds.length} softDeletedCount=${result.count} durationMs=${Date.now() - startedAt}`,
+    );
 
-      throw new ServiceUnavailableException('Files service unavailable');
-    }
+    return result;
   }
-
-  async assertAllOwnedReady(ownerId: string, fileIds: string[]): Promise<void> {
-    const uniqueFileIds = [...new Set(fileIds)];
-
-    const result = await this.checkOwnedReadyFiles({
-      ownerId,
-      fileIds: uniqueFileIds,
-    });
-
-    if (result.invalidFileIds.length > 0) {
-      throw new BadRequestException(
-        `Invalid file ids: ${result.invalidFileIds.join(', ')}`,
-      );
-    }
-  }
-}
-*
-* import { Injectable } from '@nestjs/common';
-import { FilesTcpClient } from '../../../files-client/files-tcp.client';
-
-@Injectable()
-export class CreatePostUseCase {
-  constructor(
-    private readonly filesTcpClient: FilesTcpClient,
-  ) {}
-
-  async execute(ownerId: string, fileIds: string[]) {
-    await this.filesTcpClient.assertAllOwnedReady(ownerId, fileIds);
-
-    // continue with post creation:
-    // 1. create post
-    // 2. create post attachments
-    // 3. persist sortOrder, etc.
-  }
-}*/
 }

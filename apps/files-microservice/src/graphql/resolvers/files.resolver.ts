@@ -10,22 +10,25 @@ import {
 import { File } from '../types/file.type';
 import { InitiateUploadInput } from '../inputs/initiate-upload.input';
 import { InitiateUploadPayload } from '../types/payloads/initiate-upload.payload';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { InitiateUploadBatchCommand } from '../../application/use-cases/initiate-upload/initiate-upload-batch.use.case';
 import { CurrentUserId } from '@app/common';
 import { CompleteUploadPayload } from '../types/payloads/complete-upload.payload';
 import { CompleteUploadInput } from '../inputs/complete-upload.input';
 import { CompleteUploadBatchCommand } from '../../application/use-cases/complete-upload/complete-upload-batch.use.case';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ResolveFileUrlCommand } from '../../application/use-cases/resolve-file-url/resolve-file-url.use.case';
 import { FilesRepository } from '../../domain/repositories/files/files.repository';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
+import { GetFileByIdQuery } from '../../application/handlers/get-file-by-id/get-file-by-id.handler';
+import { FileEntity } from '../../domain/entities/file.entity';
 
 @Resolver(() => File)
 export class FilesResolver {
   private readonly logger = new Logger(FilesResolver.name);
   constructor(
     private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
     private readonly filesRepository: FilesRepository,
   ) {}
 
@@ -63,12 +66,16 @@ export class FilesResolver {
       id: string;
     },
     @Context() context: { dataloaderFactory: DataloaderFactory },
-  ): Promise<File | null> {
+  ): Promise<FileEntity | null> {
     this.logger.debug(`Resolving File reference. fileId=${reference.id}`);
 
     if (!reference?.id) {
       return null;
     }
+    /*return await this.queryBus.execute(new GetFileByIdQuery(reference.id));
+    if (!reference?.id) {
+      return null;
+    }*/
 
     const loader = context.dataloaderFactory.create<string, File | null>(
       'files',
@@ -99,7 +106,7 @@ export class FilesResolver {
   // field resolver for url - called when frontend accesses file.url
   @ResolveField(() => String, { nullable: true })
   url(@Parent() file: File): Promise<string> | null {
-    //todo: think adout it
+    //todo: think about it
     if (!file) return null;
     return this.commandBus.execute(new ResolveFileUrlCommand(file));
   }
