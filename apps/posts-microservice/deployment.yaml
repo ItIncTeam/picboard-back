@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: DEPLOYMENT_NAME
+  namespace: NAMESPACE
+  labels:
+    app: PROJECT
+spec:
+  selector:
+    matchLabels:
+      project: PROJECT
+  template:
+    metadata:
+      namespace: NAMESPACE
+      labels:
+        project: PROJECT
+    spec:
+      containers:
+         - name: PROJECT
+           image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
+           securityContext:
+             allowPrivilegeEscalation: false
+             runAsNonRoot: true      # опционально, но хорошая практика
+             runAsUser: 1000         # опционально
+           ports:
+             - containerPort: PORT_CONTAINER
+           env:
+             - name: DATABASE_DIRECT_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: posts-micro-production-config-secret
+                   key: DATABASE_DIRECT_URL
+             - name: FILES_TCP_HOST
+               valueFrom:
+                 secretKeyRef:
+                   name: posts-micro-production-config-secret
+                   key: FILES_TCP_HOST
+             - name: FILES_TCP_PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: posts-micro-production-config-secret
+                   key: FILES_TCP_PORT
+             - name: FILES_SUBGRAPH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: posts-micro-production-config-secret
+                   key: FILES_SUBGRAPH_SECRET
+             - name: PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: posts-micro-production-config-secret
+                   key: PORT
+             - name: DATABASE_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: posts-micro-production-config-secret
+                   key: DATABASE_URL
