@@ -34,6 +34,9 @@ import { PicboardDataSource } from './auth/picboard-data-source';
             methods: ['POST', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization'],
           },
+          csrfPrevention: {
+            requestHeaders: ['content-type', 'authorization', 'x-apollo-operation-name'],
+          },
           context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
           /*context: ({ req, res }: { req: any; res: any }) => {
             console.log('gateway context auth', req.headers.authorization);
