@@ -29,6 +29,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
       useFactory: (appConfig: AppConfig, jwtService: JwtService) => ({
         server: {
           path: '/api/v1',
+          introspection: true /*!appConfig.isProduction*/,
           cors: {
             origin: ['https://picboard.space', 'http://localhost:3000'],
             credentials: true,
