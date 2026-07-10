@@ -61,7 +61,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(SubgraphGatewayAuthMiddleware)
-      .exclude({ path: 'api/v1/auth/(.*)', method: RequestMethod.GET })
+      .exclude({ path: 'api/v1/auth/*path', method: RequestMethod.GET })
       .forRoutes({ path: 'api/v1', method: RequestMethod.ALL });
   }
 }
