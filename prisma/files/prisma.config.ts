@@ -6,6 +6,8 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: env('DATABASE_DIRECT_URL'),
+    url:
+      env('DATABASE_DIRECT_URL') ||
+      'postgresql://dummy:dummy@localhost:5432/dummy',
   },
 });
