@@ -46,4 +46,8 @@ export class AppConfig {
   get filesSubgraphSecret(): string {
     return this.required('FILES_SUBGRAPH_SECRET');
   }
+
+  get isProduction(): boolean {
+    return this.configService.get<string>('NODE_ENV') === 'production';
+  }
 }

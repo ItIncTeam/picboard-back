@@ -37,7 +37,9 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
             allowedHeaders: ['Content-Type', 'Authorization'],
           },
           csrfPrevention: false,
-          plugins: [ApolloServerPluginLandingPageLocalDefault()],
+          ...(appConfig.isProduction
+            ? { plugins: [ApolloServerPluginLandingPageLocalDefault()] }
+            : {}),
           context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
           /*context: ({ req, res }: { req: any; res: any }) => {
             console.log('gateway context auth', req.headers.authorization);
