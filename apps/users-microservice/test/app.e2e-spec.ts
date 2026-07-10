@@ -20,6 +20,7 @@ class MockEmailAdapter {
 const uniqueEmail = () =>
   `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 const rootUrl = '/api/v1';
+const subgraphSecret = 'users-secret';
 
 /** Извлекает refresh token из Set-Cookie заголовка ответа */
 const refreshTokenFromCookie = (res: request.Response): string => {
@@ -31,6 +32,10 @@ const refreshTokenFromCookie = (res: request.Response): string => {
 describe('Users subgraph (e2e)', () => {
   let app: INestApplication;
   let prisma: UsersPrismaService;
+
+  /** Хелпер — POST с Router-Authorization (имитирует gateway) */
+  const authPost = (url: string) =>
+    request(app.getHttpServer()).post(url).set('Router-Authorization', subgraphSecret);
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -58,8 +63,7 @@ describe('Users subgraph (e2e)', () => {
   });
 
   it('should expose graphql endpoint', async () => {
-    const res = await request(app.getHttpServer())
-      .post(rootUrl)
+    const res = await authPost(rootUrl)
       .send({ query: 'query { __typename }' })
       .expect(200);
 
@@ -69,8 +73,7 @@ describe('Users subgraph (e2e)', () => {
 
   it('should sign up a user', async () => {
     const email = uniqueEmail();
-    const res = await request(app.getHttpServer())
-      .post(rootUrl)
+    const res = await authPost(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -102,8 +105,7 @@ describe('Users subgraph (e2e)', () => {
   it('should reject sign in for unconfirmed user', async () => {
     const email = uniqueEmail();
 
-    await request(app.getHttpServer())
-      .post(rootUrl)
+    await authPost(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -121,8 +123,7 @@ describe('Users subgraph (e2e)', () => {
         },
       });
 
-    const res = await request(app.getHttpServer())
-      .post(rootUrl)
+    const res = await authPost(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
@@ -141,8 +142,7 @@ describe('Users subgraph (e2e)', () => {
     const email = uniqueEmail();
     const username = `u_${Date.now()}`;
 
-    const signUpRes = await request(app.getHttpServer())
-      .post(rootUrl)
+    const signUpRes = await authPost(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -169,8 +169,7 @@ describe('Users subgraph (e2e)', () => {
       data: { isConfirmed: true },
     });
 
-    const res = await request(app.getHttpServer())
-      .post(rootUrl)
+    const res = await authPost(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
@@ -189,8 +188,7 @@ describe('Users subgraph (e2e)', () => {
     const email = uniqueEmail();
     const username = `u_${Date.now()}`;
 
-    const signUpRes = await request(app.getHttpServer())
-      .post(rootUrl)
+    const signUpRes = await authPost(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -217,8 +215,7 @@ describe('Users subgraph (e2e)', () => {
       data: { isConfirmed: true },
     });
 
-    const res = await request(app.getHttpServer())
-      .post(rootUrl)
+    const res = await authPost(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
@@ -243,8 +240,7 @@ describe('Users subgraph (e2e)', () => {
     const username = `u_${Date.now()}`;
 
     // Sign up
-    const signUpRes = await request(app.getHttpServer())
-      .post(rootUrl)
+    const signUpRes = await authPost(rootUrl)
       .send({
         query: `
           mutation SignUp($input: SignUpInput!) {
@@ -274,8 +270,7 @@ describe('Users subgraph (e2e)', () => {
     });
 
     // Sign in to get refreshToken cookie
-    const signInRes = await request(app.getHttpServer())
-      .post(rootUrl)
+    const signInRes = await authPost(rootUrl)
       .send({
         query: `
           mutation SignIn($input: SignInInput!) {
@@ -295,8 +290,7 @@ describe('Users subgraph (e2e)', () => {
     expect(cookies).toBeDefined();
 
     // Logout with the refreshToken cookie
-    const logoutRes = await request(app.getHttpServer())
-      .post(rootUrl)
+    const logoutRes = await authPost(rootUrl)
       .set('Cookie', cookies)
       .send({ query: 'mutation { logout }' })
       .expect(200);
@@ -320,8 +314,7 @@ describe('Users subgraph (e2e)', () => {
       const email = uniqueEmail();
       const username = `u_${Date.now()}`;
 
-      const signUpRes = await request(app.getHttpServer())
-        .post(rootUrl)
+      const signUpRes = await authPost(rootUrl)
         .send({
           query: `
             mutation SignUp($input: SignUpInput!) {
@@ -353,11 +346,10 @@ describe('Users subgraph (e2e)', () => {
     };
 
     it('should refresh tokens and set new cookie', async () => {
-      const { email, username } = await signUpAndConfirm();
+      const { email } = await signUpAndConfirm();
 
       // Sign in to get refreshToken cookie
-      const signInRes = await request(app.getHttpServer())
-        .post(rootUrl)
+      const signInRes = await authPost(rootUrl)
         .send({
           query: `
             mutation SignIn($input: SignInInput!) {
@@ -374,8 +366,7 @@ describe('Users subgraph (e2e)', () => {
       const refreshTokenValue = refreshTokenFromCookie(signInRes);
 
       // Refresh with the token from cookie
-      const refreshRes = await request(app.getHttpServer())
-        .post(rootUrl)
+      const refreshRes = await authPost(rootUrl)
         .set('Cookie', `refreshToken=${refreshTokenValue}`)
         .send({
           query: 'mutation { refreshToken { accessToken } }',
@@ -395,8 +386,7 @@ describe('Users subgraph (e2e)', () => {
     });
 
     it('should reject refresh token without cookie', async () => {
-      const res = await request(app.getHttpServer())
-        .post(rootUrl)
+      const res = await authPost(rootUrl)
         .send({
           query: 'mutation { refreshToken { accessToken } }',
         })
@@ -413,6 +403,7 @@ describe('Users subgraph (e2e)', () => {
       // Sign in — agent captures Set-Cookie automatically
       const signInRes = await agent
         .post(rootUrl)
+        .set('Router-Authorization', subgraphSecret)
         .send({
           query: `
             mutation SignIn($input: SignInInput!) {
@@ -431,6 +422,7 @@ describe('Users subgraph (e2e)', () => {
       // Agent sends the captured refreshToken cookie — first refresh succeeds
       const firstRefresh = await agent
         .post(rootUrl)
+        .set('Router-Authorization', subgraphSecret)
         .send({
           query: 'mutation { refreshToken { accessToken } }',
         })
@@ -441,6 +433,7 @@ describe('Users subgraph (e2e)', () => {
       // Agent now has the NEW cookie from Set-Cookie — second refresh also succeeds
       const secondRefresh = await agent
         .post(rootUrl)
+        .set('Router-Authorization', subgraphSecret)
         .send({
           query: 'mutation { refreshToken { accessToken } }',
         })
@@ -449,8 +442,7 @@ describe('Users subgraph (e2e)', () => {
       expect(secondRefresh.body.errors).toBeUndefined();
 
       // Old token is dead — raw request with the original token fails
-      const oldAttempt = await request(app.getHttpServer())
-        .post(rootUrl)
+      const oldAttempt = await authPost(rootUrl)
         .set('Cookie', `refreshToken=${oldRefreshToken}`)
         .send({
           query: 'mutation { refreshToken { accessToken } }',
@@ -467,8 +459,7 @@ describe('Users subgraph (e2e)', () => {
       const { email } = await signUpAndConfirm();
 
       // Sign in
-      const signInRes = await request(app.getHttpServer())
-        .post(rootUrl)
+      const signInRes = await authPost(rootUrl)
         .send({
           query: `
             mutation SignIn($input: SignInInput!) {
@@ -485,8 +476,7 @@ describe('Users subgraph (e2e)', () => {
       const refreshTokenValue = refreshTokenFromCookie(signInRes);
 
       // Refresh
-      const refreshRes = await request(app.getHttpServer())
-        .post(rootUrl)
+      const refreshRes = await authPost(rootUrl)
         .set('Cookie', `refreshToken=${refreshTokenValue}`)
         .send({ query: 'mutation { refreshToken { accessToken } }' })
         .expect(200);
@@ -566,7 +556,7 @@ describe('Users subgraph (e2e)', () => {
     };
 
     it('should complete full OAuth flow: login → callback → exchangeOAuthCode', async () => {
-      // 1. Open login URL → get state in cookie
+      // 1. Open login URL → get state in cookie (excluded from middleware — no Router-Authorization)
       const loginRes = await request(app.getHttpServer())
         .get('/api/v1/auth/github/login')
         .expect(302);
@@ -579,7 +569,7 @@ describe('Users subgraph (e2e)', () => {
       expect(stateMatch).not.toBeNull();
       const state = stateMatch![1];
 
-      // 2. Simulate callback from GitHub
+      // 2. Simulate callback from GitHub (excluded from middleware — no Router-Authorization)
       const callbackRes = await request(app.getHttpServer())
         .get(
           '/api/v1/auth/github/callback?code=mock_github_code&state=' + state,
@@ -594,9 +584,8 @@ describe('Users subgraph (e2e)', () => {
       const exchangeCode = extractCodeFromRedirect(location);
       expect(exchangeCode).not.toBeNull();
 
-      // 4. Exchange the code for tokens
-      const exchangeRes = await request(app.getHttpServer())
-        .post('/api/v1')
+      // 4. Exchange the code for tokens (GraphQL — goes through middleware)
+      const exchangeRes = await authPost('/api/v1')
         .send({
           query: `
             mutation {
@@ -617,7 +606,7 @@ describe('Users subgraph (e2e)', () => {
     });
 
     it('should reject already used exchange code', async () => {
-      // 1. Go through OAuth callback to get an exchangeCode
+      // 1. Go through OAuth callback to get an exchangeCode (excluded from middleware)
       const loginRes = await request(app.getHttpServer())
         .get('/api/v1/auth/github/login')
         .expect(302);
@@ -637,9 +626,8 @@ describe('Users subgraph (e2e)', () => {
       const location = callbackRes.headers['location'] as string;
       const exchangeCode = extractCodeFromRedirect(location)!;
 
-      // 2. First call — succeeds
-      const first = await request(app.getHttpServer())
-        .post('/api/v1')
+      // 2. First call — succeeds (GraphQL — goes through middleware)
+      const first = await authPost('/api/v1')
         .send({
           query: `
             mutation {
@@ -653,9 +641,8 @@ describe('Users subgraph (e2e)', () => {
 
       expect(first.body.errors).toBeUndefined();
 
-      // 3. Second call with the same code — should fail
-      const second = await request(app.getHttpServer())
-        .post('/api/v1')
+      // 3. Second call with the same code — should fail (GraphQL — goes through middleware)
+      const second = await authPost('/api/v1')
         .send({
           query: `
             mutation {
