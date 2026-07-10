@@ -3,8 +3,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { PostsResolver } from './graphql/posts.resolver';
 import { PostsEventsController } from './posts.events.controller';
 import { AppConfigModule } from '../config/app-config.module';
-import { AppConfig } from '../config/app.config';
-import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 import { FilesServiceClient } from '../infrastructure/client/files-service.client';
 import { PostAttachmentResolver } from './graphql/post-attachment.resolver';
@@ -15,21 +13,7 @@ import { UpdatePostDescriptionUseCase } from '../application/use-cases/update-po
 import { DeletePostUseCase } from '../application/use-cases/delete-post/delete-post.use.case';
 
 @Module({
-  imports: [
-    AppConfigModule,
-    CqrsModule,
-    JwtModule.registerAsync({
-      imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (appConfig: AppConfig) => ({
-        secret: appConfig.jwtAccessSecret,
-        signOptions: {
-          expiresIn: appConfig.jwtAccessExpiresIn,
-        },
-      }),
-    }),
-    PrismaModule,
-  ],
+  imports: [AppConfigModule, CqrsModule, PrismaModule],
   providers: [
     PostsResolver,
     PostAttachmentResolver,
