@@ -1,6 +1,6 @@
 //configModule from './dynamic-config.module' HAS TO BE IMPORTED ON TOP OF EVERYTHING!
 import { configModule } from './dynamic-config.module';
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
 import { IntrospectAndCompose } from '@apollo/gateway';
@@ -8,6 +8,7 @@ import { AppConfig } from './config/app.config';
 import { AppConfigModule } from './config/app-config.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PicboardDataSource } from './auth/picboard-data-source';
+import { RateLimitMiddleware } from './auth/rate-limit.middleware';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 
 //This gateway module keeps JWT verification centralized and sends a distinct gateway secret to each subgraph.
@@ -15,6 +16,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
   imports: [
     configModule,
     AppConfigModule,
+
     JwtModule.registerAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -82,5 +84,14 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
       }),
     }),
   ],
+
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    if (process.env.NODE_ENV !== 'testing') {
+      consumer
+        .apply(RateLimitMiddleware)
+        .forRoutes({ path: '/api/v1', method: RequestMethod.ALL });
+    }
+  }
+}
