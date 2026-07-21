@@ -26,4 +26,6 @@ export abstract class UsersRepository {
     userId: string,
     passwordHash: string,
   ): Promise<UserEntity>;
+
+  abstract count(): Promise<number>;
 }

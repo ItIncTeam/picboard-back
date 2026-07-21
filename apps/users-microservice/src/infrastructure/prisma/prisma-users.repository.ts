@@ -272,4 +272,8 @@ export class PrismaUsersRepository implements UsersRepository {
       user.isConfirmed,
     );
   }
+
+  async count(): Promise<number> {
+    return this.prisma.user.count();
+  }
 }
