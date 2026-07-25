@@ -35,7 +35,9 @@ describe('Users subgraph (e2e)', () => {
 
   /** Хелпер — POST с Router-Authorization (имитирует gateway) */
   const authPost = (url: string) =>
-    request(app.getHttpServer()).post(url).set('Router-Authorization', subgraphSecret);
+    request(app.getHttpServer())
+      .post(url)
+      .set('Router-Authorization', subgraphSecret);
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -105,23 +107,22 @@ describe('Users subgraph (e2e)', () => {
   it('should reject sign in for unconfirmed user', async () => {
     const email = uniqueEmail();
 
-    await authPost(rootUrl)
-      .send({
-        query: `
+    await authPost(rootUrl).send({
+      query: `
           mutation SignUp($input: SignUpInput!) {
             signUp(input: $input) { user { id } }
           }
         `,
-        variables: {
-          input: {
-            email,
-            username: `u_${Date.now()}`,
-            password: 'Password1',
-            acceptTerms: true,
-            acceptPrivacy: true,
-          },
+      variables: {
+        input: {
+          email,
+          username: `u_${Date.now()}`,
+          password: 'Password1',
+          acceptTerms: true,
+          acceptPrivacy: true,
         },
-      });
+      },
+    });
 
     const res = await authPost(rootUrl)
       .send({
@@ -142,25 +143,24 @@ describe('Users subgraph (e2e)', () => {
     const email = uniqueEmail();
     const username = `u_${Date.now()}`;
 
-    const signUpRes = await authPost(rootUrl)
-      .send({
-        query: `
+    const signUpRes = await authPost(rootUrl).send({
+      query: `
           mutation SignUp($input: SignUpInput!) {
             signUp(input: $input) {
               user { id email username isConfirmed }
             }
           }
         `,
-        variables: {
-          input: {
-            email,
-            username,
-            password: 'correct',
-            acceptTerms: true,
-            acceptPrivacy: true,
-          },
+      variables: {
+        input: {
+          email,
+          username,
+          password: 'correct',
+          acceptTerms: true,
+          acceptPrivacy: true,
         },
-      });
+      },
+    });
 
     const userId = signUpRes.body.data.signUp.user.id;
 
@@ -188,25 +188,24 @@ describe('Users subgraph (e2e)', () => {
     const email = uniqueEmail();
     const username = `u_${Date.now()}`;
 
-    const signUpRes = await authPost(rootUrl)
-      .send({
-        query: `
+    const signUpRes = await authPost(rootUrl).send({
+      query: `
           mutation SignUp($input: SignUpInput!) {
             signUp(input: $input) {
               user { id email username isConfirmed }
             }
           }
         `,
-        variables: {
-          input: {
-            email,
-            username,
-            password: 'password123',
-            acceptTerms: true,
-            acceptPrivacy: true,
-          },
+      variables: {
+        input: {
+          email,
+          username,
+          password: 'password123',
+          acceptTerms: true,
+          acceptPrivacy: true,
         },
-      });
+      },
+    });
 
     const userId = signUpRes.body.data.signUp.user.id;
 
