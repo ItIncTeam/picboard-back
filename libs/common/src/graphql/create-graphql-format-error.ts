@@ -98,6 +98,24 @@ export function createGraphqlFormatError(isProduction: boolean) {
       };
     }
 
+    if (getStatus(503) || code === 'SERVICE_UNAVAILABLE') {
+      return {
+        message: message || 'Service temporarily unavailable',
+        code: 'SERVICE_UNAVAILABLE',
+        statusCode: 503,
+        errors: null,
+      };
+    }
+
+    if (getStatus(504) || code === 'GATEWAY_TIMEOUT') {
+      return {
+        message: message || 'Gateway timeout',
+        code: 'GATEWAY_TIMEOUT',
+        statusCode: 504,
+        errors: null,
+      };
+    }
+
     if (code === 'GRAPHQL_VALIDATION_FAILED') {
       return {
         message: 'GraphQL query validation failed',
