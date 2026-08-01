@@ -158,7 +158,7 @@ describe('Posts subgraph (e2e)', () => {
         .expect(200);
 
       expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
+      expect(res.body.errors[0].code).toBe('UNAUTHENTICATED');
     });
   });
 

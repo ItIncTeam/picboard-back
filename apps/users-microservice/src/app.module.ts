@@ -19,6 +19,7 @@ import {
   normalizeContext,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
+  PrismaExceptionModule,
 } from '@app/common';
 import { AppConfig } from './config/app.config';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
@@ -27,6 +28,13 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
   imports: [
     configModule,
     AppConfigModule,
+    PrismaExceptionModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        exposeErrorCode: !appConfig.isProduction,
+      }),
+    }),
     SubgraphAuthModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],

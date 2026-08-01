@@ -9,6 +9,7 @@ import { AppConfigModule } from './config/app-config.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PicboardDataSource } from './auth/picboard-data-source';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { createGraphqlFormatError } from '@app/common';
 
 //This gateway module keeps JWT verification centralized and sends a distinct gateway secret to each subgraph.
 @Module({
@@ -40,6 +41,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
           ...(appConfig.isProduction
             ? { plugins: [ApolloServerPluginLandingPageLocalDefault()] }
             : {}),
+          formatError: createGraphqlFormatError(appConfig.isProduction),
           context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
           /*context: ({ req, res }: { req: any; res: any }) => {
             console.log('gateway context auth', req.headers.authorization);

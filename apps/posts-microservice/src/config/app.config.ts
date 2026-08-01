@@ -51,6 +51,10 @@ export class AppConfig {
     return value;
   }
 
+  get isProduction(): boolean {
+    return this.configService.get<string>('NODE_ENV') === 'production';
+  }
+
   get filesTcpHost(): string {
     return this.configService.get<string>('FILES_TCP_HOST') ?? 'localhost';
   }
