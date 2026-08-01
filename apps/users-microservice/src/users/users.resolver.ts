@@ -4,6 +4,7 @@ import {
   ResolveReference,
   Resolver,
   Context,
+  Int,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
 import {
@@ -23,6 +24,11 @@ export class UsersResolver {
   @Query(() => User, { nullable: true })
   user(@Args('id') id: string) {
     return this.usersRepository.findById(id);
+  }
+
+  @Query(() => Int)
+  usersCount(): Promise<number> {
+    return this.usersRepository.count();
   }
 
   @Query(() => User, { nullable: true })
