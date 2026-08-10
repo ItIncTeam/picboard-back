@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  GatewayTimeoutException,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ClientProxy, ClientTCP } from '@nestjs/microservices';
 import { firstValueFrom, timeout, TimeoutError } from 'rxjs';
 import { AppConfig } from '../../config/app.config';
@@ -48,9 +54,9 @@ export class FilesServiceClient {
       );
     } catch (error) {
       if (error instanceof TimeoutError) {
-        throw new BadRequestException('Files service timeout');
+        throw new GatewayTimeoutException('Files service timeout');
       }
-      throw new BadRequestException('Files service unavailable');
+      throw new ServiceUnavailableException('Files service unavailable');
     }
   }
 
