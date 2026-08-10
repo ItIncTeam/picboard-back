@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { default as request } from 'supertest';
 import { AppModule } from '../src/app.module';
 import { FilesServiceClient } from '../src/infrastructure/client/files-service.client';
+import { PostsPrismaService } from '../src/prisma/posts-prisma.service';
 
 class MockFilesServiceClient {
   async assertAllOwnedReadyOrException(
@@ -53,6 +54,13 @@ describe('Posts subgraph (e2e)', () => {
   });
 
   afterAll(async () => {
+    const prisma = app.get(PostsPrismaService);
+    await prisma.postAttachment.deleteMany({
+      where: { fileId: { startsWith: '00000000' } },
+    });
+    await prisma.post.deleteMany({
+      where: { ownerId: { in: ['user-1', 'user-2'] } },
+    });
     if (app) {
       await app.close();
     }
@@ -92,9 +100,6 @@ describe('Posts subgraph (e2e)', () => {
       expect(res.body.errors).toBeUndefined();
       expect(res.body.data.createPost.id).toBeDefined();
       expect(res.body.data.createPost.description).toBe('E2E test post');
-
-      // save for later tests
-      this.createdPostId = res.body.data.createPost.id;
     });
 
     it('should reject > 10 files', async () => {
