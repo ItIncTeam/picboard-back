@@ -50,4 +50,12 @@ export class AppConfig {
   get isProduction(): boolean {
     return this.configService.get<string>('NODE_ENV') === 'production';
   }
+
+  get rateLimitTtl(): number {
+    return Number(this.configService.get<string>('RATE_LIMIT_TTL') ?? '60000');
+  }
+
+  get rateLimitMax(): number {
+    return Number(this.configService.get<string>('RATE_LIMIT_MAX') ?? '30');
+  }
 }
