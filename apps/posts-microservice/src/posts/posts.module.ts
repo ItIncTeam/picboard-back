@@ -6,6 +6,7 @@ import { AppConfigModule } from '../config/app-config.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { FilesServiceClient } from '../infrastructure/client/files-service.client';
 import { PostAttachmentResolver } from './graphql/post-attachment.resolver';
+import { PostAuthorResolver } from './graphql/post-author.resolver';
 import { PostsRepository } from '../domain/repositories/posts.repository';
 import { PrismaPostsRepository } from '../infrastructure/prisma/prisma-posts.repository';
 import { CreatePostUseCase } from '../application/use-cases/create-post/create-post.use.case';
@@ -17,6 +18,7 @@ import { DeletePostUseCase } from '../application/use-cases/delete-post/delete-p
   providers: [
     PostsResolver,
     PostAttachmentResolver,
+    PostAuthorResolver,
     FilesServiceClient,
     CreatePostUseCase,
     UpdatePostDescriptionUseCase,
