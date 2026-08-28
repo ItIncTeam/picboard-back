@@ -40,9 +40,9 @@ export class UsersResolver {
   }
 
   @ResolveReference()
-  async resolveReference(
+  resolveReference(
     reference: { __typename: string; id: string },
-    @Context() context: { dataloaderFactory: DataloaderFactory },
+    context: { dataloaderFactory: DataloaderFactory },
   ): Promise<UserEntity /* | null*/> {
     if (!reference?.id) {
       throw new NotFoundException('User ID was not provided');

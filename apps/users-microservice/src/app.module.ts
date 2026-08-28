@@ -23,6 +23,7 @@ import {
 } from '@app/common';
 import { AppConfig } from './config/app.config';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
+import { User } from './graphql/types/user.type';
 
 @Module({
   imports: [
@@ -49,6 +50,9 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
       useFactory: (appConfig: AppConfig) => ({
         autoSchemaFile: {
           federation: 2,
+        },
+        buildSchemaOptions: {
+          orphanedTypes: [User],
         },
         path: '/api/v1',
         introspection: true /*!appConfig.isProduction*/,
