@@ -5,8 +5,11 @@ import {
   Resolver,
   Context,
   Int,
+  ResolveField,
+  Parent,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
+import { FileReference } from '../graphql/types/file-reference.type';
 import {
   Logger,
   NotFoundException,
@@ -29,6 +32,12 @@ export class UsersResolver {
   @Query(() => Int)
   usersCount(): Promise<number> {
     return this.usersRepository.count();
+  }
+
+  @ResolveField(() => FileReference, { nullable: true })
+  avatar(@Parent() user: User): FileReference | null {
+    if (!user.profilePictureFileId) return null;
+    return { __typename: 'File', id: user.profilePictureFileId } as FileReference;
   }
 
   @Query(() => User, { nullable: true })
