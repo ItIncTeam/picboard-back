@@ -24,6 +24,7 @@ import {
 import { AppConfig } from './config/app.config';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 import { User } from './graphql/types/user.type';
+import { FileReference } from './graphql/types/file-reference.type';
 
 @Module({
   imports: [
@@ -52,7 +53,7 @@ import { User } from './graphql/types/user.type';
           federation: 2,
         },
         buildSchemaOptions: {
-          orphanedTypes: [User],
+          orphanedTypes: [User, FileReference],
         },
         path: '/api/v1',
         introspection: true /*!appConfig.isProduction*/,
