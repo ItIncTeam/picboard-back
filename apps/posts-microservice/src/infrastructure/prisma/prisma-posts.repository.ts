@@ -33,7 +33,7 @@ export class PrismaPostsRepository implements PostsRepository {
     });
     return PostMapper.toEntities(posts);
   }
-
+  //todo: infinity scroll
   async findFeed(): Promise<PostEntity[]> {
     const posts = await this.prisma.post.findMany({
       where: { deletedAt: null },

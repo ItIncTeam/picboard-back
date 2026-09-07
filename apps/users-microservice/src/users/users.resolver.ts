@@ -4,8 +4,12 @@ import {
   ResolveReference,
   Resolver,
   Context,
+  Int,
+  ResolveField,
+  Parent,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
+import { FileReference } from '../graphql/types/file-reference.type';
 import {
   Logger,
   NotFoundException,
@@ -25,6 +29,17 @@ export class UsersResolver {
     return this.usersRepository.findById(id);
   }
 
+  @Query(() => Int)
+  usersCount(): Promise<number> {
+    return this.usersRepository.count();
+  }
+
+  @ResolveField(() => FileReference, { nullable: true })
+  avatar(@Parent() user: User): FileReference | null {
+    if (!user.profilePictureFileId) return null;
+    return { __typename: 'File', id: user.profilePictureFileId } as FileReference;
+  }
+
   @Query(() => User, { nullable: true })
   async me(@Context() context: { auth: { userId?: string } }) {
     if (!context.auth?.userId) {
@@ -34,9 +49,9 @@ export class UsersResolver {
   }
 
   @ResolveReference()
-  async resolveReference(
+  resolveReference(
     reference: { __typename: string; id: string },
-    @Context() context: { dataloaderFactory: DataloaderFactory },
+    context: { dataloaderFactory: DataloaderFactory },
   ): Promise<UserEntity /* | null*/> {
     if (!reference?.id) {
       throw new NotFoundException('User ID was not provided');

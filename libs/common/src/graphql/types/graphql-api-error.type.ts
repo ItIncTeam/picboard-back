@@ -19,6 +19,8 @@ export type GraphqlApiError = {
     | 'NOT_FOUND'
     | 'CONFLICT'
     | 'GRAPHQL_VALIDATION_FAILED'
+    | 'SERVICE_UNAVAILABLE'
+    | 'GATEWAY_TIMEOUT'
     | 'INTERNAL_SERVER_ERROR';
   statusCode: number;
   errors: FieldError[] | null;

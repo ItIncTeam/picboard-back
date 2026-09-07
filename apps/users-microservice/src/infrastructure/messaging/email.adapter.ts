@@ -8,8 +8,8 @@ export class EmailAdapter {
 
   async sendEmail(email: string, subject: string, message: string) {
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      service: 'gmail',
+      host: 'smtp.mail.ru',
+      service: 'mail',
       port: 465,
       secure: true,
       ignoreTLS: true,

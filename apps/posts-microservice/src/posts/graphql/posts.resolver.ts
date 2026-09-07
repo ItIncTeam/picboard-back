@@ -31,6 +31,7 @@ export class PostsResolver {
     private readonly postsRepository: PostsRepository,
   ) {}
 
+  //todo: infinity scroll
   @Query(() => [PostEntity])
   feed() {
     return this.postsRepository.findFeed();
@@ -42,7 +43,9 @@ export class PostsResolver {
   }
 
   @Query(() => PostConnection)
-  async profilePosts(@Args('input') input: ProfilePostsInput): Promise<PostConnection> {
+  async profilePosts(
+    @Args('input') input: ProfilePostsInput,
+  ): Promise<PostConnection> {
     const limit = input.first ?? 8;
     const result = await this.postsRepository.findProfilePosts(
       input.userId,
