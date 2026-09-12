@@ -79,6 +79,9 @@ export class PrismaUsersRepository implements UsersRepository {
           user.confirmationCode,
           user.confirmationCodeExpDate,
           user.isConfirmed,
+          user.displayName,
+          user.bio,
+          user.profilePictureFileId,
         ),
     );
   }
@@ -101,6 +104,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -125,6 +131,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -146,6 +155,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -172,6 +184,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -195,6 +210,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -213,6 +231,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -247,6 +268,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 
@@ -270,6 +294,9 @@ export class PrismaUsersRepository implements UsersRepository {
       user.confirmationCode,
       user.confirmationCodeExpDate,
       user.isConfirmed,
+      user.displayName,
+      user.bio,
+      user.profilePictureFileId,
     );
   }
 

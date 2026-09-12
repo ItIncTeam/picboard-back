@@ -16,20 +16,20 @@ export class PostAuthorResolver {
   ): Promise<User | null> {
     // Gateway передаёт только key-поля (id). ownerId недоступен в @Parent.
     // DataLoader батчит запросы по id — без N+1.
-    const loader = context.dataloaderFactory.create<
-      string,
-      PostEntity
-    >('post-author', async (ids: string[]) => {
-      const posts = await this.postsRepository.findByIds(ids);
-      const postMap = new Map(posts.map((p) => [p.id, p]));
-      return ids.map((id) => {
-        const post = postMap.get(id);
-        if (!post) {
-          throw new NotFoundException('Post not found');
-        }
-        return post;
-      });
-    });
+    const loader = context.dataloaderFactory.create<string, PostEntity>(
+      'post-author',
+      async (ids: string[]) => {
+        const posts = await this.postsRepository.findByIds(ids);
+        const postMap = new Map(posts.map((p) => [p.id, p]));
+        return ids.map((id) => {
+          const post = postMap.get(id);
+          if (!post) {
+            throw new NotFoundException('Post not found');
+          }
+          return post;
+        });
+      },
+    );
 
     const fullPost = await loader.load(post.id);
     // Gateway сам до-загрузит username/displayName через resolveReference в users
