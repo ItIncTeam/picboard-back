@@ -659,4 +659,69 @@ describe('Users subgraph (e2e)', () => {
       );
     });
   });
+
+  describe('public vs private user contract', () => {
+    const signUpUser = (username: string) =>
+      authPost(rootUrl)
+        .send({
+          query: `
+            mutation SignUp($input: SignUpInput!) {
+              signUp(input: $input) {
+                user { id username }
+                message
+              }
+            }
+          `,
+          variables: {
+            input: {
+              email: uniqueEmail(),
+              username,
+              password: 'password123',
+              acceptTerms: true,
+              acceptPrivacy: true,
+            },
+          },
+        })
+        .expect(200);
+
+    it('should allow querying public fields on user(id) without auth', async () => {
+      const username = `pub_${Date.now().toString().slice(-8)}`;
+      const signup = await signUpUser(username);
+      expect(signup.body.errors).toBeUndefined();
+      const id = signup.body.data.signUp.user.id;
+
+      const res = await authPost(rootUrl)
+        .send({
+          query: `
+            query {
+              user(id: "${id}") { id username }
+            }
+          `,
+        })
+        .expect(200);
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.user.id).toBe(id);
+      expect(res.body.data.user.username).toBe(username);
+    });
+
+    it('should reject querying email on public user(id)', async () => {
+      const signup = await signUpUser(`pub2_${Date.now().toString().slice(-8)}`);
+      expect(signup.body.errors).toBeUndefined();
+      const id = signup.body.data.signUp.user.id;
+
+      const res = await authPost(rootUrl)
+        .send({
+          query: `
+            query {
+              user(id: "${id}") { id email }
+            }
+          `,
+        })
+        .expect(400);
+
+      expect(res.body.errors).toBeDefined();
+      expect(res.body.errors[0].message).toContain('GraphQL query validation failed');
+    });
+  });
 });

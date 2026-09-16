@@ -9,6 +9,7 @@ import {
   Parent,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
+import { Me } from '../graphql/types/me.type';
 import { FileReference } from '../graphql/types/file-reference.type';
 import {
   Logger,
@@ -40,7 +41,7 @@ export class UsersResolver {
     return { __typename: 'File', id: user.profilePictureFileId } as FileReference;
   }
 
-  @Query(() => User, { nullable: true })
+  @Query(() => Me, { nullable: true })
   async me(@Context() context: { auth: { userId?: string } }) {
     if (!context.auth?.userId) {
       throw new UnauthorizedException();
