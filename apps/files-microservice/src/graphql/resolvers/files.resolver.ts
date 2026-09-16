@@ -15,6 +15,9 @@ import { CurrentUserId } from '@app/common';
 import { CompleteUploadPayload } from '../types/payloads/complete-upload.payload';
 import { CompleteUploadInput } from '../inputs/complete-upload.input';
 import { CompleteUploadBatchCommand } from '../../application/use-cases/complete-upload/complete-upload-batch.use.case';
+import { RetryUploadPayload } from '../types/payloads/retry-upload.payload';
+import { RetryUploadArgs } from '../inputs/retry-upload.input';
+import { RetryUploadBatchCommand } from '../../application/use-cases/retry-upload/retry-upload-batch.use.case';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ResolveFileUrlCommand } from '../../application/use-cases/resolve-file-url/resolve-file-url.use.case';
 import { FilesRepository } from '../../domain/repositories/files/files.repository';
@@ -54,6 +57,21 @@ export class FilesResolver {
     );
   }
 
+  // re-issue a presigned PUT URL for a file whose upload never completed,
+  // so one bad file can be repaired instead of the whole batch being discarded
+  @Mutation(() => [RetryUploadPayload])
+  retryUpload(
+    @CurrentUserId() ownerId: string,
+    @Args() args: RetryUploadArgs,
+  ): Promise<RetryUploadPayload[]> {
+    return this.commandBus.execute(
+      new RetryUploadBatchCommand(
+        args.input.map((item) => item.fileId),
+        ownerId,
+      ),
+    );
+  }
+
   //resolve entire File entity by @key (from gateway)
   //return file or null now
   @ResolveReference()
@@ -82,7 +100,9 @@ export class FilesResolver {
         const file = fileMap.get(id);
         if (!file) {
           this.logger.warn(`Referenced file not found. fileId=${id}`);
-          throw new NotFoundException('File not found');
+          // returned, not thrown: rejects this key only, leaving the rest of
+          // the batch resolvable
+          return new NotFoundException('File not found');
         }
         return file /* ?? null*/;
       });
