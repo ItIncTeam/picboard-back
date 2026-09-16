@@ -1,5 +1,5 @@
 import { Context, Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { PostEntity } from '../entities/post.entity';
 import { User } from '../entities/user.stub';
 import { PostsRepository } from '../../domain/repositories/posts.repository';
@@ -7,6 +7,7 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 
 @Resolver(() => PostEntity)
 export class PostAuthorResolver {
+  private readonly logger = new Logger(PostAuthorResolver.name);
   constructor(private readonly postsRepository: PostsRepository) {}
 
   @ResolveField(() => User, { nullable: true })
@@ -25,7 +26,10 @@ export class PostAuthorResolver {
       return ids.map((id) => {
         const post = postMap.get(id);
         if (!post) {
-          throw new NotFoundException('Post not found');
+          this.logger.warn(`Author lookup failed, post not found. postId=${id}`);
+          // returned, not thrown: rejects this key only, leaving the rest of
+          // the batch resolvable
+          return new NotFoundException('Post not found');
         }
         return post;
       });
