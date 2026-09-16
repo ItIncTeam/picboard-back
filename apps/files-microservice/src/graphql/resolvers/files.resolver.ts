@@ -7,13 +7,13 @@ import {
   Parent,
 } from '@nestjs/graphql';
 import { File } from '../types/file.type';
-import { InitiateUploadInput } from '../inputs/initiate-upload.input';
+import { InitiateUploadArgs } from '../inputs/initiate-upload.input';
 import { InitiateUploadPayload } from '../types/payloads/initiate-upload.payload';
 import { CommandBus } from '@nestjs/cqrs';
 import { InitiateUploadBatchCommand } from '../../application/use-cases/initiate-upload/initiate-upload-batch.use.case';
 import { CurrentUserId } from '@app/common';
 import { CompleteUploadPayload } from '../types/payloads/complete-upload.payload';
-import { CompleteUploadInput } from '../inputs/complete-upload.input';
+import { CompleteUploadArgs } from '../inputs/complete-upload.input';
 import { CompleteUploadBatchCommand } from '../../application/use-cases/complete-upload/complete-upload-batch.use.case';
 import { RetryUploadPayload } from '../types/payloads/retry-upload.payload';
 import { RetryUploadArgs } from '../inputs/retry-upload.input';
@@ -35,23 +35,21 @@ export class FilesResolver {
   @Mutation(() => [InitiateUploadPayload])
   initiateUploadBatch(
     @CurrentUserId() ownerId: string,
-    @Args('input', { type: () => [InitiateUploadInput] })
-    input: InitiateUploadInput[],
+    @Args() args: InitiateUploadArgs,
   ): Promise<InitiateUploadPayload[]> {
     return this.commandBus.execute(
-      new InitiateUploadBatchCommand(input, ownerId),
+      new InitiateUploadBatchCommand(args.input, ownerId),
     );
   }
 
   @Mutation(() => [CompleteUploadPayload])
   completeUpload(
     @CurrentUserId() ownerId: string,
-    @Args('input', { type: () => [CompleteUploadInput] })
-    input: CompleteUploadInput[],
+    @Args() args: CompleteUploadArgs,
   ): Promise<CompleteUploadPayload[]> {
     return this.commandBus.execute(
       new CompleteUploadBatchCommand(
-        input.map((item) => item.fileId),
+        args.input.map((item) => item.fileId),
         ownerId,
       ),
     );
