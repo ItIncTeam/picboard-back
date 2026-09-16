@@ -60,24 +60,49 @@ A `READY` file returns `NotFoundException` — not retryable, by design.
 
 ---
 
-## Section 2 — Tell the client what's retryable 🎯
+## Section 2 — Tell the client what's retryable ✅
 
 Plan step 2. Small, high UI value.
 
-- Add `failedReason?: string` and `retryable: boolean` to `graphql/types/payloads/complete-upload.payload.ts`
-- Widen `CompleteUploadBatchResult` (`complete-upload-batch.use.case.ts:20`)
-- Set the flag at the four existing failure exits:
+| File | Change |
+|---|---|
+| `graphql/types/payloads/complete-upload.payload.ts` | added `failedReason?: string` (nullable) and `retryable: boolean` |
+| `complete-upload-batch.use.case.ts` | widened `CompleteUploadBatchResult`; all five result sites now carry both fields |
+| `complete-upload-batch.use.case.ts` | added private `markFailed()` so the persisted reason and the returned payload cannot drift |
+| `complete-upload-batch.use.case.ts` | moved `toMimeEnum` to module scope (it was declared inside the verification loop and redeclared per iteration) |
+| `complete-upload-batch.use.case.ts` + `initiate-upload-batch.use.case.ts` | hardcoded `10` → `UPLOAD_RULES.MAX_FILES_PER_BATCH` |
 
-| Site | Reason | `retryable` |
+**Classification:**
+
+| Situation | `retryable` | Why |
 |---|---|---|
-| `complete-upload-batch.use.case.ts:96` | Object not found in storage | `true` |
-| `:110` | Size mismatch | `true` |
-| `:145` | MIME mismatch | **`false`** — same bytes fail identically |
-| `:168` | caught exception | `true` |
+| Object not found in storage | `true` | the PUT never landed |
+| Size mismatch | **`false`** | declaration mismatch — see below |
+| MIME mismatch | **`false`** | same bytes fail identically — needs a fresh `initiateUploadBatch` |
+| Caught exception | `true` | probably transient S3/infra |
+| `READY` | `false` | nothing to retry |
 
-**Cleanup to fold in:** `UPLOAD_RULES.MAX_FILES_PER_BATCH` is used only by the retry use case.
-Still hardcoded as `10` in `complete-upload-batch.use.case.ts:49`,
-`initiate-upload-batch.use.case.ts:54`, `upload-policy.service.ts:13`.
+**Size mismatch was initially `true`,** following the plan's "truncated / partial upload"
+reasoning. That reasoning doesn't hold: S3 PUT is atomic — there is no partial object, and a
+dropped connection returns an error rather than a 200. So for a client that waits for its 200
+before calling `completeUpload` (which is the documented contract), the only way the sizes
+disagree is that the client declared one `size` at initiate and sent different bytes. Re-sending
+the same blob mismatches identically, exactly like the MIME case.
+
+**Known imprecision, not fixed:** `retryable` conflates "retry the upload" with "retry the
+verification". For the caught-exception branch the object is usually already in S3 and intact —
+the cheap recovery is to call `completeUpload` again, not to re-upload. `retryable: true` gets the
+right outcome by a wasteful route. Documented for the frontend instead of changing the API; the
+`failedCode` enum below would resolve it properly.
+
+**Security note:** the caught-exception branch persists the raw SDK message to
+`failedReason` on the row but returns a generic `'Upload verification failed'` to the client —
+AWS errors can carry bucket names, ARNs and internal endpoints. That's the `clientReason`
+parameter on `markFailed`.
+
+**Not done (optional):** a `failedCode` GraphQL enum (`OBJECT_NOT_FOUND`, `SIZE_MISMATCH`,
+`MIME_MISMATCH`, `VERIFICATION_ERROR`) instead of matching on free-text `failedReason`.
+Only worth it if the frontend wants per-case copy beyond retry/don't-retry.
 
 ---
 
@@ -104,7 +129,7 @@ Product call, not a bug fix.
 
 ---
 
-## Section 4 — Transactional `createManyPending` ⬜
+## Section 4 — Transactional `createManyPending` 🎯
 
 Plan step 5 / §11 A. `prisma-files.repository.ts:23` runs N `create`s under `Promise.all` with no
 `$transaction` — a mid-batch failure leaves committed orphan `PENDING` rows.
@@ -127,6 +152,7 @@ Plan steps 6–7. Config-shaped, no domain logic.
 
 ---
 
+
 ## Section 6 — Durability net ⬜
 
 Plan steps 8–9.
@@ -134,6 +160,65 @@ Plan steps 8–9.
 - S3 lifecycle rule on the upload prefix (console/IaC, zero code)
 - Reconciliation cron — needs `@nestjs/schedule` installed. The **rescue branch** is the valuable
   half: a `PENDING` row whose object exists at the right size gets promoted to `READY`
+
+---
+
+## Section 7 — Make input validation actually run ✅
+
+Not from the plan. Found while adding `RetryUploadArgs`.
+
+`@Args('input', { type: () => [X] }) input: X[]` reflects as `design:paramtypes: [Array]`
+(TypeScript erases the element type). `ValidationPipe.toValidate()` has an explicit skip list —
+`[String, Boolean, Number, Array, Object, Buffer, Date]` — so the pipe returned before validating.
+**Every decorator on `InitiateUploadInput` and `CompleteUploadInput` was inert.**
+
+The explicit `{ type: () => [X] }` feeds the schema builder (`TypeMetadataStorage`), never the pipe.
+Schema correct, validation absent, simultaneously.
+
+What was unenforced: `@Max(20_971_520)` on `size` (and `awsS3Storage.service.ts:59` sets no
+`ContentLength` either, so **nothing anywhere capped upload size**), `@MaxLength(255)` and
+`@Matches(...)` on `originalName`, `@IsUUID()` on both `clientUploadId` and `fileId`.
+GraphQL's own type system still covered `Int`, enum membership and non-null.
+
+| File | Change |
+|---|---|
+| `graphql/inputs/initiate-upload.input.ts` | added `InitiateUploadArgs` (`@ArgsType`) |
+| `graphql/inputs/complete-upload.input.ts` | added `CompleteUploadArgs` (`@ArgsType`) |
+| `graphql/resolvers/files.resolver.ts` | both mutations take `@Args() args: XArgs` |
+
+`@ArgsType` flattens, so both GraphQL signatures are unchanged. These were the only two bare-array
+args in the codebase — `grep "type: () => \["` across `apps/` now returns nothing.
+
+**Breaking for clients that were sending invalid data**, since the rules now actually apply.
+
+---
+
+## Section 8 — `formatError` returns 500 for every subgraph error ✅
+
+`createGraphqlFormatError` returns `{message, code, statusCode, errors}` with `code`/`statusCode`
+at the **top level**, but a `GraphQLFormattedError` only carries `message`, `locations`, `path`,
+`extensions`. The subgraph computes the right status, emits it in fields the spec drops, and the
+gateway's second pass over the same error finds nothing to match — falling through to
+`INTERNAL_SERVER_ERROR`.
+
+Not idempotent: it consumes the standard shape and emits a non-standard one, so running it twice
+(subgraph, then gateway) loses everything the first pass computed. Affects every error in the
+system, not just uploads.
+
+| File | Change |
+|---|---|
+| `libs/common/src/graphql/types/graphql-api-error.type.ts` | `GraphqlApiError` → `GraphqlApiErrorCode` + `GraphqlApiErrorExtensions` |
+| `libs/common/src/graphql/create-graphql-format-error.ts` | returns `GraphQLFormattedError` with everything under `extensions`; `getStatus` and the `errors` lookup also read `extensions`; `locations`/`path` now forwarded |
+| `apps/posts-microservice/test/app.e2e-spec.ts:166` | `errors[0].code` → `errors[0].extensions.code` |
+
+Two branches stay written out longhand rather than using the `build()` helper, because their
+messages are deliberately fixed: `GRAPHQL_VALIDATION_FAILED` (always the same string) and the
+final `INTERNAL_SERVER_ERROR` fallback — `build()` prefers the resolver's message over the
+fallback, which in production would hand the caller the internal message that branch exists to
+hide.
+
+**Caller impact:** `errors[0].code` → `errors[0].extensions.code`. Frontend already warned in
+[upload-retry-frontend-ru.md](./upload-retry-frontend-ru.md) §6 — tell them it has shipped.
 
 ---
 
@@ -160,3 +245,6 @@ Section 3, 4, 5, 6  — independent of the retry work and of each other
 - **§11 G** — `DataloaderFactory.create()` returns on a name hit and discards the passed `batchFn`,
   so `'posts'` and `'post-author'` both call `postsRepository.findByIds` and that query runs
   twice per request. Efficiency, not correctness.
+- `infrastructure/upload-policy/upload-policy.service.ts` is entirely commented out, including its
+  own hardcoded `Maximum 10 files`. Dead code — left alone.
+- The 500-for-every-error bug moved out of this list — it's now Section 8 above.
