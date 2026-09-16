@@ -27,6 +27,10 @@ const subgraphSecret = 'posts-secret';
 describe('Posts subgraph (e2e)', () => {
   let app: INestApplication;
 
+  // shared between the editPost and deletePost blocks, which reuse a post
+  // created earlier in the run
+  let createdPostId: string | undefined;
+
   const authPost = (userId = 'user-1') =>
     request(app.getHttpServer())
       .post(rootUrl)
@@ -163,13 +167,13 @@ describe('Posts subgraph (e2e)', () => {
         .expect(200);
 
       expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].code).toBe('UNAUTHENTICATED');
+      expect(res.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
     });
   });
 
   describe('editPost', () => {
     it('should edit own post description', async () => {
-      if (!this.createdPostId) {
+      if (!createdPostId) {
         // create a post first
         const createRes = await authPost()
           .send({
@@ -180,7 +184,7 @@ describe('Posts subgraph (e2e)', () => {
             `,
           })
           .expect(200);
-        this.createdPostId = createRes.body.data.createPost.id;
+        createdPostId = createRes.body.data.createPost.id;
       }
 
       const res = await authPost()
@@ -192,7 +196,7 @@ describe('Posts subgraph (e2e)', () => {
           `,
           variables: {
             input: {
-              postId: this.createdPostId,
+              postId: createdPostId,
               description: 'Updated description',
             },
           },
@@ -221,7 +225,7 @@ describe('Posts subgraph (e2e)', () => {
     });
 
     it('should reject editing another user post', async () => {
-      if (!this.createdPostId) {
+      if (!createdPostId) {
         const createRes = await authPost()
           .send({
             query: `
@@ -231,7 +235,7 @@ describe('Posts subgraph (e2e)', () => {
             `,
           })
           .expect(200);
-        this.createdPostId = createRes.body.data.createPost.id;
+        createdPostId = createRes.body.data.createPost.id;
       }
 
       const res = await authPost('user-2')
@@ -243,7 +247,7 @@ describe('Posts subgraph (e2e)', () => {
           `,
           variables: {
             input: {
-              postId: this.createdPostId,
+              postId: createdPostId,
               description: 'Hacked description',
             },
           },

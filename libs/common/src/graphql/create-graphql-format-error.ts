@@ -1,19 +1,24 @@
-import { GraphQLError } from 'graphql';
+import { GraphQLError, GraphQLFormattedError } from 'graphql';
 import {
   FieldError,
-  GraphqlApiError,
+  GraphqlApiErrorCode,
   OriginalGraphQlError,
 } from './types/graphql-api-error.type';
 import { unwrapResolverError } from '@apollo/server/errors';
 
+// Runs twice for anything that crosses the gateway: once in the subgraph, then
+// again in the gateway over the error the subgraph already formatted. So it has
+// to be idempotent — it writes code/statusCode into `extensions` and reads them
+// back from there, otherwise the second pass loses the first pass's work and
+// degrades every error to 500.
 export function createGraphqlFormatError(isProduction: boolean) {
-  return (formattedError: GraphQLError, error: unknown): GraphqlApiError => {
+  return (
+    formattedError: GraphQLError,
+    error: unknown,
+  ): GraphQLFormattedError => {
     const unwrapped = unwrapResolverError(error);
     const resolverError = unwrapped as OriginalGraphQlError | undefined;
     const code = formattedError.extensions?.code;
-    /* const originalError = error.extensions?.originalError as
-      | OriginalGraphQlError
-      | undefined;*/
 
     const defaultMessage =
       typeof formattedError.message === 'string'
@@ -40,13 +45,30 @@ export function createGraphqlFormatError(isProduction: boolean) {
       ? (resolverResponse.errors as FieldError[])
       : Array.isArray((resolverError as any)?.errors)
         ? ((resolverError as any).errors as FieldError[])
-        : null;
+        : // second pass: field errors already normalized by the subgraph
+          Array.isArray(formattedError.extensions?.errors)
+          ? (formattedError.extensions.errors as FieldError[])
+          : null;
 
     // Extract HTTP status from any source
     const getStatus = (expected: number) =>
       resolverError?.statusCode === expected ||
       resolverResponse?.statusCode === expected ||
-      originalError?.statusCode === expected;
+      originalError?.statusCode === expected ||
+      // second pass: status written into extensions by the subgraph
+      formattedError.extensions?.statusCode === expected;
+
+    const build = (
+      apiCode: GraphqlApiErrorCode,
+      statusCode: number,
+      fallbackMessage: string,
+      fieldErrors: FieldError[] | null = null,
+    ): GraphQLFormattedError => ({
+      message: message || fallbackMessage,
+      ...(formattedError.locations && { locations: formattedError.locations }),
+      ...(formattedError.path && { path: formattedError.path }),
+      extensions: { code: apiCode, statusCode, errors: fieldErrors },
+    });
 
     if (
       getStatus(400) ||
@@ -54,82 +76,65 @@ export function createGraphqlFormatError(isProduction: boolean) {
       code === 'BAD_USER_INPUT' ||
       code === 'BAD_REQUEST'
     ) {
-      return {
-        message: message || 'Validation failed',
-        code: 'BAD_USER_INPUT',
-        statusCode: 400,
-        errors,
-      };
+      return build('BAD_USER_INPUT', 400, 'Validation failed', errors);
     }
 
     if (getStatus(401) || code === 'UNAUTHENTICATED') {
-      return {
-        message: message || 'Unauthorized',
-        code: 'UNAUTHENTICATED',
-        statusCode: 401,
-        errors: null,
-      };
+      return build('UNAUTHENTICATED', 401, 'Unauthorized');
     }
 
     if (getStatus(403) || code === 'FORBIDDEN') {
-      return {
-        message: message || 'Forbidden',
-        code: 'FORBIDDEN',
-        statusCode: 403,
-        errors: null,
-      };
+      return build('FORBIDDEN', 403, 'Forbidden');
     }
 
     if (getStatus(404) || code === 'NOT_FOUND') {
-      return {
-        message: message || 'Resource not found',
-        code: 'NOT_FOUND',
-        statusCode: 404,
-        errors: null,
-      };
+      return build('NOT_FOUND', 404, 'Resource not found');
     }
 
     if (getStatus(409) || code === 'CONFLICT') {
-      return {
-        message: message || 'Conflict',
-        code: 'CONFLICT',
-        statusCode: 409,
-        errors: null,
-      };
+      return build('CONFLICT', 409, 'Conflict');
     }
 
     if (getStatus(503) || code === 'SERVICE_UNAVAILABLE') {
-      return {
-        message: message || 'Service temporarily unavailable',
-        code: 'SERVICE_UNAVAILABLE',
-        statusCode: 503,
-        errors: null,
-      };
+      return build(
+        'SERVICE_UNAVAILABLE',
+        503,
+        'Service temporarily unavailable',
+      );
     }
 
     if (getStatus(504) || code === 'GATEWAY_TIMEOUT') {
-      return {
-        message: message || 'Gateway timeout',
-        code: 'GATEWAY_TIMEOUT',
-        statusCode: 504,
-        errors: null,
-      };
+      return build('GATEWAY_TIMEOUT', 504, 'Gateway timeout');
     }
 
+    // written out rather than built: the message is deliberately fixed, not
+    // taken from the resolver
     if (code === 'GRAPHQL_VALIDATION_FAILED') {
       return {
         message: 'GraphQL query validation failed',
-        code: 'GRAPHQL_VALIDATION_FAILED',
-        statusCode: 400,
-        errors: null,
+        ...(formattedError.locations && {
+          locations: formattedError.locations,
+        }),
+        extensions: {
+          code: 'GRAPHQL_VALIDATION_FAILED',
+          statusCode: 400,
+          errors: null,
+        },
       };
     }
 
+    // likewise: build() would prefer `message` over the fallback, which in
+    // production would hand the caller the internal message this branch exists
+    // to hide
     return {
       message: isProduction ? 'Internal server error' : defaultMessage,
-      code: 'INTERNAL_SERVER_ERROR',
-      statusCode: 500,
-      errors: null,
+      ...(formattedError.locations && { locations: formattedError.locations }),
+      ...(formattedError.path && { path: formattedError.path }),
+      extensions: {
+        code: 'INTERNAL_SERVER_ERROR',
+        statusCode: 500,
+        errors: null,
+      },
     };
   };
 }

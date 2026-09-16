@@ -68,7 +68,9 @@ export class UsersResolver {
         const user = userMap.get(id);
         if (!user) {
           this.logger.warn(`Referenced user not found. userId=${id}`);
-          throw new NotFoundException('User not found');
+          // returned, not thrown: rejects this key only, leaving the rest of
+          // the batch resolvable
+          return new NotFoundException('User not found');
         }
         return user /* ?? null*/;
       });

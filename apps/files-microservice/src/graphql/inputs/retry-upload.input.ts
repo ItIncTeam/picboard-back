@@ -11,7 +11,7 @@ import { Type } from 'class-transformer';
 import { UPLOAD_RULES } from '../../files/files.constants';
 
 @InputType()
-export class CompleteUploadInput {
+export class RetryUploadInput {
   @Field()
   @IsNotEmpty()
   @IsString()
@@ -20,17 +20,16 @@ export class CompleteUploadInput {
 }
 
 // @ArgsType flattens into the schema, so the mutation signature stays
-// completeUpload(input: [CompleteUploadInput!]!). The wrapper exists so the
-// validation pipe has a class to work with: a bare array parameter reflects as
-// `Array`, which ValidationPipe.toValidate() skips outright — leaving every
-// decorator above unenforced.
+// retryUpload(input: [RetryUploadInput!]!). The wrapper exists only to give
+// class-validator a property to hang the batch-size rules on — array
+// decorators cannot be applied to a bare resolver parameter.
 @ArgsType()
-export class CompleteUploadArgs {
-  @Field(() => [CompleteUploadInput])
+export class RetryUploadArgs {
+  @Field(() => [RetryUploadInput])
   @ArrayMinSize(1)
   @ArrayMaxSize(UPLOAD_RULES.MAX_FILES_PER_BATCH)
   // without ValidateNested + Type the per-item @IsUUID above never runs
   @ValidateNested({ each: true })
-  @Type(() => CompleteUploadInput)
-  input: CompleteUploadInput[];
+  @Type(() => RetryUploadInput)
+  input: RetryUploadInput[];
 }

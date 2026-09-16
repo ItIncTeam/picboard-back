@@ -33,6 +33,8 @@ export class PrismaFilesRepository implements FilesRepository {
             createdAt: true,
             storageKey: true,
             bucket: true,
+            uploadAttempts: true,
+            lastAttemptAt: true,
           },
         }),
       ),
@@ -51,6 +53,8 @@ export class PrismaFilesRepository implements FilesRepository {
           file.createdAt,
           file.storageKey,
           file.bucket,
+          file.uploadAttempts,
+          file.lastAttemptAt,
         ),
     );
   }
@@ -65,6 +69,20 @@ export class PrismaFilesRepository implements FilesRepository {
         id: { in: ids },
         ownerId,
         status,
+        deletedAt: null,
+      },
+    });
+
+    return files.map((file) => this.toEntity(file));
+  }
+
+  async findRetryable(ids: string[], ownerId: string): Promise<FileEntity[]> {
+    const files = await this.prisma.file.findMany({
+      where: {
+        id: { in: ids },
+        ownerId,
+        status: { in: [FileStatus.PENDING, FileStatus.FAILED] },
+        deletedAt: null,
       },
     });
 
@@ -113,6 +131,24 @@ export class PrismaFilesRepository implements FilesRepository {
     return this.toEntity(file);
   }
 
+  async markRetrying(id: string): Promise<FileEntity> {
+    const file = await this.prisma.file.update({
+      where: { id },
+      data: {
+        status: FileStatus.PENDING,
+        failedReason: null,
+        failedAt: null,
+        // atomic SQL increment: two concurrent retries cannot both
+        // read the same value and write the same result
+        uploadAttempts: { increment: 1 },
+        lastAttemptAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    return this.toEntity(file);
+  }
+
   async findById(id: string): Promise<FileEntity> {
     const file = await this.prisma.file.findUnique({
       where: {
@@ -144,6 +180,8 @@ export class PrismaFilesRepository implements FilesRepository {
       createdAt: file.createdAt,
       storageKey: file.storageKey,
       bucket: file.bucket,
+      uploadAttempts: file.uploadAttempts,
+      lastAttemptAt: file.lastAttemptAt,
     };
   }
 
