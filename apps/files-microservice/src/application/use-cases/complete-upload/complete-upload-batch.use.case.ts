@@ -130,36 +130,23 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
           this.logger.warn(
             `File ${file.id} size mismatch: ${file.size} vs ${objectMetadata.size}`,
           );
-          // a truncated or partial upload: re-sending can still succeed
+          // NOT retryable. A PUT either stores the whole object or fails, so a
+          // client that waits for its 200 before calling this cannot have
+          // truncated the upload. The only way the sizes disagree is that the
+          // client declared one size at initiate and sent different bytes —
+          // re-sending the same blob mismatches identically, exactly like the
+          // MIME case below.
           results.push(
             await this.markFailed(
               file.id,
               `Size mismatch: declared ${file.size}, actual ${objectMetadata.size}`,
-              true,
+              false,
             ),
           );
           continue;
         }
 
         // Check ContentType matches declared mimeType
-        function toMimeEnum(value: string | null | undefined): Mime | null {
-          if (!value) return null;
-
-          switch (value.toLowerCase()) {
-            case 'image/png':
-            case 'png':
-              return Mime.PNG;
-
-            case 'image/jpeg':
-            case 'image/jpg':
-            case 'jpeg':
-            case 'jpg':
-              return Mime.JPEG;
-
-            default:
-              return null;
-          }
-        }
         if (
           objectMetadata.mimeType &&
           toMimeEnum(objectMetadata.mimeType) !== file.mimeType
