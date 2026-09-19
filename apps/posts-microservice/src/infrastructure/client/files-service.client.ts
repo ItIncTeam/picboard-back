@@ -66,7 +66,7 @@ export class FilesServiceClient {
         this.client
           .send(FILES_TCP_PATTERNS.MARK_FILES_DELETED, {
             ownerId: data.ownerId,
-            filesIds: data.fileIds,
+            fileIds: data.fileIds,
           })
           .pipe(timeout(5000)),
       );
