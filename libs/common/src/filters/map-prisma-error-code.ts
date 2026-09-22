@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  GatewayTimeoutException,
   HttpException,
   InternalServerErrorException,
   NotFoundException,
@@ -46,13 +45,10 @@ export function mapPrismaErrorCode(code: string): HttpException | null {
     return new BadRequestException('Database validation failed');
   }
 
-  if (code === 'P2024') {
-    return new GatewayTimeoutException('Database connection pool timeout');
-  }
-
   // 500 Internal Server Error
   if (
     code === 'P2010' ||
+    code === 'P2024' ||
     code === 'P2027' ||
     code === 'P2021' ||
     code === 'P2022' ||

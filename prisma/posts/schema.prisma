@@ -32,28 +32,3 @@ model PostAttachment {
   @@unique([postId, sortOrder])
   @@index([fileId])
 }
-
-enum OutboxStatus {
-  PENDING
-  DONE
-  FAILED
-}
-
-// Transactional outbox: задача «при удалении поста удалить его файлы в files-сервисе».
-// Запись создаётся в одной транзакции с soft-delete поста; фоновый воркер
-// доставляет её в files с ретраями (at-least-once, идемпотентно).
-model FileDeletionOutbox {
-  id            String       @id @default(uuid())
-  postId        String
-  ownerId       String
-  fileIds       String[]
-  status        OutboxStatus @default(PENDING)
-  attempts      Int          @default(0)
-  lastError     String?
-  nextAttemptAt DateTime     @default(now())
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  processedAt   DateTime?
-
-  @@index([status, nextAttemptAt])
-}

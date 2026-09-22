@@ -14,8 +14,6 @@ export class FileEntity {
     public readonly createdAt: Date,
     public readonly storageKey: string,
     public readonly bucket: string,
-    public readonly uploadAttempts: number,
-    public readonly lastAttemptAt: Date | null,
     public readonly url?: string,
     /*public readonly updatedAt: Date | null,
     public readonly checksum?: string | null,

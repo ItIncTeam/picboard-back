@@ -46,9 +46,6 @@ model File {
   deletedAt    DateTime?
   failedReason String?
 
-  uploadAttempts Int       @default(1)
-  lastAttemptAt  DateTime?
-
   @@index([ownerId])
   @@index([status])
   @@index([ownerId, status])

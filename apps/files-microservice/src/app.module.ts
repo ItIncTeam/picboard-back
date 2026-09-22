@@ -15,7 +15,6 @@ import { File } from '../src/graphql/types/file.type';
 import {
   createGraphqlFormatError,
   normalizeContext,
-  PrismaExceptionModule,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
 } from '@app/common';
@@ -27,13 +26,6 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
   imports: [
     configModule,
     AppConfigModule,
-    PrismaExceptionModule.forRootAsync({
-      imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (appConfig: AppConfig) => ({
-        exposeErrorCode: !appConfig.isProduction,
-      }),
-    }),
     SubgraphAuthModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],

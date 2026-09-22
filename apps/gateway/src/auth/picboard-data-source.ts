@@ -41,8 +41,8 @@ export class PicboardDataSource extends RemoteGraphQLDataSource {
     request: any;
     context: GatewayContext;
   }) {
-    /*console.log('willSendRequest fired, url:', request.http?.url);
-    console.log('request body:', JSON.stringify(request.query ?? request.operationName ?? request));*/
+    /*console.log('willSendRequest fired');
+    console.log('context headers', context?.req?.headers);*/
 
     request.http?.headers.set('Router-Authorization', this.routerSecret);
 

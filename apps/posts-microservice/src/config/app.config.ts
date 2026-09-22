@@ -35,6 +35,20 @@ export class AppConfig {
     return value;
   }
 
+  get jwtAccessSecret(): string {
+    const value = this.configService.get<string>('JWT_ACCESS_SECRET');
+    if (!value) throw new Error('JWT_ACCESS_SECRET is not defined');
+    return value;
+  }
+
+  get jwtAccessExpiresIn(): any {
+    const value = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN');
+    if (!value) {
+      throw new Error('JWT_ACCESS_EXPIRES_IN is not defined');
+    }
+    return value;
+  }
+
   get postsSubgraphSecret(): string {
     const value = this.configService.get<string>('POSTS_SUBGRAPH_SECRET');
     if (!value) {
@@ -49,10 +63,6 @@ export class AppConfig {
       throw new Error('ROUTER_SECRET is not defined');
     }
     return value;
-  }
-
-  get isProduction(): boolean {
-    return this.configService.get<string>('NODE_ENV') === 'production';
   }
 
   get filesTcpHost(): string {

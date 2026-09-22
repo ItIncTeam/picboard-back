@@ -8,8 +8,5 @@ export class UserEntity {
     public readonly confirmationCode: string | null,
     public readonly confirmationCodeExpDate: Date | null,
     public readonly isConfirmed: boolean,
-    public readonly displayName?: string | null,
-    public readonly bio?: string | null,
-    public readonly profilePictureFileId?: string | null,
   ) {}
 }
