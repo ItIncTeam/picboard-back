@@ -12,6 +12,9 @@ import { PrismaPostsRepository } from '../infrastructure/prisma/prisma-posts.rep
 import { CreatePostUseCase } from '../application/use-cases/create-post/create-post.use.case';
 import { UpdatePostDescriptionUseCase } from '../application/use-cases/update-post-description/update-post-description.use.case';
 import { DeletePostUseCase } from '../application/use-cases/delete-post/delete-post.use.case';
+import { FileDeletionOutboxRepository } from '../domain/repositories/file-deletion-outbox.repository';
+import { PrismaFileDeletionOutboxRepository } from '../infrastructure/prisma/prisma-file-deletion-outbox.repository';
+import { FileDeletionOutboxWorker } from '../infrastructure/worker/file-deletion-outbox.worker';
 
 @Module({
   imports: [AppConfigModule, CqrsModule, PrismaModule],
@@ -27,6 +30,11 @@ import { DeletePostUseCase } from '../application/use-cases/delete-post/delete-p
       provide: PostsRepository,
       useClass: PrismaPostsRepository,
     },
+    {
+      provide: FileDeletionOutboxRepository,
+      useClass: PrismaFileDeletionOutboxRepository,
+    },
+    FileDeletionOutboxWorker,
   ],
   controllers: [PostsEventsController],
 })

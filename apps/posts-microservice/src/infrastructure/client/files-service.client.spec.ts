@@ -36,13 +36,13 @@ describe('FilesServiceClient', () => {
       expect(payload).not.toHaveProperty('filesIds');
     });
 
-    it('does not throw when the TCP call fails (fire-and-forget)', async () => {
+    it('propagates TCP errors so the worker can retry', async () => {
       const { client, send } = buildClientWithMockSend();
       send.mockReturnValue(throwError(() => new Error('tcp down')));
 
       await expect(
         client.markFilesDeleted({ ownerId: 'o', fileIds: ['f'] }),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow('tcp down');
     });
   });
 });

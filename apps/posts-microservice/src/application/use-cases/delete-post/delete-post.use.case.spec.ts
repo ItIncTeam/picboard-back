@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DeletePostCommand, DeletePostUseCase } from './delete-post.use.case';
 import { PostsRepository } from '../../../domain/repositories/posts.repository';
-import { FilesServiceClient } from '../../../infrastructure/client/files-service.client';
 import { PostEntity } from '../../../posts/entities/post.entity';
 import { PostAttachmentEntity } from '../../../posts/entities/post-attachment.entity';
 
@@ -32,30 +31,23 @@ function createPost(overrides: Partial<PostEntity> = {}): PostEntity {
 describe('DeletePostUseCase', () => {
   let useCase: DeletePostUseCase;
   let postsRepository: jest.Mocked<PostsRepository>;
-  let filesClient: jest.Mocked<FilesServiceClient>;
 
   beforeEach(async () => {
     postsRepository = {
       findById: jest.fn(),
-      softDelete: jest.fn(),
+      softDeleteAndEnqueueFileDeletion: jest.fn(),
       create: jest.fn(),
       findByIds: jest.fn(),
       findByOwnerId: jest.fn(),
       findFeed: jest.fn(),
       findProfilePosts: jest.fn(),
       updateDescription: jest.fn(),
-    };
-
-    filesClient = {
-      markFilesDeleted: jest.fn(),
-      assertAllOwnedReadyOrException: jest.fn(),
-    } as unknown as jest.Mocked<FilesServiceClient>;
+    } as unknown as jest.Mocked<PostsRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DeletePostUseCase,
         { provide: PostsRepository, useValue: postsRepository },
-        { provide: FilesServiceClient, useValue: filesClient },
       ],
     }).compile();
 
@@ -63,21 +55,21 @@ describe('DeletePostUseCase', () => {
   });
 
   describe('successful deletion', () => {
-    it('should soft delete post and mark files as deleted', async () => {
+    it('should soft delete post and enqueue file deletion', async () => {
       const post = createPost({
         attachments: [createPostAttachment({ fileId: 'file-1' })],
       });
       postsRepository.findById.mockResolvedValue(post);
-      postsRepository.softDelete.mockResolvedValue(undefined);
 
       const command = new DeletePostCommand('post-1', 'user-1');
       await useCase.execute(command);
 
-      expect(postsRepository.softDelete).toHaveBeenCalledWith('post-1');
-      expect(filesClient.markFilesDeleted).toHaveBeenCalledWith({
-        fileIds: ['file-1'],
-        ownerId: 'user-1',
-      });
+      expect(postsRepository.findById).toHaveBeenCalledWith('post-1');
+      expect(postsRepository.softDeleteAndEnqueueFileDeletion).toHaveBeenCalledWith(
+        'post-1',
+        ['file-1'],
+        'user-1',
+      );
     });
 
     it('should handle post with multiple attachments', async () => {
@@ -92,10 +84,11 @@ describe('DeletePostUseCase', () => {
       const command = new DeletePostCommand('post-1', 'user-1');
       await useCase.execute(command);
 
-      expect(filesClient.markFilesDeleted).toHaveBeenCalledWith({
-        fileIds: ['file-1', 'file-2'],
-        ownerId: 'user-1',
-      });
+      expect(postsRepository.softDeleteAndEnqueueFileDeletion).toHaveBeenCalledWith(
+        'post-1',
+        ['file-1', 'file-2'],
+        'user-1',
+      );
     });
   });
 
@@ -107,8 +100,7 @@ describe('DeletePostUseCase', () => {
       await expect(useCase.execute(command)).rejects.toThrow(NotFoundException);
       await expect(useCase.execute(command)).rejects.toThrow('Post not found');
 
-      expect(postsRepository.softDelete).not.toHaveBeenCalled();
-      expect(filesClient.markFilesDeleted).not.toHaveBeenCalled();
+      expect(postsRepository.softDeleteAndEnqueueFileDeletion).not.toHaveBeenCalled();
     });
   });
 
@@ -123,8 +115,7 @@ describe('DeletePostUseCase', () => {
       );
       await expect(useCase.execute(command)).rejects.toThrow('Access denied');
 
-      expect(postsRepository.softDelete).not.toHaveBeenCalled();
-      expect(filesClient.markFilesDeleted).not.toHaveBeenCalled();
+      expect(postsRepository.softDeleteAndEnqueueFileDeletion).not.toHaveBeenCalled();
     });
   });
 });
