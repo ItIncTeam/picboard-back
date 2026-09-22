@@ -16,9 +16,5 @@ export abstract class PostsRepository {
     id: string,
     description: string | null,
   ): Promise<PostEntity>;
-  abstract softDeleteAndEnqueueFileDeletion(
-    postId: string,
-    fileIds: string[],
-    ownerId: string,
-  ): Promise<void>;
+  abstract softDelete(id: string): Promise<void>;
 }

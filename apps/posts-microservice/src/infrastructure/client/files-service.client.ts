@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  GatewayTimeoutException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ClientProxy, ClientTCP } from '@nestjs/microservices';
 import { firstValueFrom, timeout, TimeoutError } from 'rxjs';
 import { AppConfig } from '../../config/app.config';
@@ -26,6 +21,7 @@ export interface CheckOwnedReadyResponse {
 @Injectable()
 export class FilesServiceClient {
   private client: ClientProxy;
+  private readonly logger = new Logger(FilesServiceClient.name);
 
   constructor(private readonly appConfig: AppConfig) {
     this.client = new ClientTCP({
@@ -52,21 +48,25 @@ export class FilesServiceClient {
       );
     } catch (error) {
       if (error instanceof TimeoutError) {
-        throw new GatewayTimeoutException('Files service timeout');
+        throw new BadRequestException('Files service timeout');
       }
-      throw new ServiceUnavailableException('Files service unavailable');
+      throw new BadRequestException('Files service unavailable');
     }
   }
 
   async markFilesDeleted(data: SoftDeleteFilesInput): Promise<void> {
-    await firstValueFrom(
-      this.client
-        .send(FILES_TCP_PATTERNS.MARK_FILES_DELETED, {
-          ownerId: data.ownerId,
-          fileIds: data.fileIds,
-        })
-        .pipe(timeout(5000)),
-    );
+    try {
+      await firstValueFrom(
+        this.client
+          .send(FILES_TCP_PATTERNS.MARK_FILES_DELETED, {
+            ownerId: data.ownerId,
+            filesIds: data.fileIds,
+          })
+          .pipe(timeout(5000)),
+      );
+    } catch (error) {
+      this.logger.error('Failed to mark files as deleted', error);
+    }
   }
 
   async assertAllOwnedReadyOrException(

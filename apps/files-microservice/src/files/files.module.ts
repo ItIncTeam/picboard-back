@@ -14,7 +14,6 @@ import { CompleteUploadBatchUseCase } from '../application/use-cases/complete-up
 import { CheckOwnedReadyFilesHandler } from '../application/handlers/check-owned-ready-files/check-owned-ready-files.handler';
 import { ResolveFileUrlUseCase } from '../application/use-cases/resolve-file-url/resolve-file-url.use.case';
 import { SoftDeleteFilesUseCase } from '../application/use-cases/soft-delete-files/soft-delete-files.use.case';
-import { RetryUploadBatchUseCase } from '../application/use-cases/retry-upload/retry-upload-batch.use.case';
 
 @Module({
   imports: [
@@ -36,7 +35,6 @@ import { RetryUploadBatchUseCase } from '../application/use-cases/retry-upload/r
     FilesResolver,
     InitiateUploadBatchUseCase,
     CompleteUploadBatchUseCase,
-    RetryUploadBatchUseCase,
     ResolveFileUrlUseCase,
     SoftDeleteFilesUseCase,
     CheckOwnedReadyFilesHandler,

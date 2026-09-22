@@ -7,17 +7,14 @@ import {
   Parent,
 } from '@nestjs/graphql';
 import { File } from '../types/file.type';
-import { InitiateUploadArgs } from '../inputs/initiate-upload.input';
+import { InitiateUploadInput } from '../inputs/initiate-upload.input';
 import { InitiateUploadPayload } from '../types/payloads/initiate-upload.payload';
 import { CommandBus } from '@nestjs/cqrs';
 import { InitiateUploadBatchCommand } from '../../application/use-cases/initiate-upload/initiate-upload-batch.use.case';
 import { CurrentUserId } from '@app/common';
 import { CompleteUploadPayload } from '../types/payloads/complete-upload.payload';
-import { CompleteUploadArgs } from '../inputs/complete-upload.input';
+import { CompleteUploadInput } from '../inputs/complete-upload.input';
 import { CompleteUploadBatchCommand } from '../../application/use-cases/complete-upload/complete-upload-batch.use.case';
-import { RetryUploadPayload } from '../types/payloads/retry-upload.payload';
-import { RetryUploadArgs } from '../inputs/retry-upload.input';
-import { RetryUploadBatchCommand } from '../../application/use-cases/retry-upload/retry-upload-batch.use.case';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { ResolveFileUrlCommand } from '../../application/use-cases/resolve-file-url/resolve-file-url.use.case';
 import { FilesRepository } from '../../domain/repositories/files/files.repository';
@@ -35,36 +32,23 @@ export class FilesResolver {
   @Mutation(() => [InitiateUploadPayload])
   initiateUploadBatch(
     @CurrentUserId() ownerId: string,
-    @Args() args: InitiateUploadArgs,
+    @Args('input', { type: () => [InitiateUploadInput] })
+    input: InitiateUploadInput[],
   ): Promise<InitiateUploadPayload[]> {
     return this.commandBus.execute(
-      new InitiateUploadBatchCommand(args.input, ownerId),
+      new InitiateUploadBatchCommand(input, ownerId),
     );
   }
 
   @Mutation(() => [CompleteUploadPayload])
   completeUpload(
     @CurrentUserId() ownerId: string,
-    @Args() args: CompleteUploadArgs,
+    @Args('input', { type: () => [CompleteUploadInput] })
+    input: CompleteUploadInput[],
   ): Promise<CompleteUploadPayload[]> {
     return this.commandBus.execute(
       new CompleteUploadBatchCommand(
-        args.input.map((item) => item.fileId),
-        ownerId,
-      ),
-    );
-  }
-
-  // re-issue a presigned PUT URL for a file whose upload never completed,
-  // so one bad file can be repaired instead of the whole batch being discarded
-  @Mutation(() => [RetryUploadPayload])
-  retryUpload(
-    @CurrentUserId() ownerId: string,
-    @Args() args: RetryUploadArgs,
-  ): Promise<RetryUploadPayload[]> {
-    return this.commandBus.execute(
-      new RetryUploadBatchCommand(
-        args.input.map((item) => item.fileId),
+        input.map((item) => item.fileId),
         ownerId,
       ),
     );
@@ -98,9 +82,7 @@ export class FilesResolver {
         const file = fileMap.get(id);
         if (!file) {
           this.logger.warn(`Referenced file not found. fileId=${id}`);
-          // returned, not thrown: rejects this key only, leaving the rest of
-          // the batch resolvable
-          return new NotFoundException('File not found');
+          throw new NotFoundException('File not found');
         }
         return file /* ?? null*/;
       });

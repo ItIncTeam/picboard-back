@@ -1,5 +1,4 @@
 import { Directive, Field, ID, ObjectType } from '@nestjs/graphql';
-import { FileReference } from './file-reference.type';
 
 @ObjectType()
 @Directive('@key(fields: "id")')
@@ -8,7 +7,19 @@ export class User {
   id: string;
 
   @Field()
+  email: string;
+
+  @Field()
   username: string;
+
+  @Field({ nullable: true })
+  confirmationCode: string;
+
+  @Field({ nullable: true })
+  confirmationCodeExpDate: Date;
+
+  @Field()
+  isConfirmed: boolean;
 
   @Field({ nullable: true })
   displayName?: string;
@@ -18,7 +29,4 @@ export class User {
 
   @Field(() => ID, { nullable: true })
   profilePictureFileId?: string;
-
-  @Field(() => FileReference, { nullable: true })
-  avatar?: FileReference;
 }

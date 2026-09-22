@@ -9,11 +9,9 @@ import {
 import { PostsModule } from './posts/posts.module';
 import { AppConfigModule } from './config/app-config.module';
 import {
-  createGraphqlFormatError,
   normalizeContext,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
-  PrismaExceptionModule,
 } from '@app/common';
 import { AppConfig } from './config/app.config';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
@@ -22,13 +20,6 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
   imports: [
     configModule,
     AppConfigModule,
-    PrismaExceptionModule.forRootAsync({
-      imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (appConfig: AppConfig) => ({
-        exposeErrorCode: !appConfig.isProduction,
-      }),
-    }),
     SubgraphAuthModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -36,22 +27,17 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
         secret: appConfig.postsSubgraphSecret,
       }),
     }),
-    GraphQLModule.forRootAsync<ApolloFederationDriverConfig>({
+    GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
-      imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (appConfig: AppConfig) => ({
-        autoSchemaFile: {
-          federation: 2,
-        },
-        path: '/api/v1',
-        sortSchema: true,
-        playground: true,
-        formatError: createGraphqlFormatError(appConfig.isProduction),
-        context: ({ req, res }) => ({
-          dataloaderFactory: new DataloaderFactory(),
-          ...normalizeContext(req, res),
-        }),
+      autoSchemaFile: {
+        federation: 2,
+      },
+      path: '/api/v1',
+      sortSchema: true,
+      playground: true,
+      context: ({ req, res }) => ({
+      dataloaderFactory: new DataloaderFactory(),
+      ...normalizeContext(req, res),
       }),
     }),
     PostsModule,

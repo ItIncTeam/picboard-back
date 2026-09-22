@@ -19,23 +19,14 @@ import {
   normalizeContext,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
-  PrismaExceptionModule,
 } from '@app/common';
 import { AppConfig } from './config/app.config';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
-import { Me } from './graphql/types/me.type';
 
 @Module({
   imports: [
     configModule,
     AppConfigModule,
-    PrismaExceptionModule.forRootAsync({
-      imports: [AppConfigModule],
-      inject: [AppConfig],
-      useFactory: (appConfig: AppConfig) => ({
-        exposeErrorCode: !appConfig.isProduction,
-      }),
-    }),
     SubgraphAuthModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -50,9 +41,6 @@ import { Me } from './graphql/types/me.type';
       useFactory: (appConfig: AppConfig) => ({
         autoSchemaFile: {
           federation: 2,
-        },
-        buildSchemaOptions: {
-          orphanedTypes: [Me],
         },
         path: '/api/v1',
         introspection: true /*!appConfig.isProduction*/,
@@ -73,7 +61,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(SubgraphGatewayAuthMiddleware)
-      .exclude({ path: 'api/v1/auth/*path', method: RequestMethod.GET })
       .forRoutes({ path: 'api/v1', method: RequestMethod.ALL });
   }
 }

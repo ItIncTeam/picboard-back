@@ -42,6 +42,16 @@ export class FilesTcpController {
     return result;
   }
 
+  //todo: create use case
+  // @MessagePattern(FILES_TCP_PATTERNS.MARK_FILES_DELETED)
+  // async markFilesDeleted(@Payload() payload: CheckOwnedReadyFilesDto): Promise<void> {
+  //   await Promise.all(
+  //     payload.fileIds.map(id =>
+  //       this.filesRepository.updateStatus(id, FileStatus.DELETED),
+  //     ),
+  //   );
+  // }
+
   @MessagePattern(FILES_TCP_PATTERNS.MARK_FILES_DELETED)
   @UsePipes(createRpcValidationPipe())
   async softDeleteMany(

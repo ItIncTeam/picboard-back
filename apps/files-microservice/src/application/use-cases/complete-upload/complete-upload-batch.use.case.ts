@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { FilesRepository } from '../../../domain/repositories/files/files.repository';
 import { StorageService } from '../../../domain/services/awsS3Storage/storage.service';
-import { UPLOAD_RULES } from '../../../files/files.constants';
 
 export class CompleteUploadBatchCommand {
   constructor(
@@ -21,29 +20,6 @@ export class CompleteUploadBatchCommand {
 export class CompleteUploadBatchResult {
   fileId: string;
   status: FileStatus;
-  failedReason?: string;
-  retryable: boolean;
-}
-
-// hoisted out of the verification loop: it holds no state and was previously
-// redeclared on every iteration
-function toMimeEnum(value: string | null | undefined): Mime | null {
-  if (!value) return null;
-
-  switch (value.toLowerCase()) {
-    case 'image/png':
-    case 'png':
-      return Mime.PNG;
-
-    case 'image/jpeg':
-    case 'image/jpg':
-    case 'jpeg':
-    case 'jpg':
-      return Mime.JPEG;
-
-    default:
-      return null;
-  }
 }
 
 // verify ownership, confirm object existence or metadata, transition status to UPLOADED/READY, persist storage metadata
@@ -70,10 +46,8 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
     }
 
     // Validate fileIds array is not too large
-    if (fileIds.length > UPLOAD_RULES.MAX_FILES_PER_BATCH) {
-      throw new BadRequestException(
-        `Maximum ${UPLOAD_RULES.MAX_FILES_PER_BATCH} files are allowed`,
-      );
+    if (fileIds.length > 10) {
+      throw new BadRequestException('Maximum 10 files are allowed');
     }
 
     // Step 1: Fetch all file records from DB
@@ -114,14 +88,12 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
 
         if (!objectMetadata) {
           this.logger.warn(`File ${file.id} not found in S3`);
-          // the PUT never landed, so the same bytes are still worth sending
-          results.push(
-            await this.markFailed(
-              file.id,
-              'Object not found in storage',
-              true,
-            ),
+          await this.filesRepository.updateStatus(
+            file.id,
+            FileStatus.FAILED,
+            'Object not found in storage',
           );
+          results.push({ fileId: file.id, status: FileStatus.FAILED });
           continue;
         }
 
@@ -130,23 +102,34 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
           this.logger.warn(
             `File ${file.id} size mismatch: ${file.size} vs ${objectMetadata.size}`,
           );
-          // NOT retryable. A PUT either stores the whole object or fails, so a
-          // client that waits for its 200 before calling this cannot have
-          // truncated the upload. The only way the sizes disagree is that the
-          // client declared one size at initiate and sent different bytes —
-          // re-sending the same blob mismatches identically, exactly like the
-          // MIME case below.
-          results.push(
-            await this.markFailed(
-              file.id,
-              `Size mismatch: declared ${file.size}, actual ${objectMetadata.size}`,
-              false,
-            ),
+          await this.filesRepository.updateStatus(
+            file.id,
+            FileStatus.FAILED,
+            `Size mismatch: declared ${file.size}, actual ${objectMetadata.size}`,
           );
+          results.push({ fileId: file.id, status: FileStatus.FAILED });
           continue;
         }
 
         // Check ContentType matches declared mimeType
+        function toMimeEnum(value: string | null | undefined): Mime | null {
+          if (!value) return null;
+
+          switch (value.toLowerCase()) {
+            case 'image/png':
+            case 'png':
+              return Mime.PNG;
+
+            case 'image/jpeg':
+            case 'image/jpg':
+            case 'jpeg':
+            case 'jpg':
+              return Mime.JPEG;
+
+            default:
+              return null;
+          }
+        }
         if (
           objectMetadata.mimeType &&
           toMimeEnum(objectMetadata.mimeType) !== file.mimeType
@@ -154,16 +137,12 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
           this.logger.warn(
             `File ${file.id} MIME mismatch: ${file.mimeType} vs ${objectMetadata.mimeType}`,
           );
-          // NOT retryable: the client declared one type and sent another, so
-          // re-uploading the same bytes fails identically. This file needs a
-          // fresh initiateUploadBatch with corrected metadata.
-          results.push(
-            await this.markFailed(
-              file.id,
-              `MIME mismatch: declared ${file.mimeType}, actual ${objectMetadata.mimeType}`,
-              false,
-            ),
+          await this.filesRepository.updateStatus(
+            file.id,
+            FileStatus.FAILED,
+            `MIME mismatch: declared ${file.mimeType}, actual ${objectMetadata.mimeType}`,
           );
+          results.push({ fileId: file.id, status: FileStatus.FAILED });
           continue;
         }
 
@@ -175,48 +154,21 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
           new Date(),
         );
 
-        results.push({
-          fileId: file.id,
-          status: FileStatus.READY,
-          retryable: false,
-        });
+        results.push({ fileId: file.id, status: FileStatus.READY });
       } catch (error) {
         const errorMessage = error.message || 'Upload verification failed';
         this.logger.error(`Failed to verify file ${file.id}`, error);
 
-        // probably a transient S3/infra problem, so worth another attempt.
-        // The raw SDK message is persisted for debugging but not returned:
-        // it can carry bucket names, ARNs and internal endpoints.
-        results.push(
-          await this.markFailed(
-            file.id,
-            errorMessage,
-            true,
-            'Upload verification failed',
-          ),
+        await this.filesRepository.updateStatus(
+          file.id,
+          FileStatus.FAILED,
+          errorMessage,
         );
+
+        results.push({ fileId: file.id, status: FileStatus.FAILED });
       }
     }
 
     return results;
-  }
-
-  // keeps the persisted reason and the returned payload from drifting apart.
-  // clientReason defaults to reason; pass it explicitly when the stored text
-  // is not safe to hand back to the caller.
-  private async markFailed(
-    fileId: string,
-    reason: string,
-    retryable: boolean,
-    clientReason: string = reason,
-  ): Promise<CompleteUploadBatchResult> {
-    await this.filesRepository.updateStatus(fileId, FileStatus.FAILED, reason);
-
-    return {
-      fileId,
-      status: FileStatus.FAILED,
-      failedReason: clientReason,
-      retryable,
-    };
   }
 }
