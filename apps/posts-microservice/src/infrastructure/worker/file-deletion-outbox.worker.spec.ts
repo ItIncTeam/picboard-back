@@ -1,17 +1,24 @@
 import { FileDeletionOutboxWorker } from './file-deletion-outbox.worker';
 import { FileDeletionOutboxRepository } from '../../domain/repositories/file-deletion-outbox.repository';
 import { FilesServiceClient } from '../client/files-service.client';
-import { CLEANUP_EVERY_TICKS, MAX_ATTEMPTS } from './file-deletion-outbox.worker';
+import { CLEANUP_EVERY_TICKS } from './file-deletion-outbox.worker';
 
 describe('FileDeletionOutboxWorker', () => {
   let worker: FileDeletionOutboxWorker;
   let outbox: jest.Mocked<FileDeletionOutboxRepository>;
   let filesClient: jest.Mocked<FilesServiceClient>;
 
-  const now = new Date('2026-01-01');
-
-  const task = (overrides: Partial<{ id: string; ownerId: string; fileIds: string[]; attempts: number }> = {}) => ({
+  const task = (
+    overrides: Partial<{
+      id: string;
+      postId: string;
+      ownerId: string;
+      fileIds: string[];
+      attempts: number;
+    }> = {},
+  ) => ({
     id: 'task-1',
+    postId: 'post-1',
     ownerId: 'user-1',
     fileIds: ['file-1'],
     attempts: 0,
@@ -25,7 +32,7 @@ describe('FileDeletionOutboxWorker', () => {
       reschedule: jest.fn(),
       markFailed: jest.fn(),
       deleteDoneOlderThan: jest.fn(),
-    } as unknown as jest.Mocked<FileDeletionOutboxRepository>;
+    };
 
     filesClient = {
       markFilesDeleted: jest.fn(),
