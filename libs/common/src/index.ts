@@ -8,6 +8,7 @@ export * from './validation/create-validation-pipe';
 export * from './validation/create-rpc-validation-pipe';
 export * from './validation/format-validation-errors';
 export * from './validation/types/validation-error-item.type';
+export * from './rpc/map-rpc-error-to-http';
 export * from './filters/map-prisma-error-code';
 export * from './prisma/prisma-exception.filter';
 export * from './prisma/prisma-exception.module';

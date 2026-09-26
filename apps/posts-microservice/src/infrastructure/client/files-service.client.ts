@@ -1,11 +1,7 @@
-import {
-  Injectable,
-  BadRequestException,
-  GatewayTimeoutException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ClientProxy, ClientTCP } from '@nestjs/microservices';
-import { firstValueFrom, timeout, TimeoutError } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
+import { mapRpcErrorToHttpException } from '@app/common/rpc/map-rpc-error-to-http';
 import { AppConfig } from '../../config/app.config';
 import {
   CheckOwnedReadyFilesResponse,
@@ -51,10 +47,9 @@ export class FilesServiceClient {
           .pipe(timeout(5000)),
       );
     } catch (error) {
-      if (error instanceof TimeoutError) {
-        throw new GatewayTimeoutException('Files service timeout');
-      }
-      throw new ServiceUnavailableException('Files service unavailable');
+      throw mapRpcErrorToHttpException(error, {
+        serviceLabel: 'Files service',
+      });
     }
   }
 
