@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { FilesRepository } from '../../../domain/repositories/files/files.repository';
 import { StorageService } from '../../../domain/services/awsS3Storage/storage.service';
 import { StorageKeyBuilder } from '../../../infrastructure/storage-key/storage-key-builder.service';
+import { UPLOAD_RULES } from '../../../files/files.constants';
 import { FileStatus } from '../../../domain/enums/file-status.enum';
 import { InitiateUploadInput } from '../../../graphql/inputs/initiate-upload.input';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -50,8 +51,10 @@ export class InitiateUploadBatchUseCase implements ICommandHandler<
       throw new BadRequestException('At least one file is required');
     }
 
-    if (items.length > 10) {
-      throw new BadRequestException('Maximum 10 files are allowed');
+    if (items.length > UPLOAD_RULES.MAX_FILES_PER_BATCH) {
+      throw new BadRequestException(
+        `Maximum ${UPLOAD_RULES.MAX_FILES_PER_BATCH} files are allowed`,
+      );
     }
 
     /*this.fileUploadPolicyService.validateBatch(items);

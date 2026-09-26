@@ -1,8 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException } from '@nestjs/common';
 import { PostsRepository } from '../../../domain/repositories/posts.repository';
 import { FilesServiceClient } from '../../../infrastructure/client/files-service.client';
 import { PostEntity } from '../../../posts/entities/post.entity';
 import { CreatePostInput } from '../../../posts/graphql/dto/create-post.input';
+import { POST_RULES } from '../../../posts/posts.constants';
 
 export class CreatePostCommand {
   constructor(
@@ -20,6 +22,12 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
 
   async execute(command: CreatePostCommand): Promise<PostEntity> {
     const { input, ownerId } = command;
+
+    if (input.fileIds.length > POST_RULES.MAX_FILES_PER_POST) {
+      throw new BadRequestException(
+        `Maximum ${POST_RULES.MAX_FILES_PER_POST} files per post`,
+      );
+    }
 
     await this.filesClient.assertAllOwnedReadyOrException(
       input.fileIds,

@@ -13,6 +13,7 @@ export function createRpcValidationPipe(): ValidationPipe {
       const firstMessage = formatted[0]?.message ?? 'Validation failed';
 
       return new RpcException({
+        statusCode: 400,
         message: firstMessage,
         errors: formatted,
       });
