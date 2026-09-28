@@ -48,9 +48,7 @@ export function mapRpcErrorToHttpException(
   }
 
   const rpc = error as RpcErrorPayload;
-  const message = Array.isArray(rpc?.message)
-    ? rpc.message[0]
-    : rpc?.message;
+  const message = Array.isArray(rpc?.message) ? rpc.message[0] : rpc?.message;
 
   switch (rpc?.statusCode) {
     case 400:
