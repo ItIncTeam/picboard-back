@@ -10,6 +10,7 @@ export * from './validation/format-validation-errors';
 export * from './validation/types/validation-error-item.type';
 export * from './rpc/map-rpc-error-to-http';
 export * from './rpc/extract-error-message';
+export * from './rpc/http-to-rpc-exception.filter';
 export * from './filters/map-prisma-error-code';
 export * from './prisma/prisma-exception.filter';
 export * from './prisma/prisma-exception.module';
