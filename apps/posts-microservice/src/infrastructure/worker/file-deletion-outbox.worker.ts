@@ -101,6 +101,19 @@ export class FileDeletionOutboxWorker implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * 4xx от files-сервиса — перманентная ошибка: повтор не поможет (payload не
+   * изменится), поэтому не тратим попытки. Классифицируем по `statusCode` на
+   * «сыром» payload — через TCP тип теряется (см. mapRpcErrorToHttpException).
+   * Всё остальное (5xx / сеть / таймаут) — повторяем.
+   */
+  private isPermanentFailure(error: unknown): boolean {
+    const statusCode = (error as { statusCode?: unknown })?.statusCode;
+    return (
+      typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500
+    );
+  }
+
   private async deliver(task: {
     id: string;
     ownerId: string;
@@ -118,10 +131,10 @@ export class FileDeletionOutboxWorker implements OnModuleInit, OnModuleDestroy {
       const message = extractErrorMessage(error);
       const nextAttempt = task.attempts + 1;
 
-      if (nextAttempt >= MAX_ATTEMPTS) {
+      if (this.isPermanentFailure(error) || nextAttempt >= MAX_ATTEMPTS) {
         await this.outbox.markFailed(task.id, message);
         this.logger.error(
-          `Outbox task ${task.id} failed after ${nextAttempt} attempts: ${message}`,
+          `Outbox task ${task.id} failed after ${nextAttempt} attempt(s): ${message}`,
         );
         return;
       }

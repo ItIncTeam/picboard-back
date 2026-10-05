@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   GatewayTimeoutException,
+  InternalServerErrorException,
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -50,6 +51,28 @@ describe('mapRpcErrorToHttpException', () => {
     expect(
       mapRpcErrorToHttpException({ statusCode: 409, message: 'nope' }),
     ).toBeInstanceOf(ConflictException);
+  });
+
+  it('maps RPC 500 → InternalServerError', () => {
+    const error = mapRpcErrorToHttpException(
+      { statusCode: 500, message: 'boom' },
+      { serviceLabel: 'Files service' },
+    );
+
+    expect(error).toBeInstanceOf(InternalServerErrorException);
+    expect(error.getStatus()).toBe(500);
+    expect(error.message).toBe('boom');
+  });
+
+  it('maps RPC 504 → GatewayTimeout preserving message', () => {
+    const error = mapRpcErrorToHttpException(
+      { statusCode: 504, message: 'Files repository request timed out' },
+      { serviceLabel: 'Files service' },
+    );
+
+    expect(error).toBeInstanceOf(GatewayTimeoutException);
+    expect(error.getStatus()).toBe(504);
+    expect(error.message).toBe('Files repository request timed out');
   });
 
   it('maps unknown error (no statusCode) → 503 ServiceUnavailable', () => {

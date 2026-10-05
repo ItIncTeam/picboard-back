@@ -71,6 +71,37 @@ describe('FileDeletionOutboxWorker', () => {
     });
   });
 
+  describe('permanent 4xx failure', () => {
+    it('marks FAILED immediately without rescheduling', async () => {
+      outbox.findPendingBatch.mockResolvedValue([task({ attempts: 0 })]);
+      filesClient.markFilesDeleted.mockRejectedValue({
+        statusCode: 400,
+        message: 'invalid file ids',
+      });
+
+      await worker.tick();
+
+      expect(outbox.markFailed).toHaveBeenCalledWith(
+        'task-1',
+        'invalid file ids',
+      );
+      expect(outbox.reschedule).not.toHaveBeenCalled();
+    });
+
+    it('still retries 5xx', async () => {
+      outbox.findPendingBatch.mockResolvedValue([task({ attempts: 0 })]);
+      filesClient.markFilesDeleted.mockRejectedValue({
+        statusCode: 503,
+        message: 'files down',
+      });
+
+      await worker.tick();
+
+      expect(outbox.reschedule).toHaveBeenCalled();
+      expect(outbox.markFailed).not.toHaveBeenCalled();
+    });
+  });
+
   describe('attempts=4 (next=5=MAX)', () => {
     it('should markFailed', async () => {
       outbox.findPendingBatch.mockResolvedValue([task({ attempts: 4 })]);
