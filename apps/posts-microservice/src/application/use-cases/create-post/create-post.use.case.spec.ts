@@ -20,7 +20,7 @@ describe('CreatePostUseCase', () => {
       findFeed: jest.fn(),
       findProfilePosts: jest.fn(),
       updateDescription: jest.fn(),
-      softDelete: jest.fn(),
+      softDeleteAndEnqueueFileDeletion: jest.fn(),
     };
 
     filesClient = {
