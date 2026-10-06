@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { FileDeletionOutboxRepository } from '../../domain/repositories/file-deletion-outbox.repository';
 import { FilesServiceClient } from '../client/files-service.client';
+import { extractErrorMessage } from '@app/common/rpc/extract-error-message';
 
 /** Период опроса outbox-таблицы */
 const PROCESS_INTERVAL_MS = 15_000;
@@ -96,11 +97,21 @@ export class FileDeletionOutboxWorker implements OnModuleInit, OnModuleDestroy {
         this.logger.log(`Outbox cleanup: removed ${removed} DONE task(s)`);
       }
     } catch (error) {
-      this.logger.error(
-        'Outbox cleanup failed',
-        error instanceof Error ? error.stack : String(error),
-      );
+      this.logger.error(`Outbox cleanup failed: ${extractErrorMessage(error)}`);
     }
+  }
+
+  /**
+   * 4xx от files-сервиса — перманентная ошибка: повтор не поможет (payload не
+   * изменится), поэтому не тратим попытки. Классифицируем по `statusCode` на
+   * «сыром» payload — через TCP тип теряется (см. mapRpcErrorToHttpException).
+   * Всё остальное (5xx / сеть / таймаут) — повторяем.
+   */
+  private isPermanentFailure(error: unknown): boolean {
+    const statusCode = (error as { statusCode?: unknown })?.statusCode;
+    return (
+      typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500
+    );
   }
 
   private async deliver(task: {
@@ -117,13 +128,13 @@ export class FileDeletionOutboxWorker implements OnModuleInit, OnModuleDestroy {
       await this.outbox.markDone(task.id);
       this.logger.log(`Delivered file deletion for outbox task ${task.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = extractErrorMessage(error);
       const nextAttempt = task.attempts + 1;
 
-      if (nextAttempt >= MAX_ATTEMPTS) {
+      if (this.isPermanentFailure(error) || nextAttempt >= MAX_ATTEMPTS) {
         await this.outbox.markFailed(task.id, message);
         this.logger.error(
-          `Outbox task ${task.id} failed after ${nextAttempt} attempts: ${message}`,
+          `Outbox task ${task.id} failed after ${nextAttempt} attempt(s): ${message}`,
         );
         return;
       }
