@@ -8,7 +8,6 @@ import {
   IsString,
   IsUUID,
   Matches,
-  Max,
   MaxLength,
   Min,
   ValidateNested,
@@ -42,10 +41,11 @@ export class InitiateUploadInput {
   @IsEnum(Mime)
   mimeType: Mime;
 
+  // no @Max here: the limit depends on the purpose, so FileUploadPolicyService
+  // enforces it from PURPOSE_UPLOAD_RULES and returns the purpose's message
   @Field(() => Int)
   @IsInt()
   @Min(1)
-  @Max(20_971_520) //20MB
   size: number;
 }
 
@@ -53,7 +53,7 @@ export class InitiateUploadInput {
 // initiateUploadBatch(input: [InitiateUploadInput!]!). The wrapper exists so the
 // validation pipe has a class to work with: a bare array parameter reflects as
 // `Array`, which ValidationPipe.toValidate() skips outright — leaving every
-// decorator above unenforced, including the 20MB cap.
+// decorator above unenforced.
 @ArgsType()
 export class InitiateUploadArgs {
   @Field(() => [InitiateUploadInput])
