@@ -43,6 +43,9 @@ export class HttpToRpcExceptionFilter implements ExceptionFilter {
               ? (raw as { message: string }).message
               : exception.message,
           ...(errors !== undefined ? { errors } : {}),
+          ...((raw as { domainCode?: string }).domainCode !== undefined
+            ? { code: (raw as { domainCode?: string }).domainCode }
+            : {}),
         };
 
         return throwError(() => new RpcException(payload));

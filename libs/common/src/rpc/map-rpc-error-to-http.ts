@@ -56,21 +56,63 @@ export function mapRpcErrorToHttpException(
       return new BadRequestException({
         message: message ?? 'Bad request',
         errors: rpc.errors ?? null,
+        ...(rpc.code !== undefined ? { domainCode: rpc.code } : {}),
       });
     case 401:
+      if (rpc.code !== undefined) {
+        return new UnauthorizedException({
+          message: message ?? 'Unauthorized',
+          domainCode: rpc.code,
+        });
+      }
       return new UnauthorizedException(message ?? 'Unauthorized');
     case 403:
+      if (rpc.code !== undefined) {
+        return new ForbiddenException({
+          message: message ?? 'Forbidden',
+          domainCode: rpc.code,
+        });
+      }
       return new ForbiddenException(message ?? 'Forbidden');
     case 404:
+      if (rpc.code !== undefined) {
+        return new NotFoundException({
+          message: message ?? 'Resource not found',
+          domainCode: rpc.code,
+        });
+      }
       return new NotFoundException(message ?? 'Resource not found');
     case 409:
+      if (rpc.code !== undefined) {
+        return new ConflictException({
+          message: message ?? 'Conflict',
+          domainCode: rpc.code,
+        });
+      }
       return new ConflictException(message ?? 'Conflict');
     case 500:
+      if (rpc.code !== undefined) {
+        return new InternalServerErrorException({
+          message: message ?? `${label} error`,
+          domainCode: rpc.code,
+        });
+      }
       return new InternalServerErrorException(message ?? `${label} error`);
     case 504:
+      if (rpc.code !== undefined) {
+        return new GatewayTimeoutException({
+          message: message ?? `${label} timeout`,
+          domainCode: rpc.code,
+        });
+      }
       return new GatewayTimeoutException(message ?? `${label} timeout`);
     default:
-      // сеть / нет обработчика / неклассифицируемая ошибка → сервис недоступен
+      if (rpc.code !== undefined) {
+        return new ServiceUnavailableException({
+          message: `${label} unavailable`,
+          domainCode: rpc.code,
+        });
+      }
       return new ServiceUnavailableException(`${label} unavailable`);
   }
 }

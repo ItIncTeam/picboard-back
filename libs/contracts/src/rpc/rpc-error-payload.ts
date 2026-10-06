@@ -14,10 +14,12 @@
 export type RpcErrorField = {
   field: string;
   message: string;
+  code?: string;
 };
 
 export type RpcErrorPayload = {
   statusCode: number;
   message: string;
   errors?: RpcErrorField[] | null;
+  code?: string;
 };
