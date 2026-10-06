@@ -9,7 +9,14 @@ import {
 } from '@nestjs/common';
 import { FilesRepository } from '../../../domain/repositories/files/files.repository';
 import { StorageService } from '../../../domain/services/awsS3Storage/storage.service';
-import { UPLOAD_RULES } from '../../../files/files.constants';
+import {
+  PURPOSE_UPLOAD_RULES,
+  UPLOAD_RULES,
+} from '../../../files/files.constants';
+import {
+  detectImageMime,
+  IMAGE_SIGNATURE_LENGTH,
+} from '../../../domain/services/file-signature/detect-image-mime';
 
 export class CompleteUploadBatchCommand {
   constructor(
@@ -165,6 +172,37 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
             ),
           );
           continue;
+        }
+
+        // Check the file's first bytes match the declared mimeType. The
+        // Content-Type check above can't catch a disguised file: the
+        // presigned PUT signs the declared type, so S3 just echoes it back
+        const rules = PURPOSE_UPLOAD_RULES[file.purpose];
+
+        if (rules.verifyContent) {
+          const head = await this.storageService.readObjectBytes({
+            key: file.storageKey,
+            length: IMAGE_SIGNATURE_LENGTH,
+          });
+          const actualMime = head ? detectImageMime(head) : null;
+
+          if (actualMime !== file.mimeType) {
+            this.logger.warn(
+              `File ${file.id} content mismatch: ${file.mimeType} vs ${actualMime ?? 'unknown'}`,
+            );
+            // NOT retryable: re-uploading the same bytes fails identically.
+            // The detailed reason is stored; the client gets the purpose's
+            // message
+            results.push(
+              await this.markFailed(
+                file.id,
+                `Content mismatch: declared ${file.mimeType}, actual ${actualMime ?? 'unknown'}`,
+                false,
+                rules.errorMessage,
+              ),
+            );
+            continue;
+          }
         }
 
         // Step 3: Transition UPLOADED -> READY
