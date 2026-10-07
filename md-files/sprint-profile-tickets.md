@@ -214,6 +214,36 @@ The spec says photo centering is optional, and the frontend can crop before uplo
 
 ---
 
+### B-8: Sign `Content-Type` in presigned PUT URLs
+**Type:** Tech debt · **SP:** 3 · **Service:** files-microservice · **Needs:** frontend
+
+Found while testing B-1. The AWS SDK v3 S3 presigner always leaves `content-type` out of the signature: `prepareRequest()` in `@aws-sdk/s3-request-presigner` adds it to `unsignableHeaders`. Our presigned PUT URLs are therefore signed for `host` only (`X-Amz-SignedHeaders=host`), and the `ContentType` we pass to `PutObjectCommand` has no effect. The client can send any `Content-Type`, S3 stores it, and S3 serves the file back with it.
+
+Today the only thing stopping, say, a file declared as PNG and uploaded as `text/html` from becoming `READY` is the Content-Type check in `completeUpload`, and the object still stays in S3 with that header. A second problem: we pass the `Mime` enum value (`'JPEG'` / `'PNG'`), not a real MIME type, so it can't be signed as it is. The comment in `retry-upload-batch.use.case.ts` that says S3 answers 403 on a mismatch is wrong for the same reason; it was corrected during B-1.
+
+Signing the header makes S3 reject a mismatched PUT with 403, before anything is stored. Verified locally: passing `signableHeaders` changes the signed headers from `host` to `content-type;host`.
+
+- Map `Mime` to real MIME types in one place (`JPEG → image/jpeg`, `PNG → image/png`) and use it in both presign calls (initiate and retry)
+- Pass `signableHeaders: new Set(['content-type'])` to `getSignedUrl`
+- Return the exact header value to the frontend, e.g. a `contentType` field on `InitiateUploadPayload` and `RetryUploadPayload`. It must match character for character: `image/jpg` or a missing header gets a 403.
+- Frontend: send that header on the PUT, and treat a 403 on the PUT as **not retryable**. `retryUpload` would issue a URL that fails the same way.
+- Keep the magic-byte check from B-1. Signing only forces the header to match the declaration; the bytes can still be anything.
+- `toMimeEnum` in complete-upload already accepts `image/jpeg` / `image/png`, so the Content-Type check there keeps working
+
+**Behavior change:** this also affects `POST_IMAGE`. A header that doesn't match the declaration fails at the PUT (403) instead of at `completeUpload` (`FAILED`). That's why it's a separate ticket and not part of B-1.
+
+**Rollout:** URLs issued before the deploy keep working until they expire (15 min), and files already uploaded are unaffected. To avoid 403s during the switch: (1) backend adds the `contentType` field without signing it yet, (2) frontend starts sending it, (3) backend turns on `signableHeaders`.
+
+**AC:**
+- [ ] Presigned PUT URLs have `X-Amz-SignedHeaders=content-type;host`
+- [ ] A PUT with a `Content-Type` other than the declared one is rejected by S3 with 403, and nothing is stored
+- [ ] Stored objects have `Content-Type` `image/jpeg` / `image/png`, never the enum value
+- [ ] Initiate and retry sign the same value: a retried upload with the returned header succeeds
+- [ ] The frontend sends the returned header and doesn't call `retryUpload` after a 403
+- [ ] Unit tests: the presign call uses the mapped MIME type and signs `content-type`
+
+---
+
 ## Spec coverage
 
 | Spec item | Covered by |

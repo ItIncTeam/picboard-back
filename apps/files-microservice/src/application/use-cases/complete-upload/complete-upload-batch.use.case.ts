@@ -175,8 +175,9 @@ export class CompleteUploadBatchUseCase implements ICommandHandler<
         }
 
         // Check the file's first bytes match the declared mimeType. The
-        // Content-Type check above can't catch a disguised file: the
-        // presigned PUT signs the declared type, so S3 just echoes it back
+        // Content-Type check above only compares a header the client chose:
+        // a client can declare JPEG, send "Content-Type: image/jpeg" and
+        // upload any bytes
         const rules = PURPOSE_UPLOAD_RULES[file.purpose];
 
         if (rules.verifyContent) {
