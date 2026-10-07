@@ -90,9 +90,11 @@ export class RetryUploadBatchUseCase implements ICommandHandler<
           // retry crossing a month boundary would sign a different key and
           // orphan the original object (storageKey is @unique).
           key: file.storageKey,
-          // Must be the same value initiate-upload-batch signed, or the
-          // Content-Type the client already sends stops matching the
-          // signature and S3 answers 403.
+          // Same value initiate-upload-batch passes. Content-Type is not
+          // part of the signature today (the S3 presigner always leaves it
+          // out), so a different header doesn't fail the PUT; completeUpload
+          // catches it instead. Keep the two in sync for when it is signed
+          // (B-8).
           mimeType: file.mimeType,
           size: file.size,
           expiresInSeconds: this.appConfig.s3UrlExpiresInSeconds,
