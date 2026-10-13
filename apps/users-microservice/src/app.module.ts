@@ -11,6 +11,7 @@ import {
   ApolloFederationDriver,
   ApolloFederationDriverConfig,
 } from '@nestjs/apollo';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from '@app/auth';
 import { AppConfigModule } from './config/app-config.module';
@@ -57,7 +58,10 @@ import { Me } from './graphql/types/me.type';
         path: '/api/v1',
         introspection: true /*!appConfig.isProduction*/,
         sortSchema: true,
-        playground: true /*!appConfig.isProduction*/,
+        playground: false,
+        ...(appConfig.isProduction
+          ? { plugins: [ApolloServerPluginLandingPageLocalDefault()] }
+          : { plugins: [ApolloServerPluginLandingPageLocalDefault()] }),
         context: ({ req, res }) => ({
           dataloaderFactory: new DataloaderFactory(),
           ...normalizeContext(req, res),
