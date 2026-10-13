@@ -28,6 +28,9 @@ model User {
   displayName             String?
   bio                     String?
   profilePictureFileId    String?        @db.Uuid
+  firstName               String?
+  lastName                String?
+  dateOfBirth             DateTime?      @db.Date
   createdAt               DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime       @updatedAt @db.Timestamptz(6)
 
@@ -35,6 +38,11 @@ model User {
   refreshToken            RefreshToken[]
   consents                UserConsent[]
   oauthExchangeCodes      OAuthExchangeCode[]
+  countryId               String?        @db.Uuid
+  cityId                  String?        @db.Uuid
+
+  country                 Country?       @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  city                    City?          @relation(fields: [cityId], references: [id], onDelete: SetNull)
 }
 
 model UserConsent {
@@ -92,4 +100,29 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Country {
+  id     String @id @default(uuid()) @db.Uuid
+  code   String @unique
+  name   String
+  nameRu String?
+  cities City[]
+  users  User[]
+  @@map("countries")
+}
+
+model City {
+  id         String  @id @default(uuid()) @db.Uuid
+  countryId  String  @db.Uuid
+  name       String
+  nameRu     String?
+  population Int?
+  geonameId  Int     @unique
+  country    Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  users      User[]
+  @@index([countryId])
+  @@index([name])
+  @@index([nameRu])
+  @@map("cities")
 }
