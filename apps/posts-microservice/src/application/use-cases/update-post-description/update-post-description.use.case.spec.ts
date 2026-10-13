@@ -33,7 +33,7 @@ describe('UpdatePostDescriptionUseCase', () => {
       findByOwnerId: jest.fn(),
       findFeed: jest.fn(),
       findProfilePosts: jest.fn(),
-      softDelete: jest.fn(),
+      softDeleteAndEnqueueFileDeletion: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

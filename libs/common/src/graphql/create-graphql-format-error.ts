@@ -1,8 +1,10 @@
 import { GraphQLError, GraphQLFormattedError } from 'graphql';
 import {
+  DomainErrorCode,
   FieldError,
   GraphqlApiErrorCode,
   OriginalGraphQlError,
+  TRANSPORT_ERROR_CODES,
 } from './types/graphql-api-error.type';
 import { unwrapResolverError } from '@apollo/server/errors';
 
@@ -51,6 +53,28 @@ export function createGraphqlFormatError(isProduction: boolean) {
           : null;
 
     // Extract HTTP status from any source
+    // Domain codes (design B1): a domain-specific code must reach the client in
+    // `extensions.code`. Source: the thrown exception's response on the first
+    // pass, or the already-written `extensions.code` on the second (gateway)
+    // pass — where it must NOT be overwritten by a transport code.
+    const incomingCode = formattedError.extensions?.code;
+    const resolverDomainCode =
+      (resolverError as { domainCode?: string } | undefined)?.domainCode ??
+      (resolverResponse as { domainCode?: string } | undefined)?.domainCode;
+    const domainCode: string | undefined =
+      resolverDomainCode ??
+      (typeof incomingCode === 'string' &&
+      !TRANSPORT_ERROR_CODES.has(incomingCode)
+        ? incomingCode
+        : undefined);
+
+    const httpStatus: number =
+      resolverError?.statusCode ??
+      resolverResponse?.statusCode ??
+      originalError?.statusCode ??
+      (formattedError.extensions?.statusCode as number | undefined) ??
+      400;
+
     const getStatus = (expected: number) =>
       resolverError?.statusCode === expected ||
       resolverResponse?.statusCode === expected ||
@@ -59,7 +83,7 @@ export function createGraphqlFormatError(isProduction: boolean) {
       formattedError.extensions?.statusCode === expected;
 
     const build = (
-      apiCode: GraphqlApiErrorCode,
+      apiCode: GraphqlApiErrorCode | DomainErrorCode,
       statusCode: number,
       fallbackMessage: string,
       fieldErrors: FieldError[] | null = null,
@@ -69,6 +93,10 @@ export function createGraphqlFormatError(isProduction: boolean) {
       ...(formattedError.path && { path: formattedError.path }),
       extensions: { code: apiCode, statusCode, errors: fieldErrors },
     });
+
+    if (domainCode) {
+      return build(domainCode, httpStatus, message || 'Request failed', errors);
+    }
 
     if (
       getStatus(400) ||
