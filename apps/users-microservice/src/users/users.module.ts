@@ -21,10 +21,15 @@ import { BcryptPasswordHasher } from '../infrastructure/security/bcrypt-password
 import { TokenService } from '../domain/services/token.service';
 import { JwtTokenService } from '../infrastructure/security/jwt-token.service';
 import { AuthResolver } from '../graphql/resolvers/auth.resolver';
+import { LocationResolver } from '../graphql/resolvers/location.resolver';
+import { CountryRepository } from '../domain/repositories/country.repository';
+import { CityRepository } from '../domain/repositories/city.repository';
+import { PrismaCountryRepository } from '../infrastructure/prisma/repositories/prisma-country.repository';
+import { PrismaCityRepository } from '../infrastructure/prisma/repositories/prisma-city.repository';
 import { EmailAdapter } from '../infrastructure/messaging/email.adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfirmEmailUseCase } from '../application/use-cases/confirm-email/confirm-email.use.case';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+
 import { ResendConfirmationEmailUseCase } from '../application/use-cases/resend-confirmation-email/resend-confirmation-email';
 import { OAuthLoginUseCase } from '../application/use-cases/oauth-login/oauth-login.use-case';
 import { ResetPasswordUseCase } from '../application/use-cases/reset-password/reset-password.use.case';
@@ -40,7 +45,7 @@ import { CompleteGoogleOAuthLoginUseCase } from '../application/use-cases/comple
 import { OAuthAccountsRepository } from '../domain/repositories/oauth-account/oauth-accounts.repository';
 import { PrismaOAuthAccountsRepository } from '../infrastructure/prisma/repositories/prisma-oauth-account/prisma-oauth-accounts.repository';
 /*import { PrismaOAuthExchangeCodesRepository } from '../infrastructure/prisma/repositories/prisma-oauth-exchange-code/prisma-oauth-exchange-codes.repository';*/
-import { OAuthExchangeCodesRepository } from '../domain/repositories/oauth-exchange-code/oauth-exchange-codes.repository';
+
 import { IssueSessionUseCase } from '../application/use-cases/issue-session/issue-session.use.case';
 import { UsernameGeneratorService } from '../infrastructure/googleOAuth/username-generator.service';
 
@@ -90,6 +95,7 @@ import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
     UsersResolver,
     MeResolver,
     AuthResolver,
+    LocationResolver,
     SignUpUserUseCase,
     SignInUserUseCase,
     ConfirmEmailUseCase,
@@ -125,6 +131,14 @@ import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
     {
       provide: ConsentRepository,
       useClass: PrismaConsentRepository,
+    },
+    {
+      provide: CountryRepository,
+      useClass: PrismaCountryRepository,
+    },
+    {
+      provide: CityRepository,
+      useClass: PrismaCityRepository,
     },
     {
       provide: PasswordHasher,
