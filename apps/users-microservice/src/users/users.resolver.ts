@@ -4,8 +4,13 @@ import {
   ResolveReference,
   Resolver,
   Context,
+  Int,
+  ResolveField,
+  Parent,
 } from '@nestjs/graphql';
 import { User } from '../graphql/types/user.type';
+import { Me } from '../graphql/types/me.type';
+import { FileReference } from '../graphql/types/file-reference.type';
 import {
   Logger,
   NotFoundException,
@@ -25,7 +30,18 @@ export class UsersResolver {
     return this.usersRepository.findById(id);
   }
 
-  @Query(() => User, { nullable: true })
+  @Query(() => Int)
+  usersCount(): Promise<number> {
+    return this.usersRepository.count();
+  }
+
+  @ResolveField(() => FileReference, { nullable: true })
+  avatar(@Parent() user: User): FileReference | null {
+    if (!user.profilePictureFileId) return null;
+    return { __typename: 'File', id: user.profilePictureFileId } as FileReference;
+  }
+
+  @Query(() => Me, { nullable: true })
   async me(@Context() context: { auth: { userId?: string } }) {
     if (!context.auth?.userId) {
       throw new UnauthorizedException();
@@ -34,9 +50,9 @@ export class UsersResolver {
   }
 
   @ResolveReference()
-  async resolveReference(
+  resolveReference(
     reference: { __typename: string; id: string },
-    @Context() context: { dataloaderFactory: DataloaderFactory },
+    context: { dataloaderFactory: DataloaderFactory },
   ): Promise<UserEntity /* | null*/> {
     if (!reference?.id) {
       throw new NotFoundException('User ID was not provided');
@@ -52,7 +68,9 @@ export class UsersResolver {
         const user = userMap.get(id);
         if (!user) {
           this.logger.warn(`Referenced user not found. userId=${id}`);
-          throw new NotFoundException('User not found');
+          // returned, not thrown: rejects this key only, leaving the rest of
+          // the batch resolvable
+          return new NotFoundException('User not found');
         }
         return user /* ?? null*/;
       });

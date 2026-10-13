@@ -11,12 +11,17 @@ export abstract class FilesRepository {
     ownerId: string,
     status: FileStatus,
   ): Promise<FileEntity[]>;
+  abstract findRetryable(
+    ids: string[],
+    ownerId: string,
+  ): Promise<FileEntity[]>;
   abstract updateStatus(
     id: string,
     status: FileStatus,
     failedReason?: string | null,
     timestamp?: Date | null,
   ): Promise<FileEntity>;
+  abstract markRetrying(id: string): Promise<FileEntity>;
   abstract findById(id: string): Promise<FileEntity>;
   abstract findByIds(ids: string[]): Promise<FileEntity[]>;
   abstract softDeleteMany(input: {

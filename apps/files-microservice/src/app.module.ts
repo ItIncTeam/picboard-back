@@ -12,9 +12,12 @@ import {
 } from '@nestjs/apollo';
 import { FilesModule } from './files/files.module';
 import { File } from '../src/graphql/types/file.type';
+import { APP_FILTER } from '@nestjs/core';
 import {
   createGraphqlFormatError,
+  HttpToRpcExceptionFilter,
   normalizeContext,
+  PrismaExceptionModule,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
 } from '@app/common';
@@ -26,6 +29,13 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
   imports: [
     configModule,
     AppConfigModule,
+    PrismaExceptionModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        exposeErrorCode: !appConfig.isProduction,
+      }),
+    }),
     SubgraphAuthModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -57,6 +67,7 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
     }),
     FilesModule,
   ],
+  providers: [{ provide: APP_FILTER, useClass: HttpToRpcExceptionFilter }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
