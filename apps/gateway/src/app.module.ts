@@ -1,6 +1,11 @@
 //configModule from './dynamic-config.module' HAS TO BE IMPORTED ON TOP OF EVERYTHING!
 import { configModule } from './dynamic-config.module';
-import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  MiddlewareConsumer,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
 import { IntrospectAndCompose } from '@apollo/gateway';
@@ -40,9 +45,10 @@ import { createGraphqlFormatError } from '@app/common';
             allowedHeaders: ['Content-Type', 'Authorization'],
           },
           csrfPrevention: false,
+          playground: false,
           ...(appConfig.isProduction
             ? { plugins: [ApolloServerPluginLandingPageLocalDefault()] }
-            : {}),
+            : { plugins: [ApolloServerPluginLandingPageLocalDefault()] }),
           formatError: createGraphqlFormatError(appConfig.isProduction),
           context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
           /*context: ({ req, res }: { req: any; res: any }) => {
@@ -86,7 +92,6 @@ import { createGraphqlFormatError } from '@app/common';
       }),
     }),
   ],
-
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
