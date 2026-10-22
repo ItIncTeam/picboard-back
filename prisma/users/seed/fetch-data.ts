@@ -14,7 +14,8 @@ const dataDir = path.resolve('prisma/users/seed/data');
 const cacheDir = path.resolve('prisma/users/seed/.cache');
 
 const CITIES_ZIP = 'https://download.geonames.org/export/dump/cities15000.zip';
-const COUNTRY_INFO = 'https://download.geonames.org/export/dump/countryInfo.txt';
+const COUNTRY_INFO =
+  'https://download.geonames.org/export/dump/countryInfo.txt';
 const ALT_NAMES_ZIP =
   'https://download.geonames.org/export/dump/alternateNamesV2.zip';
 
@@ -42,15 +43,21 @@ async function buildRuMap(cityIds: Set<number>): Promise<Map<number, string>> {
     await downloadToFile(ALT_NAMES_ZIP, zipPath);
   }
   const ru = new Map<number, string>();
+  let found = false;
   await new Promise<void>((resolve, reject) => {
     const parser = unzipper.Parse();
     fs.createReadStream(zipPath).pipe(parser);
     parser.on('error', reject);
+    // без этого промис висел бы вечно, если в архиве нет нужной entry
+    parser.on('close', () => {
+      if (!found) reject(new Error('alternateNamesV2.txt not found in zip'));
+    });
     parser.on('entry', (entry: any) => {
       if (entry.path !== 'alternateNamesV2.txt') {
         entry.autodrain();
         return;
       }
+      found = true;
       let buf = '';
       entry.on('data', (chunk: Buffer) => {
         buf += chunk.toString('utf8');
@@ -86,9 +93,7 @@ async function main() {
   const wcByCode = new Map<string, any>(wcList.map((c) => [c.cca2, c]));
 
   // 2. countryInfo.txt → countries (только актуальные ISO)
-  const countryInfoText = await (
-    await fetch(COUNTRY_INFO)
-  ).text();
+  const countryInfoText = await (await fetch(COUNTRY_INFO)).text();
   const countries: { code: string; name: string; nameRu: string | null }[] = [];
   for (const line of countryInfoText.split('\n')) {
     if (line.startsWith('#')) continue;
@@ -116,7 +121,7 @@ async function main() {
     geonameId: number;
     name: string;
     countryCode: string;
-    population: number;
+    population: number | null;
     altRu: string | null;
   }[] = [];
   for (const line of entry.getData().toString('utf8').split('\n')) {
@@ -132,11 +137,12 @@ async function main() {
         break;
       }
     }
+    const population = Number.parseInt(cols[14], 10);
     raw.push({
-      geonameId: parseInt(cols[0], 10),
+      geonameId: Number.parseInt(cols[0], 10),
       name: cols[1],
       countryCode,
-      population: parseInt(cols[14], 10),
+      population: Number.isNaN(population) ? null : population,
       altRu,
     });
   }
