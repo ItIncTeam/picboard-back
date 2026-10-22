@@ -22,6 +22,8 @@ import { TokenService } from '../domain/services/token.service';
 import { JwtTokenService } from '../infrastructure/security/jwt-token.service';
 import { AuthResolver } from '../graphql/resolvers/auth.resolver';
 import { LocationResolver } from '../graphql/resolvers/location.resolver';
+import { SearchCountriesQueryHandler } from '../application/queries/search-countries/search-countries.query';
+import { SearchCitiesQueryHandler } from '../application/queries/search-cities/search-cities.query';
 import { CountryRepository } from '../domain/repositories/country.repository';
 import { CityRepository } from '../domain/repositories/city.repository';
 import { PrismaCountryRepository } from '../infrastructure/prisma/repositories/prisma-country.repository';
@@ -96,6 +98,8 @@ import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
     MeResolver,
     AuthResolver,
     LocationResolver,
+    SearchCountriesQueryHandler,
+    SearchCitiesQueryHandler,
     SignUpUserUseCase,
     SignInUserUseCase,
     ConfirmEmailUseCase,

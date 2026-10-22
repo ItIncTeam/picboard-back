@@ -24,7 +24,11 @@ export class PrismaCityRepository implements CityRepository {
             }
           : {}),
       },
-      orderBy: [{ population: 'desc' }, { name: 'asc' }],
+      orderBy: [
+        // population nullable: без nulls: 'last' Postgres в DESC поднимает NULL в топ
+        { population: { sort: 'desc', nulls: 'last' } },
+        { name: 'asc' },
+      ],
       take: limit,
     });
     return rows.map(
