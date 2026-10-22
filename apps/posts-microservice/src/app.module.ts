@@ -6,6 +6,7 @@ import {
   ApolloFederationDriver,
   ApolloFederationDriverConfig,
 } from '@nestjs/apollo';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { PostsModule } from './posts/posts.module';
 import { AppConfigModule } from './config/app-config.module';
 import {
@@ -46,7 +47,10 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
         },
         path: '/api/v1',
         sortSchema: true,
-        playground: true,
+        playground: false,
+        ...(appConfig.isProduction
+          ? { plugins: [ApolloServerPluginLandingPageLocalDefault()] }
+          : { plugins: [ApolloServerPluginLandingPageLocalDefault()] }),
         formatError: createGraphqlFormatError(appConfig.isProduction),
         context: ({ req, res }) => ({
           dataloaderFactory: new DataloaderFactory(),
