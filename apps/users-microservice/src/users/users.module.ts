@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { UsersResolver } from './users.resolver';
-import { MeResolver } from './me.resolver';
+import { UsersResolver } from '../graphql/resolvers/users.resolver';
+import { MeResolver } from '../graphql/resolvers/me.resolver';
 
 import { JwtModule } from '@nestjs/jwt';
 import { AppConfigModule } from '../config/app-config.module';

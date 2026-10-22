@@ -8,23 +8,19 @@ import {
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
-import { Country } from '../graphql/types/country.type';
-import { City } from '../graphql/types/city.type';
-import { User } from '../graphql/types/user.type';
-import { Me } from '../graphql/types/me.type';
-import { FileReference } from '../graphql/types/file-reference.type';
-import {
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Country } from '../types/country.type';
+import { City } from '../types/city.type';
+import { User } from '../types/user.type';
+import { FileReference } from '../types/file-reference.type';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
-import { CountryRepository } from '../domain/repositories/country.repository';
-import { CityRepository } from '../domain/repositories/city.repository';
-import { CountryEntity } from '../domain/entities/country.entity';
-import { CityEntity } from '../domain/entities/city.entity';
-import { UserEntity } from '../domain/entities/user.entity';
-import { UsersRepository } from '../domain/repositories/users.repository';
+import { CountryRepository } from '../../domain/repositories/country.repository';
+import { CityRepository } from '../../domain/repositories/city.repository';
+import { CountryEntity } from '../../domain/entities/country.entity';
+import { CityEntity } from '../../domain/entities/city.entity';
+import { UserEntity } from '../../domain/entities/user.entity';
+import { UsersRepository } from '../../domain/repositories/users.repository';
+import { resolveCityField, resolveCountryField } from './user-location.fields';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -59,16 +55,7 @@ export class UsersResolver {
     @Parent() user: User,
     @Context() context: { dataloaderFactory: DataloaderFactory },
   ): Promise<CountryEntity | Error | null> {
-    if (!user.countryId) return Promise.resolve(null);
-    const loader = context.dataloaderFactory.create<string, CountryEntity>(
-      'countries',
-      async (ids: string[]) => {
-        const rows = await this.countryRepository.findByIds(ids);
-        const map = new Map(rows.map((r) => [r.id, r]));
-        return ids.map((id) => map.get(id) ?? new Error('Country not found'));
-      },
-    );
-    return loader.load(user.countryId);
+    return resolveCountryField(user, context, this.countryRepository);
   }
 
   @ResolveField(() => City, { nullable: true })
@@ -76,24 +63,7 @@ export class UsersResolver {
     @Parent() user: User,
     @Context() context: { dataloaderFactory: DataloaderFactory },
   ): Promise<CityEntity | Error | null> {
-    if (!user.cityId) return Promise.resolve(null);
-    const loader = context.dataloaderFactory.create<string, CityEntity>(
-      'cities',
-      async (ids: string[]) => {
-        const rows = await this.cityRepository.findByIds(ids);
-        const map = new Map(rows.map((r) => [r.id, r]));
-        return ids.map((id) => map.get(id) ?? new Error('City not found'));
-      },
-    );
-    return loader.load(user.cityId);
-  }
-
-  @Query(() => Me, { nullable: true })
-  async me(@Context() context: { auth: { userId?: string } }) {
-    if (!context.auth?.userId) {
-      throw new UnauthorizedException();
-    }
-    return this.usersRepository.findById(context.auth.userId);
+    return resolveCityField(user, context, this.cityRepository);
   }
 
   @ResolveReference()

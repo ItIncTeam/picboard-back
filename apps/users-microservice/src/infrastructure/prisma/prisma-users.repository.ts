@@ -28,10 +28,6 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { id },
     });
 
-    if (!user) {
-      return null;
-    }
-
     return mapToUserEntityOrNull(user);
   }
 
@@ -41,10 +37,6 @@ export class PrismaUsersRepository implements UsersRepository {
       /*select: userEntitySelect,*/
     });
 
-    if (!user) {
-      return null;
-    }
-
     return mapToUserEntityOrNull(user);
   }
 
@@ -52,10 +44,6 @@ export class PrismaUsersRepository implements UsersRepository {
     const user: User | null = await this.prisma.user.findUnique({
       where: { email },
     });
-
-    if (!user) {
-      return null;
-    }
 
     return mapToUserEntityOrNull(user);
   }
@@ -82,10 +70,6 @@ export class PrismaUsersRepository implements UsersRepository {
     const user: User | null = await this.prisma.user.findFirst({
       where: { confirmationCode },
     });
-
-    if (!user) {
-      return null;
-    }
 
     return mapToUserEntityOrNull(user);
   }
