@@ -8,22 +8,28 @@ import {
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
-import { User } from '../graphql/types/user.type';
-import { Me } from '../graphql/types/me.type';
-import { FileReference } from '../graphql/types/file-reference.type';
-import {
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Country } from '../types/country.type';
+import { City } from '../types/city.type';
+import { User } from '../types/user.type';
+import { FileReference } from '../types/file-reference.type';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
-import { UserEntity } from '../domain/entities/user.entity';
-import { UsersRepository } from '../domain/repositories/users.repository';
+import { CountryRepository } from '../../domain/repositories/country.repository';
+import { CityRepository } from '../../domain/repositories/city.repository';
+import { CountryEntity } from '../../domain/entities/country.entity';
+import { CityEntity } from '../../domain/entities/city.entity';
+import { UserEntity } from '../../domain/entities/user.entity';
+import { UsersRepository } from '../../domain/repositories/users.repository';
+import { resolveCityField, resolveCountryField } from './user-location.fields';
 
 @Resolver(() => User)
 export class UsersResolver {
   private readonly logger = new Logger(UsersResolver.name);
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly countryRepository: CountryRepository,
+    private readonly cityRepository: CityRepository,
+  ) {}
 
   @Query(() => User, { nullable: true })
   user(@Args('id') id: string) {
@@ -38,15 +44,26 @@ export class UsersResolver {
   @ResolveField(() => FileReference, { nullable: true })
   avatar(@Parent() user: User): FileReference | null {
     if (!user.profilePictureFileId) return null;
-    return { __typename: 'File', id: user.profilePictureFileId } as FileReference;
+    return {
+      __typename: 'File',
+      id: user.profilePictureFileId,
+    } as FileReference;
   }
 
-  @Query(() => Me, { nullable: true })
-  async me(@Context() context: { auth: { userId?: string } }) {
-    if (!context.auth?.userId) {
-      throw new UnauthorizedException();
-    }
-    return this.usersRepository.findById(context.auth.userId);
+  @ResolveField(() => Country, { nullable: true })
+  country(
+    @Parent() user: User,
+    @Context() context: { dataloaderFactory: DataloaderFactory },
+  ): Promise<CountryEntity | Error | null> {
+    return resolveCountryField(user, context, this.countryRepository);
+  }
+
+  @ResolveField(() => City, { nullable: true })
+  city(
+    @Parent() user: User,
+    @Context() context: { dataloaderFactory: DataloaderFactory },
+  ): Promise<CityEntity | Error | null> {
+    return resolveCityField(user, context, this.cityRepository);
   }
 
   @ResolveReference()

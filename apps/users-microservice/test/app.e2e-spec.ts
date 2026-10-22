@@ -59,6 +59,25 @@ describe('Users subgraph (e2e)', () => {
   });
 
   afterAll(async () => {
+    // BACK-47 / AC A-6: e2e не должен оставлять данные после себя.
+    // Связанные записи (RefreshToken, UserConsent, OAuthAccount,
+    // OAuthExchangeCode) уходят каскадом (onDelete: Cascade).
+    if (prisma) {
+      await prisma.user.deleteMany({
+        where: {
+          OR: [
+            {
+              AND: [
+                { email: { startsWith: 'e2e-' } },
+                { email: { endsWith: '@example.com' } },
+              ],
+            },
+            { email: 'oauth-test@example.com' },
+          ],
+        },
+      });
+    }
+
     if (app) {
       await app.close();
     }
@@ -705,8 +724,45 @@ describe('Users subgraph (e2e)', () => {
       expect(res.body.data.user.username).toBe(username);
     });
 
+    it('should return the authenticated profile via me', async () => {
+      const username = `me_${Date.now().toString().slice(-8)}`;
+      const signup = await signUpUser(username);
+      expect(signup.body.errors).toBeUndefined();
+      const id = signup.body.data.signUp.user.id;
+
+      const res = await authPost(rootUrl)
+        .set('x-user-id', id)
+        .send({
+          query: `
+            query {
+              me { id email username isConfirmed countryId cityId }
+            }
+          `,
+        })
+        .expect(200);
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.me.id).toBe(id);
+      expect(res.body.data.me.username).toBe(username);
+      expect(res.body.data.me.email).toContain('@example.com');
+      // приватные поля доступны только здесь, в user(id) их нет
+      expect(res.body.data.me).toHaveProperty('isConfirmed');
+    });
+
+    it('should reject me without authentication', async () => {
+      const res = await authPost(rootUrl)
+        .send({ query: `query { me { id } }` })
+        .expect(200);
+
+      expect(res.body.data.me).toBeNull();
+      expect(res.body.errors).toBeDefined();
+      expect(res.body.errors[0].extensions.statusCode).toBe(401);
+    });
+
     it('should reject querying email on public user(id)', async () => {
-      const signup = await signUpUser(`pub2_${Date.now().toString().slice(-8)}`);
+      const signup = await signUpUser(
+        `pub2_${Date.now().toString().slice(-8)}`,
+      );
       expect(signup.body.errors).toBeUndefined();
       const id = signup.body.data.signUp.user.id;
 
@@ -721,7 +777,9 @@ describe('Users subgraph (e2e)', () => {
         .expect(400);
 
       expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].message).toContain('GraphQL query validation failed');
+      expect(res.body.errors[0].message).toContain(
+        'GraphQL query validation failed',
+      );
     });
   });
 });

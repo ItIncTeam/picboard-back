@@ -11,5 +11,10 @@ export class UserEntity {
     public readonly displayName?: string | null,
     public readonly bio?: string | null,
     public readonly profilePictureFileId?: string | null,
+    public readonly firstName?: string | null,
+    public readonly lastName?: string | null,
+    public readonly dateOfBirth?: Date | null,
+    public readonly countryId?: string | null,
+    public readonly cityId?: string | null,
   ) {}
 }

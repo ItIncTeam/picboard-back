@@ -5,59 +5,11 @@ import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
 import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
 import { User } from '../../../../../prisma/apps/users/src/generated/prisma/users-client';
-
-/*//A REUSABLE MAPPER:
-//examples in comments in methods below
-
-// user.prisma-mapper.ts
-export const userEntitySelect = {
-  id: true,
-  email: true,
-  username: true,
-  passwordHash: true,
-  createdAt: true,
-  confirmationCode: true,
-  confirmationCodeExpDate: true,
-  isConfirmed: true,
-} satisfies Prisma.UserSelect;
-
-export type UserEntityRow = Prisma.UserGetPayload<{
-  select: typeof userEntitySelect;
-}>;
-
-export function mapToUserEntity(user: UserEntityRow): UserEntity {
-  return new UserEntity(
-    user.id,
-    user.email,
-    user.username,
-    user.passwordHash,
-    user.createdAt,
-    user.confirmationCode,
-    user.confirmationCodeExpDate,
-    user.isConfirmed,
-  );
-
-  export function mapToUserEntityOrNull(
-  row: UserEntityRow | null,
-): UserEntity | null {
-  return row ? mapToUserEntity(row) : null;
-}
-
-export function mapToUserEntities(rows: UserEntityRow[]): UserEntity[] {
-  return rows.map(mapToUserEntity);
-}
-
-export function mapCreateUserDataToPrisma(data: CreateUserData): Prisma.UserCreateInput {
-  return {
-    email: data.email,
-    username: data.username,
-    passwordHash: data.passwordHash,
-    confirmationCode: data.confirmationCode,
-    confirmationCodeExpDate: data.confirmationCodeExpDate,
-    isConfirmed: data.isConfirmed,
-  };
-}
-}*/
+import {
+  mapToUserEntity,
+  mapToUserEntityOrNull,
+  mapToUserEntities,
+} from './mappers/user.mapper';
 
 @Injectable()
 export class PrismaUsersRepository implements UsersRepository {
@@ -68,22 +20,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { id: { in: ids } },
     });
 
-    return users.map(
-      (user) =>
-        new UserEntity(
-          user.id,
-          user.email,
-          user.username,
-          user.passwordHash,
-          user.createdAt,
-          user.confirmationCode,
-          user.confirmationCodeExpDate,
-          user.isConfirmed,
-          user.displayName,
-          user.bio,
-          user.profilePictureFileId,
-        ),
-    );
+    return mapToUserEntities(users);
   }
 
   async findById(id: string): Promise<UserEntity | null> {
@@ -91,23 +28,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { id },
     });
 
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async findByUsername(username: string): Promise<UserEntity | null> {
@@ -116,25 +37,7 @@ export class PrismaUsersRepository implements UsersRepository {
       /*select: userEntitySelect,*/
     });
 
-    if (!user) {
-      return null;
-    }
-
-    /*return mapToUserEntityOrNull(user);*/
-    /*same with all FIND*/
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -142,23 +45,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { email },
     });
 
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async create(data: CreateUserData): Promise<UserEntity> {
@@ -174,20 +61,7 @@ export class PrismaUsersRepository implements UsersRepository {
       /* select: userEntitySelect,*/
     });
 
-    /*return mapToUserEntity(user);*/
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntity(user);
   }
 
   async findByConfirmationCode(
@@ -197,23 +71,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { confirmationCode },
     });
 
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async confirmUserEmail(id: string): Promise<UserEntity> {
@@ -222,19 +80,7 @@ export class PrismaUsersRepository implements UsersRepository {
       data: { isConfirmed: true },
     });
 
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntity(user);
   }
 
   /*async findManyConfirmed(): Promise<UserEntity[]> {
@@ -259,19 +105,7 @@ export class PrismaUsersRepository implements UsersRepository {
       },
     });
 
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntity(user);
   }
 
   async updatePasswordHash(
@@ -285,19 +119,7 @@ export class PrismaUsersRepository implements UsersRepository {
       },
     });
 
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-      user.displayName,
-      user.bio,
-      user.profilePictureFileId,
-    );
+    return mapToUserEntity(user);
   }
 
   async count(): Promise<number> {
