@@ -12,10 +12,13 @@ export class User {
   @Field()
   username: string;
 
-  @Field({ nullable: true })
-  displayName?: string;
+  @Field(() => String, { nullable: true })
+  firstName?: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
+  lastName?: string;
+
+  @Field(() => String, { nullable: true, deprecationReason: 'Use aboutMe' })
   bio?: string;
 
   @Field(() => ID, { nullable: true })
