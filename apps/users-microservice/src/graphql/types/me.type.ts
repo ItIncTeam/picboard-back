@@ -17,10 +17,13 @@ export class Me {
   @Field()
   isConfirmed: boolean;
 
-  @Field({ nullable: true })
-  displayName?: string;
+  @Field(() => String, { nullable: true })
+  firstName?: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
+  lastName?: string;
+
+  @Field(() => String, { nullable: true, deprecationReason: 'Use aboutMe' })
   bio?: string;
 
   @Field(() => ID, { nullable: true })

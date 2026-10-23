@@ -16,6 +16,11 @@ import { UsersRepository } from '../../domain/repositories/users.repository';
 import { CountryEntity } from '../../domain/entities/country.entity';
 import { CityEntity } from '../../domain/entities/city.entity';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
+import {
+  resolveDisplayNameField,
+  resolveAboutMeField,
+  resolveDateOfBirthField,
+} from './user-profile.fields';
 import type { DataloaderContext } from './user-location.fields';
 
 @Resolver(() => Me)
@@ -54,5 +59,26 @@ export class MeResolver {
     @Context() context: DataloaderContext,
   ): Promise<CityEntity | Error | null> {
     return resolveCityField(me, context, this.cityRepository);
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  displayName(@Parent() me: Me): string {
+    return resolveDisplayNameField({
+      firstName: me.firstName,
+      lastName: me.lastName,
+      username: me.username,
+    });
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  aboutMe(@Parent() me: Me): string | null {
+    return resolveAboutMeField({ bio: me.bio });
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  dateOfBirth(@Parent() me: Me & { dateOfBirth?: Date | null }): string | null {
+    return resolveDateOfBirthField({
+      dateOfBirth: me.dateOfBirth,
+    });
   }
 }

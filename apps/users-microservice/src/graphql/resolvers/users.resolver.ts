@@ -1,22 +1,18 @@
 import {
   Args,
   Query,
-  Mutation,
   ResolveReference,
   Resolver,
   Context,
-  ID,
   Int,
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
-import { CommandBus } from '@nestjs/cqrs';
 import { Country } from '../types/country.type';
 import { City } from '../types/city.type';
 import { User } from '../types/user.type';
 import { FileReference } from '../types/file-reference.type';
-import { Logger, NotFoundException, ParseUUIDPipe } from '@nestjs/common';
-import { CurrentUserId } from '@app/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 import { CountryRepository } from '../../domain/repositories/country.repository';
 import { CityRepository } from '../../domain/repositories/city.repository';
@@ -25,6 +21,10 @@ import { CityEntity } from '../../domain/entities/city.entity';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
+import {
+  resolveDisplayNameField,
+  resolveAboutMeField,
+} from './user-profile.fields';
 import { SetProfilePhotoCommand } from '../../application/use-cases/set-profile-photo/set-profile-photo.use.case';
 
 @Resolver(() => User)
@@ -81,6 +81,20 @@ export class UsersResolver {
     @Context() context: { dataloaderFactory: DataloaderFactory },
   ): Promise<CityEntity | Error | null> {
     return resolveCityField(user, context, this.cityRepository);
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  displayName(@Parent() user: User): string {
+    return resolveDisplayNameField({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+    });
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  aboutMe(@Parent() user: User): string | null {
+    return resolveAboutMeField({ bio: user.bio });
   }
 
   @ResolveReference()
