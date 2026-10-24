@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { AppConfig } from './config/app.config';
-import { FilesPrismaExceptionFilter } from './infrastructure/prisma/exception-filter/files-prisma-exception-filter';
+
 import { createValidationPipe } from '@app/common';
 
 async function bootstrap() {
@@ -12,8 +12,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(createValidationPipe());
 
-  app.useGlobalFilters(new FilesPrismaExceptionFilter());
-
+  
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,
     options: {

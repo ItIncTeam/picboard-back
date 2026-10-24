@@ -1,59 +1,55 @@
-/*import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ValidationErrorItem } from '@app/common';
 import { InitiateUploadInput } from '../../graphql/inputs/initiate-upload.input';
-import { Purpose } from '../../domain/enums/file-purpose.enum';
+import { PURPOSE_UPLOAD_RULES } from '../../files/files.constants';
 
+// Applies PURPOSE_UPLOAD_RULES to an initiateUploadBatch request. Called by the
+// use case before any row is written or URL signed. These checks depend on the
+// purpose and on the batch as a whole, which per-field DTO decorators can't
+// express cleanly.
+// Errors use the same { message, errors: [{ field, message }] } shape as
+// createValidationPipe, so the frontend handles both the same way.
 @Injectable()
 export class FileUploadPolicyService {
   validateBatch(items: InitiateUploadInput[]): void {
     if (!items.length) {
-      throw new BadRequestException('At least one file is required');
+      this.reject('input', 'At least one file is required');
     }
 
-    if (items.length > 10) {
-      throw new BadRequestException('Maximum 10 files are allowed');
-    }
-  }
+    // the strictest purpose in the batch sets the limit, so a batch that
+    // contains an avatar can only contain that avatar
+    const maxFiles = Math.min(
+      ...items.map(
+        (item) => PURPOSE_UPLOAD_RULES[item.purpose].maxFilesPerBatch,
+      ),
+    );
 
-  validateItem(item: InitiateUploadInput): void {
-    switch (item.purpose) {
-      case Purpose.POST:
-        this.validatePostImage(item);
-        return;
-      case Purpose.BILL:
-        this.validateBill(item);
-        return;
-      default:
-        throw new BadRequestException('Unsupported file purpose');
-    }
-  }
-
-  private validatePostImage(item: InitiateUploadInput): void {
-    const allowedMimeTypes = ['image/jpeg', 'image/png'];
-    const maxSize = 20 * 1024 * 1024;
-
-    if (!allowedMimeTypes.includes(item.mimeType)) {
-      throw new BadRequestException('POST files must be JPEG or PNG');
-    }
-
-    if (item.size > maxSize) {
-      throw new BadRequestException(
-        'POST file size must be less than or equal to 20 MB',
+    if (items.length > maxFiles) {
+      this.reject(
+        'input',
+        maxFiles === 1
+          ? 'Only one file is allowed in this batch'
+          : `Maximum ${maxFiles} files are allowed`,
       );
     }
+
+    items.forEach((item, index) => this.validateItem(item, index));
   }
 
-  private validateBill(item: InitiateUploadInput): void {
-    const allowedMimeTypes = ['application/pdf'];
-    const maxSize = 20 * 1024 * 1024;
+  private validateItem(item: InitiateUploadInput, index: number): void {
+    const rules = PURPOSE_UPLOAD_RULES[item.purpose];
 
-    if (!allowedMimeTypes.includes(item.mimeType)) {
-      throw new BadRequestException('BILL files must be PDF');
+    if (!rules.allowedMimeTypes.includes(item.mimeType)) {
+      this.reject(`input.${index}.mimeType`, rules.errorMessage);
     }
 
-    if (item.size > maxSize) {
-      throw new BadRequestException(
-        'BILL file size must be less than or equal to 20 MB',
-      );
+    if (item.size > rules.maxSizeBytes) {
+      this.reject(`input.${index}.size`, rules.errorMessage);
     }
   }
-}*/
+
+  private reject(field: string, message: string): never {
+    const errors: ValidationErrorItem[] = [{ field, message }];
+    throw new BadRequestException({ message, errors });
+  }
+}
