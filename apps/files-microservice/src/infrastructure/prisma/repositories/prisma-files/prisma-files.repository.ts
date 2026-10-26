@@ -63,12 +63,14 @@ export class PrismaFilesRepository implements FilesRepository {
     ids: string[],
     ownerId: string,
     status: FileStatus,
+    purpose?: Purpose,
   ): Promise<FileEntity[]> {
     const files = await this.prisma.file.findMany({
       where: {
         id: { in: ids },
         ownerId,
         status,
+        purpose,
         deletedAt: null,
       },
     });

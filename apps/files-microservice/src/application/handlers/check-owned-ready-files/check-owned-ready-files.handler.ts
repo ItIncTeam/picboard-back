@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { FilesRepository } from '../../../domain/repositories/files/files.repository';
 import { FileStatus } from '../../../domain/enums/file-status.enum';
+import { Purpose } from '../../../domain/enums/file-purpose.enum';
 import { CheckOwnedReadyFilesResponse } from '@app/contracts';
 import { Prisma } from '../../../../../../prisma/apps/files/src/generated/prisma/files-client';
 
@@ -18,6 +19,7 @@ export class CheckOwnedReadyFilesQuery {
   constructor(
     public readonly ownerId: string,
     public readonly fileIds: string[],
+    public readonly purpose?: Purpose,
   ) {}
 }
 
@@ -35,7 +37,7 @@ export class CheckOwnedReadyFilesHandler implements IQueryHandler<
     query: CheckOwnedReadyFilesQuery,
   ): Promise<CheckOwnedReadyFilesResponse> {
     const startedAt = Date.now();
-    const { ownerId, fileIds } = query;
+    const { ownerId, fileIds, purpose } = query;
     const uniqueFileIds = [...new Set(fileIds)];
 
     if (uniqueFileIds.length !== fileIds.length) {
@@ -53,6 +55,7 @@ export class CheckOwnedReadyFilesHandler implements IQueryHandler<
       JSON.stringify({
         event: 'check_owned_ready_files_started',
         ownerId,
+        purpose,
         fileIdsCount: uniqueFileIds.length,
       }),
     );
@@ -63,6 +66,7 @@ export class CheckOwnedReadyFilesHandler implements IQueryHandler<
           uniqueFileIds,
           ownerId,
           FileStatus.READY,
+          purpose,
         ),
         CHECK_OWNED_READY_FILES_TIMEOUT_MS,
       );
@@ -85,6 +89,7 @@ export class CheckOwnedReadyFilesHandler implements IQueryHandler<
         JSON.stringify({
           event: 'check_owned_ready_files_completed',
           ownerId,
+          purpose,
           requestedCount: fileIds.length,
           uniqueCount: uniqueFileIds.length,
           validCount: validFileIds.length,
@@ -98,6 +103,7 @@ export class CheckOwnedReadyFilesHandler implements IQueryHandler<
           JSON.stringify({
             event: 'invalid_files_detected',
             ownerId,
+            purpose,
             validCount: validFileIds.length,
             invalidCount: invalidFileIds.length,
             invalidFileIds,
