@@ -8,6 +8,8 @@ import {
 } from './types/graphql-api-error.type';
 import { unwrapResolverError } from '@apollo/server/errors';
 
+type WithGetStatus = { getStatus?: () => number };
+
 // Runs twice for anything that crosses the gateway: once in the subgraph, then
 // again in the gateway over the error the subgraph already formatted. So it has
 // to be idempotent — it writes code/statusCode into `extensions` and reads them
@@ -68,7 +70,16 @@ export function createGraphqlFormatError(isProduction: boolean) {
         ? incomingCode
         : undefined);
 
+    const getStatusFromObj = (obj: unknown): number | undefined => {
+      if (obj === null || obj === undefined) return undefined;
+      const typed = obj as WithGetStatus | undefined;
+      return typed?.getStatus?.();
+    };
+
     const httpStatus: number =
+      getStatusFromObj(resolverError) ??
+      getStatusFromObj(resolverResponse) ??
+      getStatusFromObj(originalError) ??
       resolverError?.statusCode ??
       resolverResponse?.statusCode ??
       originalError?.statusCode ??
@@ -76,8 +87,8 @@ export function createGraphqlFormatError(isProduction: boolean) {
       400;
 
     const getStatus = (expected: number) =>
-      resolverError?.statusCode === expected ||
-      resolverResponse?.statusCode === expected ||
+      getStatusFromObj(resolverError) === expected ||
+      getStatusFromObj(resolverResponse) === expected ||
       originalError?.statusCode === expected ||
       // second pass: status written into extensions by the subgraph
       formattedError.extensions?.statusCode === expected;
