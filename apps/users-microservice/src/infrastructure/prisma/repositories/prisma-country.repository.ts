@@ -22,6 +22,11 @@ export class PrismaCountryRepository implements CountryRepository {
     return rows.map((c) => new CountryEntity(c.id, c.code, c.name, c.nameRu));
   }
 
+  async findById(id: string): Promise<CountryEntity | null> {
+    const c = await this.prisma.country.findUnique({ where: { id } });
+    return c ? new CountryEntity(c.id, c.code, c.name, c.nameRu) : null;
+  }
+
   async findByIds(ids: string[]): Promise<CountryEntity[]> {
     const rows = await this.prisma.country.findMany({
       where: { id: { in: ids } },

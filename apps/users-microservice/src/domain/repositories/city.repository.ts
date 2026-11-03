@@ -6,5 +6,6 @@ export abstract class CityRepository {
     search?: string,
     limit?: number,
   ): Promise<CityEntity[]>;
+  abstract findById(id: string): Promise<CityEntity | null>;
   abstract findByIds(ids: string[]): Promise<CityEntity[]>;
 }

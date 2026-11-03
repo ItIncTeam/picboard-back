@@ -10,7 +10,7 @@ import { Trim } from '@app/common/decorators/transform/trim';
 
 const PASSWORD_REGEX =
   /^(?=.{6,20}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!"#$%&'()*+,\-./:;<=>?@[\\\]^_{|}~]+$/;
-const USERNAME_REGEX = /^(?=.{6,30}$)[A-Za-z\d!_-]+$/;
+export const USERNAME_REGEX = /^(?=.{6,30}$)[A-Za-z\d!_-]+$/;
 
 @InputType()
 export class SignUpInput {

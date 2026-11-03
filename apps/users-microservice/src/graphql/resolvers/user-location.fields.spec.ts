@@ -30,6 +30,7 @@ function createCountryRepositoryMock(): jest.Mocked<CountryRepository> {
   return {
     search: jest.fn(),
     findByIds: jest.fn(),
+    findById: jest.fn(),
   };
 }
 
@@ -37,6 +38,7 @@ function createCityRepositoryMock(): jest.Mocked<CityRepository> {
   return {
     search: jest.fn(),
     findByIds: jest.fn(),
+    findById: jest.fn(),
   };
 }
 

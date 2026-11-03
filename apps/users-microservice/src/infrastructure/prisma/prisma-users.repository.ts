@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { UserEntity } from '../../domain/entities/user.entity';
+import { UpdateProfileData } from '../../domain/repositories/update-profile-data.type';
 import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
 import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
@@ -117,6 +118,18 @@ export class PrismaUsersRepository implements UsersRepository {
       data: {
         passwordHash: passwordHash,
       },
+    });
+
+    return mapToUserEntity(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileData,
+  ): Promise<UserEntity> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
     });
 
     return mapToUserEntity(user);
