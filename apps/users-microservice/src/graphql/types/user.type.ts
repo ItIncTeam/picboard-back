@@ -18,8 +18,11 @@ export class User {
   @Field(() => String, { nullable: true })
   lastName?: string;
 
-  @Field(() => String, { nullable: true, deprecationReason: 'Use aboutMe' })
-  bio?: string;
+  @Field(() => String, { nullable: true })
+  aboutMe?: string | null;
+
+  @Field(() => String, { nullable: true })
+  displayName?: string | null;
 
   @Field(() => ID, { nullable: true })
   profilePictureFileId?: string;
