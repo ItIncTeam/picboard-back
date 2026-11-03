@@ -2,7 +2,7 @@ export type ProfileFieldsParent = {
   firstName?: string | null;
   lastName?: string | null;
   username?: string;
-  bio?: string | null;
+  aboutMe?: string | null;
   dateOfBirth?: Date | null;
 };
 
@@ -18,9 +18,9 @@ export function resolveDisplayNameField(parent: ProfileFieldsParent): string {
 }
 
 export function resolveAboutMeField(parent: {
-  bio?: string | null;
+  aboutMe?: string | null;
 }): string | null {
-  return parent.bio ?? null;
+  return parent.aboutMe ?? null;
 }
 
 export function resolveDateOfBirthField(parent: {

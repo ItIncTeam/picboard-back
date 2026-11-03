@@ -15,6 +15,7 @@ import { CityRepository } from '../../domain/repositories/city.repository';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { CountryEntity } from '../../domain/entities/country.entity';
 import { CityEntity } from '../../domain/entities/city.entity';
+import { UserEntity } from '../../domain/entities/user.entity';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
 import {
   resolveDisplayNameField,
@@ -71,12 +72,12 @@ export class MeResolver {
   }
 
   @ResolveField(() => String, { nullable: true })
-  aboutMe(@Parent() me: Me): string | null {
-    return resolveAboutMeField({ bio: me.bio });
+  aboutMe(@Parent() me: UserEntity): string | null {
+    return resolveAboutMeField({ aboutMe: me.aboutMe });
   }
 
   @ResolveField(() => String, { nullable: true })
-  dateOfBirth(@Parent() me: Me & { dateOfBirth?: Date | null }): string | null {
+  dateOfBirth(@Parent() me: UserEntity): string | null {
     return resolveDateOfBirthField({
       dateOfBirth: me.dateOfBirth,
     });
