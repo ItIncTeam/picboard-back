@@ -61,6 +61,16 @@ describe('createGraphqlFormatError — domain codes (B1)', () => {
     expect(out.extensions?.statusCode).toBe(409);
   });
 
+  it('surfaces CONFLICT with 409 from ConflictException payload', () => {
+    const ex = new ConflictException({
+      message: 'taken',
+      domainCode: 'USERNAME_TAKEN',
+    });
+    const out = fmt(gqlErr('taken', { statusCode: 409 }), ex);
+    expect(out.extensions?.code).toBe('USERNAME_TAKEN');
+    expect(out.extensions?.statusCode).toBe(409);
+  });
+
   it('is idempotent: domain code survives the second pass', () => {
     const first = fmt(
       gqlErr('taken', { statusCode: 409, message: 'taken' }),
