@@ -31,8 +31,7 @@ model User {
   confirmationCode        String?
   confirmationCodeExpDate DateTime?      @db.Timestamptz(6)
   isConfirmed             Boolean        @default(false)
-  displayName             String?
-  bio                     String?
+  aboutMe                 String?
   profilePictureFileId    String?        @db.Uuid
   firstName               String?
   lastName                String?

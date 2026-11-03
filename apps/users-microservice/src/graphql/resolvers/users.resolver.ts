@@ -93,8 +93,8 @@ export class UsersResolver {
   }
 
   @ResolveField(() => String, { nullable: true })
-  aboutMe(@Parent() user: User): string | null {
-    return resolveAboutMeField({ bio: user.bio });
+  aboutMe(@Parent() user: UserEntity): string | null {
+    return resolveAboutMeField({ aboutMe: user.aboutMe });
   }
 
   @ResolveReference()

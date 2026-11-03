@@ -91,17 +91,17 @@ describe('user profile field resolvers', () => {
 
   describe('resolveAboutMeField', () => {
     it('returns bio when it is set', () => {
-      const parent = { bio: 'Some bio text' };
+      const parent = { aboutMe: 'Some bio text' };
       expect(resolveAboutMeField(parent)).toBe('Some bio text');
     });
 
     it('returns null when bio is null', () => {
-      const parent = { bio: null };
+      const parent = { aboutMe: null };
       expect(resolveAboutMeField(parent)).toBeNull();
     });
 
     it('returns null when bio is undefined', () => {
-      const parent = {} as { bio?: string | null };
+      const parent = {} as { aboutMe?: string | null };
       expect(resolveAboutMeField(parent)).toBeNull();
     });
   });
