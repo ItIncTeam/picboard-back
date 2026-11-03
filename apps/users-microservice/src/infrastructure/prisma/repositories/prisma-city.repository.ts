@@ -36,6 +36,13 @@ export class PrismaCityRepository implements CityRepository {
     );
   }
 
+  async findById(id: string): Promise<CityEntity | null> {
+    const c = await this.prisma.city.findUnique({ where: { id } });
+    return c
+      ? new CityEntity(c.id, c.name, c.nameRu, c.countryId, c.population)
+      : null;
+  }
+
   async findByIds(ids: string[]): Promise<CityEntity[]> {
     const rows = await this.prisma.city.findMany({
       where: { id: { in: ids } },

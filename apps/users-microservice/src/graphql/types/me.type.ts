@@ -17,11 +17,20 @@ export class Me {
   @Field()
   isConfirmed: boolean;
 
-  @Field({ nullable: true })
-  displayName?: string;
+  @Field(() => String, { nullable: true })
+  firstName?: string;
 
-  @Field({ nullable: true })
-  bio?: string;
+  @Field(() => String, { nullable: true })
+  lastName?: string;
+
+  @Field(() => String, { nullable: true })
+  aboutMe?: string | null;
+
+  @Field(() => String, { nullable: true })
+  displayName?: string | null;
+
+  @Field(() => String, { nullable: true })
+  dateOfBirth?: string | null;
 
   @Field(() => ID, { nullable: true })
   profilePictureFileId?: string;

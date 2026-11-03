@@ -1,6 +1,7 @@
 import { UserEntity } from '../entities/user.entity';
 import { CreateUserData } from './create-user-data.type';
 import { UpdateConfirmationData } from './update-confirmation-data.type';
+import { UpdateProfileData } from './update-profile-data.type';
 
 export abstract class UsersRepository {
   abstract findById(id: string): Promise<UserEntity | null>;
@@ -28,4 +29,9 @@ export abstract class UsersRepository {
   ): Promise<UserEntity>;
 
   abstract count(): Promise<number>;
+
+  abstract updateProfile(
+    userId: string,
+    data: UpdateProfileData,
+  ): Promise<UserEntity>;
 }

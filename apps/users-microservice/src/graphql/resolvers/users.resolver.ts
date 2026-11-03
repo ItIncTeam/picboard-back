@@ -21,6 +21,10 @@ import { CityEntity } from '../../domain/entities/city.entity';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
+import {
+  resolveDisplayNameField,
+  resolveAboutMeField,
+} from './user-profile.fields';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -64,6 +68,20 @@ export class UsersResolver {
     @Context() context: { dataloaderFactory: DataloaderFactory },
   ): Promise<CityEntity | Error | null> {
     return resolveCityField(user, context, this.cityRepository);
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  displayName(@Parent() user: User): string {
+    return resolveDisplayNameField({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+    });
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  aboutMe(@Parent() user: UserEntity): string | null {
+    return resolveAboutMeField({ aboutMe: user.aboutMe });
   }
 
   @ResolveReference()
