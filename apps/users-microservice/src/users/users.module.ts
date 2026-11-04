@@ -52,6 +52,10 @@ import { IssueSessionUseCase } from '../application/use-cases/issue-session/issu
 import { UsernameGeneratorService } from '../infrastructure/googleOAuth/username-generator.service';
 
 import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
+import { provideFileDeletionOutbox } from '@app/common/file-deletion-outbox/provide-file-deletion-outbox';
+import { FilesService } from '../domain/services/files.service';
+import { FilesServiceClient } from '../infrastructure/client/files-service.client';
+import { SetProfilePhotoUseCase } from '../application/use-cases/set-profile-photo/set-profile-photo.use.case';
 
 @Module({
   imports: [
@@ -119,6 +123,8 @@ import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
     IssueSessionUseCase,
     UsernameGeneratorService,
     OAuthLoginUseCase,
+    SetProfilePhotoUseCase,
+    FilesServiceClient,
     /*UsersEventsPublisher,*/
     {
       provide: UsersRepository,
@@ -152,6 +158,14 @@ import { OAuthModule } from '../infrastructure/oAuth/oauth.module';
       provide: TokenService,
       useClass: JwtTokenService,
     },
+    {
+      provide: FilesService,
+      useExisting: FilesServiceClient,
+    },
+    ...provideFileDeletionOutbox({
+      prisma: UsersPrismaService,
+      filesClient: FilesServiceClient,
+    }),
     /*{
       provide: APP_FILTER,
       useClass: UsersPrismaExceptionFilter,
