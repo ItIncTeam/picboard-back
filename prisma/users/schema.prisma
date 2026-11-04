@@ -17,6 +17,12 @@ enum ConsentAction {
   WITHDRAWN
 }
 
+enum OutboxStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
 model User {
   id                      String         @id @default(uuid()) @db.Uuid
   email                   String         @unique
@@ -125,4 +131,23 @@ model City {
   @@index([name])
   @@index([nameRu])
   @@map("cities")
+}
+
+// Transactional outbox: "delete the replaced avatar in files-service".
+// The row is created in the same transaction as the avatar change; the shared
+// worker (libs/common/src/file-deletion-outbox) delivers it with retries.
+// No relation to User: the old file must be deleted even if the user is gone.
+model FileDeletionOutbox {
+  id            String       @id @default(uuid()) @db.Uuid
+  ownerId       String       @db.Uuid
+  fileIds       String[]     @db.Uuid
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  lastError     String?
+  nextAttemptAt DateTime     @default(now()) @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
+  processedAt   DateTime?    @db.Timestamptz(6)
+
+  @@index([status, nextAttemptAt])
 }
