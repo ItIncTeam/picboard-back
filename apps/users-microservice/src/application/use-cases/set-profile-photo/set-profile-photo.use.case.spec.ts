@@ -14,22 +14,6 @@ import { UserEntity } from '../../../domain/entities/user.entity';
 const USER_ID = 'user-1';
 const FILE_ID = 'file-1';
 
-function createUser(profilePictureFileId: string | null): UserEntity {
-  return new UserEntity(
-    USER_ID,
-    'test@example.com',
-    'testuser',
-    '$2b$10$hashedpassword',
-    new Date('2026-01-01'),
-    null,
-    null,
-    true,
-    null,
-    null,
-    profilePictureFileId,
-  );
-}
-
 describe('SetProfilePhotoUseCase', () => {
   let useCase: SetProfilePhotoUseCase;
   let usersRepository: jest.Mocked<UsersRepository>;
@@ -57,7 +41,9 @@ describe('SetProfilePhotoUseCase', () => {
 
   describe('valid avatar', () => {
     it('should set the avatar and return the updated user', async () => {
-      const user = createUser(FILE_ID);
+      // only the identity of the returned object is checked, so the fixture
+      // doesn't depend on UserEntity's positional constructor
+      const user = { id: USER_ID, profilePictureFileId: FILE_ID } as UserEntity;
       filesService.isOwnedReadyAvatar.mockResolvedValue(true);
       usersRepository.setProfilePictureAndEnqueueOldFileDeletion.mockResolvedValue(
         user,
