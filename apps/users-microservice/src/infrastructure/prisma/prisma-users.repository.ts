@@ -122,6 +122,34 @@ export class PrismaUsersRepository implements UsersRepository {
     return mapToUserEntity(user);
   }
 
+  async setProfilePictureAndEnqueueOldFileDeletion(
+    userId: string,
+    fileId: string,
+  ): Promise<UserEntity> {
+    return this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE locks the row until commit: a concurrent call waits here and
+      // then reads our new avatar as its "previous" one, so no avatar is lost
+      // without being queued for deletion
+      const [current] = await tx.$queryRaw<
+        { profilePictureFileId: string | null }[]
+      >`SELECT "profilePictureFileId" FROM "User" WHERE "id" = ${userId}::uuid FOR UPDATE`;
+
+      const user: User = await tx.user.update({
+        where: { id: userId },
+        data: { profilePictureFileId: fileId },
+      });
+
+      const previousFileId = current?.profilePictureFileId;
+      if (previousFileId && previousFileId !== fileId) {
+        await tx.fileDeletionOutbox.create({
+          data: { ownerId: userId, fileIds: [previousFileId] },
+        });
+      }
+
+      return mapToUserEntity(user);
+    });
+  }
+
   async count(): Promise<number> {
     return this.prisma.user.count();
   }

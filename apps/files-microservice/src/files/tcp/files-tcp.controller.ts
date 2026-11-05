@@ -6,11 +6,21 @@ import {
   CheckOwnedReadyFilesDto,
   CheckOwnedReadyFilesResponse,
   FILES_TCP_PATTERNS,
+  FilePurposeValue,
   SoftDeleteFilesInput,
   SoftDeleteResponse,
 } from '@app/contracts';
 import { createRpcValidationPipe } from '@app/common/validation/create-rpc-validation-pipe';
 import { SoftDeleteFilesCommand } from '../../application/use-cases/soft-delete-files/soft-delete-files.use.case';
+import { Purpose } from '../../domain/enums/file-purpose.enum';
+
+// Contract values → domain enum. Typed as a Record so tsc fails if
+// FILE_PURPOSE_VALUES gains a value this map doesn't cover.
+const PURPOSE_FROM_CONTRACT: Record<FilePurposeValue, Purpose> = {
+  POST_IMAGE: Purpose.POST_IMAGE,
+  BILL: Purpose.BILL,
+  AVATAR: Purpose.AVATAR,
+};
 
 @Controller()
 export class FilesTcpController {
@@ -32,7 +42,11 @@ export class FilesTcpController {
     );
 
     const result = await this.queryBus.execute(
-      new CheckOwnedReadyFilesQuery(payload.ownerId, payload.fileIds),
+      new CheckOwnedReadyFilesQuery(
+        payload.ownerId,
+        payload.fileIds,
+        payload.purpose && PURPOSE_FROM_CONTRACT[payload.purpose],
+      ),
     );
 
     this.logger.log(

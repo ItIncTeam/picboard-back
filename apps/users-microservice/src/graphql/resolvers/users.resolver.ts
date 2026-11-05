@@ -1,18 +1,22 @@
 import {
   Args,
   Query,
+  Mutation,
   ResolveReference,
   Resolver,
   Context,
+  ID,
   Int,
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
+import { CommandBus } from '@nestjs/cqrs';
 import { Country } from '../types/country.type';
 import { City } from '../types/city.type';
 import { User } from '../types/user.type';
 import { FileReference } from '../types/file-reference.type';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException, ParseUUIDPipe } from '@nestjs/common';
+import { CurrentUserId } from '@app/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 import { CountryRepository } from '../../domain/repositories/country.repository';
 import { CityRepository } from '../../domain/repositories/city.repository';
@@ -21,6 +25,7 @@ import { CityEntity } from '../../domain/entities/city.entity';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
+import { SetProfilePhotoCommand } from '../../application/use-cases/set-profile-photo/set-profile-photo.use.case';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -29,6 +34,7 @@ export class UsersResolver {
     private readonly usersRepository: UsersRepository,
     private readonly countryRepository: CountryRepository,
     private readonly cityRepository: CityRepository,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @Query(() => User, { nullable: true })
@@ -39,6 +45,17 @@ export class UsersResolver {
   @Query(() => Int)
   usersCount(): Promise<number> {
     return this.usersRepository.count();
+  }
+
+  @Mutation(() => User)
+  setProfilePhoto(
+    // files-service validates fileIds as UUID v4 too; checking here keeps its
+    // TCP error message (which names "fileIds") from reaching the caller
+    @Args('fileId', { type: () => ID }, new ParseUUIDPipe({ version: '4' }))
+    fileId: string,
+    @CurrentUserId() userId: string,
+  ): Promise<UserEntity> {
+    return this.commandBus.execute(new SetProfilePhotoCommand(userId, fileId));
   }
 
   @ResolveField(() => FileReference, { nullable: true })

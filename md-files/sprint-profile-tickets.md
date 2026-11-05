@@ -14,6 +14,8 @@ Ticket keys (A-1…, B-1…) are placeholders — replace with real BACK-xx numb
 
 **Where the two halves meet:** both devs edit `prisma/users/schema.prisma` (A adds profile fields, B adds an outbox table). Merge **A-1 first** and have B rebase before generating their migration. Both also add fields to the `User` GraphQL type, which is a small, easy merge.
 
+**Done:** A-1 was merged as #28, and B-3's outbox migration (`20261102190901_add_file_deletion_outbox`) was generated on top of it.
+
 ---
 
 ## Dev A — Profile data
@@ -124,7 +126,7 @@ The profile page is public (anyone can view it without logging in), but only the
 ## Dev B — Profile photo
 
 ### B-1: Support the `AVATAR` purpose in files-service
-**Type:** Task · **SP:** 3 · **Service:** files-microservice
+**Type:** Task · **SP:** 3 · **Service:** files-microservice · **Status:** merged (#27)
 
 Allow avatars to go through the existing initiate → complete upload flow.
 - Add `AVATAR` to the `Purpose` enum in both Prisma and GraphQL
@@ -132,27 +134,29 @@ Allow avatars to go through the existing initiate → complete upload flow.
 - On complete-upload, check the actual file content, not just the declared type: confirm the real size, and confirm the file's first bytes match JPEG/PNG.
 
 **AC:**
-- [ ] A file over 10 MB, or one that isn't JPEG/PNG, is rejected at initiate. A file that lies about its size or type is rejected at complete (status `FAILED` with a `failedReason`).
-- [ ] The error message matches the spec: "The photo must be less than 10 Mb and have JPEG or PNG format"
-- [ ] Existing `POST_IMAGE` behavior is unchanged
-- [ ] Unit tests
+- [x] A file over 10 MB, or one that isn't JPEG/PNG, is rejected at initiate. A file that lies about its size or type is rejected at complete (status `FAILED` with a `failedReason`).
+- [x] The error message matches the spec: "The photo must be less than 10 Mb and have JPEG or PNG format"
+- [x] Existing `POST_IMAGE` behavior is unchanged
+- [x] Unit tests
 
 ---
 
 ### B-2: Extract the file-deletion outbox into a shared lib
-**Type:** Tech debt · **SP:** 3 · **Services:** libs/common, posts-microservice
+**Type:** Tech debt · **SP:** 3 · **Services:** libs/common, posts-microservice · **Status:** merged (#30)
 
 Replacing or deleting an avatar has to reliably delete the old file, which is the same problem #24 solved for posts. Move the outbox repository interface and worker out of posts-microservice into `libs/` so users-microservice can reuse them.
 
 **AC:**
-- [ ] The shared module takes the Prisma client and the TCP client as parameters instead of hard-coding them
-- [ ] posts-microservice is migrated to the shared module, and its existing tests pass unchanged
-- [ ] No behavior change for posts
+- [x] The shared module takes the Prisma client and the TCP client as parameters instead of hard-coding them
+- [x] posts-microservice is migrated to the shared module, and its existing tests pass unchanged
+- [x] No behavior change for posts
+
+The old posts copies (`infrastructure/worker/file-deletion-outbox.worker(.spec).ts`, `infrastructure/prisma/prisma-file-deletion-outbox.repository.ts`, `domain/repositories/file-deletion-outbox.repository.ts`) are unused now but were kept on purpose; the posts owner can delete them.
 
 ---
 
 ### B-3: `setProfilePhoto` mutation
-**Type:** Story · **SP:** 5 · **Service:** users-microservice · **Depends on:** B-1, B-2
+**Type:** Story · **SP:** 5 · **Service:** users-microservice · **Depends on:** B-1, B-2 · **Status:** implemented on branch `set-profile-photo`, PR not opened yet
 
 After the upload completes, the frontend calls `setProfilePhoto(fileId: ID!): User`.
 - Check over TCP (using the existing `check-owned-ready-files` handler) that the file belongs to the caller, is `READY`, and has purpose `AVATAR`
@@ -160,11 +164,17 @@ After the upload completes, the frontend calls `setProfilePhoto(fileId: ID!): Us
 - Add the outbox table to `prisma/users/schema.prisma` (**coordinate with A-1**)
 - Wire up the outbox worker from B-2
 
+**Implementation notes:**
+- `check-owned-ready-files` got an optional `purpose` filter (posts doesn't send it, so posts is unchanged). Deploy files-service before users-service, otherwise files rejects the new field with 400.
+- The transaction locks the user row (`SELECT … FOR UPDATE`), so two concurrent calls can't both queue the same old avatar and leave the other one in storage. Sending the current avatar again queues nothing.
+- All three rejections return the same `400 Invalid file id: <id>`. A `fileId` that isn't a UUID v4 is rejected with 400 before files-service is called.
+- Known gap, accepted: switching back to an old avatar that is still waiting in the outbox succeeds, and the worker then deletes it. Only possible with a client that keeps old file ids.
+
 **AC:**
-- [ ] The new avatar resolves through the existing `avatar` field
-- [ ] The old file gets soft-deleted in files-service, and still gets deleted if files-service was down at the time
-- [ ] Rejected: a file owned by someone else, a file that isn't `READY`, a file with the wrong purpose
-- [ ] Unit tests
+- [ ] The new avatar resolves through the existing `avatar` field (implemented; check by running it or in B-5)
+- [ ] The old file gets soft-deleted in files-service, and still gets deleted if files-service was down at the time (implemented through the outbox; check by running it or in B-5)
+- [x] Rejected: a file owned by someone else, a file that isn't `READY`, a file with the wrong purpose
+- [x] Unit tests
 
 ---
 
@@ -174,6 +184,7 @@ After the upload completes, the frontend calls `setProfilePhoto(fileId: ID!): Us
 Backs the "Do you really want to delete your profile photo?" → Yes action.
 - In one transaction: set `profilePictureFileId = null` and add the file id to the outbox
 - Deleting when there's no avatar succeeds and does nothing (returns `true`), so a retried request isn't an error
+- The users outbox and its worker already exist after B-3. Lock the user row the same way as `setProfilePictureAndEnqueueOldFileDeletion` in `prisma-users.repository.ts`, so a concurrent `setProfilePhoto` can't slip in between the read and the update
 
 **AC:**
 - [ ] After deletion, `avatar` is `null` and the file is eventually `DELETED` in files-service
@@ -270,3 +281,4 @@ Signing the header makes S3 reject a mismatched PUT with 403, before anything is
 3. Should editing the username be allowed without re-authenticating?
 4. Should the country/city lists be English-only, or also in Russian?
 5. Frontend: confirm that the photo upload starts only after [Save] (affects B-6).
+6. Frontend: `setProfilePhoto` returns `User`, but the settings page reads `me` (type `Me`). Apollo Client caches `User:<id>` and `Me:<id>` separately, so `me { avatar }` won't update by itself after the mutation. Refetch `me` (e.g. `refetchQueries`), or should the mutation return `Me` instead?
