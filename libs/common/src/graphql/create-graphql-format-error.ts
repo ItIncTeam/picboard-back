@@ -78,8 +78,6 @@ export function createGraphqlFormatError(isProduction: boolean) {
 
     const httpStatus: number =
       getStatusFromObj(resolverError) ??
-      getStatusFromObj(resolverResponse) ??
-      getStatusFromObj(originalError) ??
       resolverError?.statusCode ??
       resolverResponse?.statusCode ??
       originalError?.statusCode ??
@@ -88,7 +86,8 @@ export function createGraphqlFormatError(isProduction: boolean) {
 
     const getStatus = (expected: number) =>
       getStatusFromObj(resolverError) === expected ||
-      getStatusFromObj(resolverResponse) === expected ||
+      resolverError?.statusCode === expected ||
+      resolverResponse?.statusCode === expected ||
       originalError?.statusCode === expected ||
       // second pass: status written into extensions by the subgraph
       formattedError.extensions?.statusCode === expected;
