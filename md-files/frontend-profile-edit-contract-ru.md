@@ -87,8 +87,8 @@ input UpdateProfileInput {
 
 | Поле          | Обязательно | Правила                                                    | Сообщение при ошибке                                                     |
 | ------------- | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `username`    | **да**      | 6–30 символов, `^[A-Za-z0-9!_-]+$`, уникален               | `username must match /^(?=.{6,30}$)[A-Za-z\d!_-]+$/ regular expression`  |
-| `firstName`   | **да**      | 1–50, **минимум одна буква**; буквы, пробел, дефис, апостроф | `Only letters, spaces, hyphens and apostrophes`                          |
+| `username`    | **да**      | 6–30 символов, `^[A-Za-z0-9!_-]+$`, уникален               | `Username must be 6–30 characters: letters, digits, !, _ or -` |
+| `firstName`   | **да**      | 1–50, **только латиница и кириллица**, минимум одна буква; пробел, дефис, апостроф | `Only letters, spaces, hyphens and apostrophes`                          |
 | `lastName`    | **да**      | то же                                                      | то же                                                                    |
 | `dateOfBirth` | нет         | ISO `YYYY-MM-DD`, **существующая дата**, **не в будущем**, **возраст ≥ 13** | формат → `dateOfBirth must be in YYYY-MM-DD format`; будущее → код `DATE_IN_FUTURE`; возраст → код `USER_UNDER_13` |
 | `countryId`   | нет         | UUID страны, **должен существовать**                       | `countryId must be a UUID` / `Country not found`                         |

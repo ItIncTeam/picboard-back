@@ -76,9 +76,9 @@ Validation rules:
 
 | Field | Required | Rules |
 |---|---|---|
-| username | yes | 6–30 chars, `^[A-Za-z0-9_-]+$`, unique |
-| firstName | yes | 1–50 chars, Latin and Cyrillic letters only |
-| lastName | yes | 1–50 chars, Latin and Cyrillic letters only |
+| username | yes | 6–30 chars, `^[A-Za-z0-9!_-]+$` (matches sign-up), unique |
+| firstName | yes | 1–50 chars, Latin and Cyrillic letters, plus space, hyphen and apostrophe |
+| lastName | yes | 1–50 chars, Latin and Cyrillic letters, plus space, hyphen and apostrophe |
 | dateOfBirth | no | valid date, not in the future, **age ≥ 13** |
 | countryId / cityId | no | must exist, and the city must belong to the country |
 | aboutMe | no | 0–200 chars (letters, digits, special characters) |
