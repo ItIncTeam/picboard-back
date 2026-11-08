@@ -10,18 +10,24 @@ import {
 import { Trim } from '@app/common/decorators/transform/trim';
 import { USERNAME_REGEX } from './sign-up.input';
 
+// ТЗ: имена — только латиница и кириллица; пробел, дефис и апостроф допустимы (Anne-Marie, O'Brien).
+const NAME_REGEX =
+  /^(?=.*[\p{Script=Latin}\p{Script=Cyrillic}])[\p{Script=Latin}\p{Script=Cyrillic} '-]+$/u;
+
 @InputType()
 export class UpdateProfileInput {
   @Field()
   @Trim()
-  @Matches(USERNAME_REGEX)
+  @Matches(USERNAME_REGEX, {
+    message: 'Username must be 6–30 characters: letters, digits, !, _ or -',
+  })
   @IsNotEmpty()
   username: string;
 
   @Field()
   @Trim()
   @Length(1, 50)
-  @Matches(/^(?=.*\p{L})[\p{L} '-]+$/u, {
+  @Matches(NAME_REGEX, {
     message: 'Only letters, spaces, hyphens and apostrophes',
   })
   firstName: string;
@@ -29,7 +35,7 @@ export class UpdateProfileInput {
   @Field()
   @Trim()
   @Length(1, 50)
-  @Matches(/^(?=.*\p{L})[\p{L} '-]+$/u, {
+  @Matches(NAME_REGEX, {
     message: 'Only letters, spaces, hyphens and apostrophes',
   })
   lastName: string;
