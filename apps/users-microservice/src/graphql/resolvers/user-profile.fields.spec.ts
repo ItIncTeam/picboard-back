@@ -1,6 +1,5 @@
 import {
   resolveDisplayNameField,
-  resolveAboutMeField,
   resolveDateOfBirthField,
   ProfileFieldsParent,
 } from './user-profile.fields';
@@ -86,23 +85,6 @@ describe('user profile field resolvers', () => {
         username: 'jdoe',
       };
       expect(resolveDisplayNameField(parent)).toBe('John');
-    });
-  });
-
-  describe('resolveAboutMeField', () => {
-    it('returns bio when it is set', () => {
-      const parent = { aboutMe: 'Some bio text' };
-      expect(resolveAboutMeField(parent)).toBe('Some bio text');
-    });
-
-    it('returns null when bio is null', () => {
-      const parent = { aboutMe: null };
-      expect(resolveAboutMeField(parent)).toBeNull();
-    });
-
-    it('returns null when bio is undefined', () => {
-      const parent = {} as { aboutMe?: string | null };
-      expect(resolveAboutMeField(parent)).toBeNull();
     });
   });
 

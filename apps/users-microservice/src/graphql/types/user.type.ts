@@ -21,8 +21,8 @@ export class User {
   @Field(() => String, { nullable: true })
   aboutMe?: string | null;
 
-  @Field(() => String, { nullable: true })
-  displayName?: string | null;
+  @Field(() => String)
+  displayName: string;
 
   @Field(() => ID, { nullable: true })
   profilePictureFileId?: string;

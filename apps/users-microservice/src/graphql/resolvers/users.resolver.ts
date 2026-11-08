@@ -1,18 +1,22 @@
 import {
   Args,
   Query,
+  Mutation,
   ResolveReference,
   Resolver,
   Context,
   Int,
   ResolveField,
   Parent,
+  ID,
 } from '@nestjs/graphql';
+import { CommandBus } from '@nestjs/cqrs';
 import { Country } from '../types/country.type';
 import { City } from '../types/city.type';
 import { User } from '../types/user.type';
+import { CurrentUserId } from '@app/common';
 import { FileReference } from '../types/file-reference.type';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException, ParseUUIDPipe } from '@nestjs/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 import { CountryRepository } from '../../domain/repositories/country.repository';
 import { CityRepository } from '../../domain/repositories/city.repository';
@@ -21,11 +25,8 @@ import { CityEntity } from '../../domain/entities/city.entity';
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
-import {
-  resolveDisplayNameField,
-  resolveAboutMeField,
-} from './user-profile.fields';
 import { SetProfilePhotoCommand } from '../../application/use-cases/set-profile-photo/set-profile-photo.use.case';
+import { resolveDisplayNameField } from './user-profile.fields';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -83,18 +84,13 @@ export class UsersResolver {
     return resolveCityField(user, context, this.cityRepository);
   }
 
-  @ResolveField(() => String, { nullable: true })
+  @ResolveField(() => String)
   displayName(@Parent() user: User): string {
     return resolveDisplayNameField({
       firstName: user.firstName,
       lastName: user.lastName,
       username: user.username,
     });
-  }
-
-  @ResolveField(() => String, { nullable: true })
-  aboutMe(@Parent() user: UserEntity): string | null {
-    return resolveAboutMeField({ aboutMe: user.aboutMe });
   }
 
   @ResolveReference()

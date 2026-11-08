@@ -26,8 +26,8 @@ export class Me {
   @Field(() => String, { nullable: true })
   aboutMe?: string | null;
 
-  @Field(() => String, { nullable: true })
-  displayName?: string | null;
+  @Field(() => String)
+  displayName: string;
 
   @Field(() => String, { nullable: true })
   dateOfBirth?: string | null;
