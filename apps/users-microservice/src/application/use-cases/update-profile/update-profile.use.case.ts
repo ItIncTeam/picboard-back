@@ -10,8 +10,8 @@ import { PrismaClientKnownRequestError } from '@prisma/client-runtime-utils';
 
 export class UpdateProfileCommand {
   constructor(
-    public ownerId: string,
-    public input: UpdateProfileInput,
+    public readonly ownerId: string,
+    public readonly input: UpdateProfileInput,
   ) {}
 }
 
