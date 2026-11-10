@@ -6,6 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { FileDeletionOutboxRepository } from './file-deletion-outbox.repository';
+import { ClaimedOutboxTask } from './file-deletion-outbox.repository';
 import { FileDeletionSender } from './file-deletion-sender';
 import { extractErrorMessage } from '../rpc/extract-error-message';
 
@@ -13,6 +14,8 @@ import { extractErrorMessage } from '../rpc/extract-error-message';
 const PROCESS_INTERVAL_MS = 15_000;
 /** Сколько задач брать за один проход */
 const BATCH_SIZE = 20;
+/** Период аренды задачи (60 секунд) */
+export const LEASE_MS = 60_000;
 /** Максимум попыток доставки до окончательного FAILED */
 export const MAX_ATTEMPTS = 5;
 /** Базовая задержка экспоненциального backoff */
@@ -78,11 +81,15 @@ export class FileDeletionOutboxWorker implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processBatch(): Promise<void> {
-    const now = new Date();
-    const batch = await this.outbox.findPendingBatch(now, BATCH_SIZE);
-    if (batch.length === 0) return;
+    const candidates = await this.outbox.findPendingBatch(
+      new Date(),
+      BATCH_SIZE,
+    );
+    if (candidates.length === 0) return;
 
-    for (const task of batch) {
+    for (const candidate of candidates) {
+      const task = await this.outbox.claim(candidate.id, new Date(), LEASE_MS);
+      if (!task) continue;
       await this.deliver(task);
     }
   }
@@ -120,39 +127,72 @@ export class FileDeletionOutboxWorker implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  private async deliver(task: {
-    id: string;
-    ownerId: string;
-    fileIds: string[];
-    attempts: number;
-  }): Promise<void> {
+  private async deliver(task: ClaimedOutboxTask): Promise<void> {
     try {
       await this.filesClient.markFilesDeleted({
         ownerId: task.ownerId,
         fileIds: task.fileIds,
       });
-      await this.outbox.markDone(task.id);
-      this.logger.log(`Delivered file deletion for outbox task ${task.id}`);
     } catch (error) {
-      const message = extractErrorMessage(error);
-      const nextAttempt = task.attempts + 1;
-
-      if (this.isPermanentFailure(error) || nextAttempt >= MAX_ATTEMPTS) {
-        await this.outbox.markFailed(task.id, message);
-        this.logger.error(
-          `Outbox task ${task.id} failed after ${nextAttempt} attempt(s): ${message}`,
+      await this.handleDeliveryFailure(task, error);
+      return;
+    }
+    try {
+      const marked = await this.outbox.markDone(task.id, task.leaseUntil);
+      if (!marked)
+        this.logger.warn(
+          `Outbox task ${task.id}: lease lost, markDone skipped`,
         );
-        return;
-      }
+      else
+        this.logger.log(`Delivered file deletion for outbox task ${task.id}`);
+    } catch (error) {
+      this.logger.error(
+        `Outbox task ${task.id}: failed to persist DONE: ${extractErrorMessage(error)}`,
+      );
+    }
+  }
 
-      const delay = BASE_BACKOFF_MS * 2 ** task.attempts;
-      await this.outbox.reschedule(
+  private async handleDeliveryFailure(
+    task: ClaimedOutboxTask,
+    error: unknown,
+  ): Promise<void> {
+    const message = extractErrorMessage(error);
+    const nextAttempt = task.attempts + 1;
+    if (this.isPermanentFailure(error) || nextAttempt >= MAX_ATTEMPTS) {
+      try {
+        const ok = await this.outbox.markFailed(
+          task.id,
+          message,
+          task.leaseUntil,
+        );
+        if (!ok) this.logger.warn(`Outbox task ${task.id}: lease lost`);
+        else
+          this.logger.error(
+            `Outbox task ${task.id} failed after ${nextAttempt} attempt(s): ${message}`,
+          );
+      } catch (e) {
+        this.logger.error(
+          `Outbox task ${task.id}: failed to persist FAILED: ${extractErrorMessage(e)}`,
+        );
+      }
+      return;
+    }
+    const delay = BASE_BACKOFF_MS * 2 ** task.attempts;
+    try {
+      const ok = await this.outbox.reschedule(
         task.id,
         message,
         new Date(Date.now() + delay),
+        task.leaseUntil,
       );
-      this.logger.warn(
-        `Outbox task ${task.id} retry #${nextAttempt} scheduled in ${delay}ms: ${message}`,
+      if (!ok) this.logger.warn(`Outbox task ${task.id}: lease lost`);
+      else
+        this.logger.warn(
+          `Outbox task ${task.id} retry #${nextAttempt} scheduled in ${delay}ms: ${message}`,
+        );
+    } catch (e) {
+      this.logger.error(
+        `Outbox task ${task.id}: failed to persist reschedule: ${extractErrorMessage(e)}`,
       );
     }
   }
