@@ -11,6 +11,8 @@ import { SignInUserUseCase } from '../application/use-cases/sign-in-user/sign-in
 import { CreateRefreshTokenUseCase } from '../application/use-cases/create-refresh-token/create-refresh-token.use-case';
 import { RotateRefreshTokenUseCase } from '../application/use-cases/rotate-refresh-token/rotate-refresh-token.use-case';
 import { LogOutUserUseCase } from '../application/use-cases/log-out-user/log-out-user.use.case';
+import { UpdateProfileUseCase } from '../application/use-cases/update-profile/update-profile.use.case';
+import { ProfileResolver } from '../graphql/resolvers/profile.resolver';
 import { UsersPrismaService } from '../infrastructure/prisma/users-prisma.service';
 import { UsersRepository } from '../domain/repositories/users.repository';
 import { PrismaUsersRepository } from '../infrastructure/prisma/prisma-users.repository';
@@ -110,6 +112,8 @@ import { SetProfilePhotoUseCase } from '../application/use-cases/set-profile-pho
     CreateRefreshTokenUseCase,
     RotateRefreshTokenUseCase,
     LogOutUserUseCase,
+    UpdateProfileUseCase,
+    ProfileResolver,
     UsersPrismaService,
     RecaptchaV3Service,
     EmailAdapter,

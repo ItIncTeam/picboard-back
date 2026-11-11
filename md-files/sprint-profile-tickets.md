@@ -1,6 +1,6 @@
 # Sprint: Profile editing & profile photo — backend tickets
 
-Spec: "Заполнение/редактирование профиля. Загрузка фото" (UC-1 Fill in profile, UC-2 Upload photo, UC-3 Edit profile).
+Spec: "Filling in / editing the profile. Photo upload" (UC-1 Fill in profile, UC-2 Upload photo, UC-3 Edit profile).
 
 Ticket keys (A-1…, B-1…) are placeholders — replace with real BACK-xx numbers when created in Jira.
 
@@ -25,7 +25,7 @@ Ticket keys (A-1…, B-1…) are placeholders — replace with real BACK-xx numb
 
 Add the fields the "General Information" form needs to the `User` model.
 - Add `firstName String?`, `lastName String?`, `dateOfBirth DateTime? @db.Date`, `countryId`, `cityId` (FKs to the tables from A-2; they can be added in A-2's migration if that's simpler)
-- Reuse the existing `bio` column for "About me". Decide what to do with `displayName`: keep it, derive it from first + last name, or drop it.
+- "About me" lives in a dedicated `aboutMe` column (renamed from `bio`). `displayName` is **not** stored: it is computed as `firstName` + `lastName` (fallback → `username`) in the API layer, and the unused `displayName` column was dropped.
 - The columns stay nullable in the DB because users who existed before this change have no values. "Mandatory" is enforced at the API level (A-4).
 
 **AC:**
@@ -76,9 +76,9 @@ Validation rules:
 
 | Field | Required | Rules |
 |---|---|---|
-| username | yes | 6–30 chars, `^[A-Za-z0-9_-]+$`, unique |
-| firstName | yes | 1–50 chars, Latin and Cyrillic letters only |
-| lastName | yes | 1–50 chars, Latin and Cyrillic letters only |
+| username | yes | 6–30 chars, `^[A-Za-z0-9!_-]+$` (matches sign-up), unique |
+| firstName | yes | 1–50 chars, Latin and Cyrillic letters, plus space, hyphen and apostrophe |
+| lastName | yes | 1–50 chars, Latin and Cyrillic letters, plus space, hyphen and apostrophe |
 | dateOfBirth | no | valid date, not in the future, **age ≥ 13** |
 | countryId / cityId | no | must exist, and the city must belong to the country |
 | aboutMe | no | 0–200 chars (letters, digits, special characters) |
@@ -87,8 +87,15 @@ Validation rules:
 - The under-13 check needs a dedicated error code (e.g. `USER_UNDER_13`) so the frontend can show "A user under 13 cannot create a profile. Privacy Policy".
 - If the username is already taken, return a specific `USERNAME_TAKEN` error. Also catch the Prisma unique-constraint violation (P2002) in case two requests race for the same name.
 - The spec's `dd.mm.yyyy` is how the date is shown in the UI. The API accepts ISO `YYYY-MM-DD`, and the frontend converts between the two.
-- ⚠️ The JWT payload includes `username` (`libs/auth/src/jwt.strategy.ts:36`). After a username change, either issue a fresh access token in the response, or stop depending on the `username` claim downstream. Decide which one as part of this ticket.
+- ✅ **Verified:** the access token is signed with `{ sub, email }` (`apps/users-microservice/src/domain/services/token.service.ts`) and carries no `username`, so changing the username does not break sessions — no decision needed here. Side note: `JwtPayload` in `libs/auth/src/jwt.strategy.ts:36` declares `username` as required even though the token never has it; it should be `username?: string`.
 - Trim whitespace from strings before validating.
+- **Concurrency (deliberate decision):** `updateProfile` is a full replace with no version column, so
+  two simultaneous edits of the same user end in last-write-wins: a form left open in another tab
+  overwrites newer values, because `username`/`firstName`/`lastName` are always sent.
+  A race for `username` between different users is covered by the unique index plus P2002 handling.
+  Avatars do not conflict: `profilePictureFileId` is not part of the input (set separately, B-3).
+  `version`/`expectedVersion` protection should be added only when real complaints appear or a second
+  editing surface arrives. Until then, the frontend is required to re-read `me` before saving.
 
 **AC:**
 - [ ] Valid input saves the profile and the mutation returns the updated profile
@@ -276,7 +283,7 @@ Signing the header makes S3 reject a mismatched PUT with 403, before anything is
 | UC-3 alt: leave without saving | Frontend only |
 
 ## Open questions for the PO / frontend
-1. `displayName`: keep it, derive it from first + last name, or drop it?
+1. ~~`displayName`: keep it, derive it from first + last name, or drop it?~~ — **resolved:** computed in the API layer, the column was dropped.
 2. Is date of birth shown publicly?
 3. Should editing the username be allowed without re-authenticating?
 4. Should the country/city lists be English-only, or also in Russian?

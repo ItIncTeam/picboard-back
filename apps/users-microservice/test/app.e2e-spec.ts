@@ -735,7 +735,10 @@ describe('Users subgraph (e2e)', () => {
         .send({
           query: `
             query {
-              me { id email username isConfirmed countryId cityId }
+              me {
+                id email username isConfirmed countryId cityId
+                firstName lastName dateOfBirth aboutMe displayName
+              }
             }
           `,
         })
@@ -747,6 +750,13 @@ describe('Users subgraph (e2e)', () => {
       expect(res.body.data.me.email).toContain('@example.com');
       // приватные поля доступны только здесь, в user(id) их нет
       expect(res.body.data.me).toHaveProperty('isConfirmed');
+      // A-5: новые поля read-model доступны и пока пустые у свежего профиля
+      expect(res.body.data.me.firstName).toBeNull();
+      expect(res.body.data.me.lastName).toBeNull();
+      expect(res.body.data.me.dateOfBirth).toBeNull();
+      expect(res.body.data.me.aboutMe).toBeNull();
+      // displayName вычисляется из first/last, а без них падает на username
+      expect(res.body.data.me.displayName).toBe(username);
     });
 
     it('should reject me without authentication', async () => {

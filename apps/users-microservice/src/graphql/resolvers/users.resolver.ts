@@ -5,18 +5,18 @@ import {
   ResolveReference,
   Resolver,
   Context,
-  ID,
   Int,
   ResolveField,
   Parent,
+  ID,
 } from '@nestjs/graphql';
 import { CommandBus } from '@nestjs/cqrs';
 import { Country } from '../types/country.type';
 import { City } from '../types/city.type';
 import { User } from '../types/user.type';
+import { CurrentUserId } from '@app/common';
 import { FileReference } from '../types/file-reference.type';
 import { Logger, NotFoundException, ParseUUIDPipe } from '@nestjs/common';
-import { CurrentUserId } from '@app/common';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
 import { CountryRepository } from '../../domain/repositories/country.repository';
 import { CityRepository } from '../../domain/repositories/city.repository';
@@ -26,6 +26,7 @@ import { UserEntity } from '../../domain/entities/user.entity';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
 import { SetProfilePhotoCommand } from '../../application/use-cases/set-profile-photo/set-profile-photo.use.case';
+import { resolveDisplayNameField } from './user-profile.fields';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -81,6 +82,15 @@ export class UsersResolver {
     @Context() context: { dataloaderFactory: DataloaderFactory },
   ): Promise<CityEntity | Error | null> {
     return resolveCityField(user, context, this.cityRepository);
+  }
+
+  @ResolveField(() => String)
+  displayName(@Parent() user: User): string {
+    return resolveDisplayNameField({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+    });
   }
 
   @ResolveReference()
