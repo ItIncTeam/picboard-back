@@ -27,5 +27,12 @@ export abstract class UsersRepository {
     passwordHash: string,
   ): Promise<UserEntity>;
 
+  // Sets the new avatar and, in the same transaction, queues the previous one
+  // for deletion (skipped when there is none or it's the same file)
+  abstract setProfilePictureAndEnqueueOldFileDeletion(
+    userId: string,
+    fileId: string,
+  ): Promise<UserEntity>;
+
   abstract count(): Promise<number>;
 }
