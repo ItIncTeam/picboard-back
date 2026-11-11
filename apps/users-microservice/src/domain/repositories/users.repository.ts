@@ -35,6 +35,12 @@ export abstract class UsersRepository {
     fileId: string,
   ): Promise<UserEntity>;
 
+  // Clears the avatar and, in the same transaction, queues its file for
+  // deletion. No-op when there is no avatar, so a retried call isn't an error
+  abstract clearProfilePictureAndEnqueueFileDeletion(
+    userId: string,
+  ): Promise<void>;
+
   abstract count(): Promise<number>;
 
   abstract updateProfile(

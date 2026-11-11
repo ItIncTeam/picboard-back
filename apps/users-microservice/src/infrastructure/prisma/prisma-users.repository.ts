@@ -163,6 +163,32 @@ export class PrismaUsersRepository implements UsersRepository {
     });
   }
 
+  async clearProfilePictureAndEnqueueFileDeletion(
+    userId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE: a concurrent setProfilePhoto either waits for our commit
+      // and then reads null (queues nothing), or commits first and its new
+      // avatar is the one we clear and queue here, so no file is left behind
+      const [current] = await tx.$queryRaw<
+        { profilePictureFileId: string | null }[]
+      >`SELECT "profilePictureFileId" FROM "User" WHERE "id" = ${userId}::uuid FOR UPDATE`;
+
+      const fileId = current?.profilePictureFileId;
+      // no avatar (or no row): nothing to clear, and updatedAt stays as it is
+      if (!fileId) return;
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { profilePictureFileId: null },
+      });
+
+      await tx.fileDeletionOutbox.create({
+        data: { ownerId: userId, fileIds: [fileId] },
+      });
+    });
+  }
+
   async count(): Promise<number> {
     return this.prisma.user.count();
   }

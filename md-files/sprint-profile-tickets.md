@@ -163,7 +163,7 @@ The old posts copies (`infrastructure/worker/file-deletion-outbox.worker(.spec).
 ---
 
 ### B-3: `setProfilePhoto` mutation
-**Type:** Story · **SP:** 5 · **Service:** users-microservice · **Depends on:** B-1, B-2 · **Status:** implemented on branch `set-profile-photo`, PR not opened yet
+**Type:** Story · **SP:** 5 · **Service:** users-microservice · **Depends on:** B-1, B-2 · **Status:** in review (#32)
 
 After the upload completes, the frontend calls `setProfilePhoto(fileId: ID!): User`.
 - Check over TCP (using the existing `check-owned-ready-files` handler) that the file belongs to the caller, is `READY`, and has purpose `AVATAR`
@@ -186,17 +186,23 @@ After the upload completes, the frontend calls `setProfilePhoto(fileId: ID!): Us
 ---
 
 ### B-4: `deleteProfilePhoto` mutation
-**Type:** Story · **SP:** 3 · **Service:** users-microservice · **Depends on:** B-3
+**Type:** Story · **SP:** 3 · **Service:** users-microservice · **Depends on:** B-3 · **Status:** implemented on branch `delete-profile-photo` (based on `set-profile-photo`), PR waits for #32
 
 Backs the "Do you really want to delete your profile photo?" → Yes action.
 - In one transaction: set `profilePictureFileId = null` and add the file id to the outbox
 - Deleting when there's no avatar succeeds and does nothing (returns `true`), so a retried request isn't an error
 - The users outbox and its worker already exist after B-3. Lock the user row the same way as `setProfilePictureAndEnqueueOldFileDeletion` in `prisma-users.repository.ts`, so a concurrent `setProfilePhoto` can't slip in between the read and the update
 
+**Implementation notes:**
+- `deleteProfilePhoto: Boolean!` takes no arguments. The user comes from the token, so a caller can only clear their own avatar. Anonymous callers get 401.
+- No files-service call. The avatar on the caller's own row is theirs, and the outbox worker sends the `ownerId`, so files-service only deletes files that user owns.
+- The transaction locks the user row (`SELECT … FOR UPDATE`), the same as `setProfilePhoto`. A concurrent set either waits and then reads `null` (queues nothing), or commits first, and then its new avatar is the one cleared and queued. Without the lock, the new avatar could stay in storage forever.
+- No avatar (or no user row) → nothing is written, not even `updatedAt`, and the mutation still returns `true`.
+
 **AC:**
-- [ ] After deletion, `avatar` is `null` and the file is eventually `DELETED` in files-service
-- [ ] Only the owner can delete their own photo
-- [ ] Unit tests
+- [ ] After deletion, `avatar` is `null` and the file is eventually `DELETED` in files-service (implemented through the outbox; check by running it or in B-5)
+- [x] Only the owner can delete their own photo (by construction: no arguments, the user comes from the token)
+- [x] Unit tests
 
 ---
 
