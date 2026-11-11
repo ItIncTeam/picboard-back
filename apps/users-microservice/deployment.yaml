@@ -125,6 +125,16 @@ spec:
                  secretKeyRef:
                    name: users-microservice-production-config-secret
                    key: USERS_SUBGRAPH_SECRET
+             - name: FILES_TCP_HOST
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: FILES_TCP_HOST
+             - name: FILES_TCP_PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: users-microservice-production-config-secret
+                   key: FILES_TCP_PORT
              - name: PORT
                valueFrom:
                  secretKeyRef:
