@@ -26,8 +26,8 @@ pipeline {
                     sh '''
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                       nvm install --lts
-                       nvm use --lts
+                       nvm install 20.20.2
+                       nvm use 20.20.2
                        yarn install
                        yarn run prisma:generate:users:deployment
                        yarn test
@@ -41,7 +41,7 @@ pipeline {
                     sh '''
                        export NVM_DIR="$HOME/.nvm"
                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                       nvm use --lts
+                       nvm use 20.20.2
                        yarn test:users:e2e
                     '''
                 }
