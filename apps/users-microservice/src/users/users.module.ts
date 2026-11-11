@@ -58,6 +58,7 @@ import { provideFileDeletionOutbox } from '@app/common/file-deletion-outbox/prov
 import { FilesService } from '../domain/services/files.service';
 import { FilesServiceClient } from '../infrastructure/client/files-service.client';
 import { SetProfilePhotoUseCase } from '../application/use-cases/set-profile-photo/set-profile-photo.use.case';
+import { DeleteProfilePhotoUseCase } from '../application/use-cases/delete-profile-photo/delete-profile-photo.use.case';
 
 @Module({
   imports: [
@@ -128,6 +129,7 @@ import { SetProfilePhotoUseCase } from '../application/use-cases/set-profile-pho
     UsernameGeneratorService,
     OAuthLoginUseCase,
     SetProfilePhotoUseCase,
+    DeleteProfilePhotoUseCase,
     FilesServiceClient,
     /*UsersEventsPublisher,*/
     {

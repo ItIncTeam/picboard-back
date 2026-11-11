@@ -5,10 +5,10 @@ import {
   ResolveReference,
   Resolver,
   Context,
+  ID,
   Int,
   ResolveField,
   Parent,
-  ID,
 } from '@nestjs/graphql';
 import { CommandBus } from '@nestjs/cqrs';
 import { Country } from '../types/country.type';
@@ -27,6 +27,7 @@ import { UsersRepository } from '../../domain/repositories/users.repository';
 import { resolveCityField, resolveCountryField } from './user-location.fields';
 import { SetProfilePhotoCommand } from '../../application/use-cases/set-profile-photo/set-profile-photo.use.case';
 import { resolveDisplayNameField } from './user-profile.fields';
+import { DeleteProfilePhotoCommand } from '../../application/use-cases/delete-profile-photo/delete-profile-photo.use.case';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -57,6 +58,11 @@ export class UsersResolver {
     @CurrentUserId() userId: string,
   ): Promise<UserEntity> {
     return this.commandBus.execute(new SetProfilePhotoCommand(userId, fileId));
+  }
+
+  @Mutation(() => Boolean)
+  deleteProfilePhoto(@CurrentUserId() userId: string): Promise<boolean> {
+    return this.commandBus.execute(new DeleteProfilePhotoCommand(userId));
   }
 
   @ResolveField(() => FileReference, { nullable: true })
