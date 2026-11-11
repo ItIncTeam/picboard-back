@@ -501,8 +501,8 @@ posts:  default → ServiceUnavailableException (503)            ← 504 ста�
 
 ### Принцип 6. Классификация «повторять / не повторять»
 Граница обязана сохранять признак **клиентская ошибка (4xx) vs серверная/транспортная
-(5xx)**. **Сделано (P3):** воркер `file-deletion-outbox.worker`
-(`apps/posts-microservice/src/infrastructure/worker/file-deletion-outbox.worker.ts`)
+(5xx)**. **Сделано (P3):** общий воркер `file-deletion-outbox.worker`
+(`libs/common/src/file-deletion-outbox/file-deletion-outbox.worker.ts`)
 теперь читает `statusCode` из payload и сразу помечает 4xx-задачу `FAILED`, не тратя
 попытки; 5xx / сеть / таймаут по-прежнему ретраятся.
 
@@ -663,9 +663,9 @@ GATEWAY_TIMEOUT` с осмысленным текстом. До правок в�
 | `libs/common/src/rpc/map-rpc-error-to-http.ts` | P2: тип из `@app/contracts`; кейсы `500` / `504` |
 | `libs/common/src/validation/create-rpc-validation-pipe.ts` | payload типизирован `RpcErrorPayload` |
 | `apps/files-microservice/src/app.module.ts` | регистрация `HttpToRpcExceptionFilter` как `APP_FILTER` |
-| `apps/posts-microservice/src/infrastructure/worker/file-deletion-outbox.worker.ts` | P3: `isPermanentFailure` — 4xx → сразу `FAILED` |
+| `libs/common/src/file-deletion-outbox/file-deletion-outbox.worker.ts` | P3: `isPermanentFailure` — 4xx → сразу `FAILED` |
 | `libs/common/src/rpc/map-rpc-error-to-http.spec.ts` | тесты `500` / `504` |
-| `apps/posts-microservice/src/infrastructure/worker/file-deletion-outbox.worker.spec.ts` | тесты 4xx / 5xx |
+| `libs/common/src/file-deletion-outbox/file-deletion-outbox.worker.spec.ts` | тесты 4xx / 5xx |
 
 ## Что дают правки
 
