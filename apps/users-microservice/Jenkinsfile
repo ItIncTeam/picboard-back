@@ -24,7 +24,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                       set -euxo pipefail
+                       set -ex
                           export NVM_DIR="$HOME/.nvm"
                           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
@@ -48,7 +48,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                       set -euxo pipefail
+                       set -ex
                           export NVM_DIR="$HOME/.nvm"
                           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
