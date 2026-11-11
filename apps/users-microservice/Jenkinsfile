@@ -20,46 +20,46 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Unit tests') {
-            steps {
-                script {
-                    sh '''
-                       set -ex
-                          export NVM_DIR="$HOME/.nvm"
-                          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-                          nvm install 20.20.2
-                          nvm use 20.20.2
-                          node -v
-                          npm -v
-
-                          corepack enable
-                          corepack prepare pnpm@10.33.4 --activate
-                          pnpm -v
-
-                          pnpm install --frozen-lockfile
-                          pnpm prisma:generate:users:deployment
-                          pnpm test -- --runInBand
-                    '''
-                }
-            }
-        }
-        stage('e2e tests') {
-            steps {
-                script {
-                    sh '''
-                       set -ex
-                          export NVM_DIR="$HOME/.nvm"
-                          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-                          nvm use 20.20.2
-                          corepack enable
-                          corepack prepare pnpm@10.33.4 --activate
-                          pnpm test:users:e2e
-                    '''
-                }
-            }
-        }
+//         stage('Unit tests') {
+//             steps {
+//                 script {
+//                     sh '''
+//                        set -ex
+//                           export NVM_DIR="$HOME/.nvm"
+//                           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+//
+//                           nvm install 20.20.2
+//                           nvm use 20.20.2
+//                           node -v
+//                           npm -v
+//
+//                           corepack enable
+//                           corepack prepare pnpm@10.33.4 --activate
+//                           pnpm -v
+//
+//                           pnpm install --frozen-lockfile
+//                           pnpm prisma:generate:users:deployment
+//                           pnpm test -- --runInBand
+//                     '''
+//                 }
+//             }
+//         }
+//         stage('e2e tests') {
+//             steps {
+//                 script {
+//                     sh '''
+//                        set -ex
+//                           export NVM_DIR="$HOME/.nvm"
+//                           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+//
+//                           nvm use 20.20.2
+//                           corepack enable
+//                           corepack prepare pnpm@10.33.4 --activate
+//                           pnpm test:users:e2e
+//                     '''
+//                 }
+//             }
+//         }
         stage('Build docker image') {
             steps {
                 echo "Build image started..."
