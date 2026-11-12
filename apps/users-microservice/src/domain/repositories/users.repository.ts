@@ -1,6 +1,7 @@
 import { UserEntity } from '../entities/user.entity';
 import { CreateUserData } from './create-user-data.type';
 import { UpdateConfirmationData } from './update-confirmation-data.type';
+import { UpdateProfileData } from './update-profile-data.type';
 
 export abstract class UsersRepository {
   abstract findById(id: string): Promise<UserEntity | null>;
@@ -25,5 +26,25 @@ export abstract class UsersRepository {
   abstract updatePasswordHash(
     userId: string,
     passwordHash: string,
+  ): Promise<UserEntity>;
+
+  // Sets the new avatar and, in the same transaction, queues the previous one
+  // for deletion (skipped when there is none or it's the same file)
+  abstract setProfilePictureAndEnqueueOldFileDeletion(
+    userId: string,
+    fileId: string,
+  ): Promise<UserEntity>;
+
+  // Clears the avatar and, in the same transaction, queues its file for
+  // deletion. No-op when there is no avatar, so a retried call isn't an error
+  abstract clearProfilePictureAndEnqueueFileDeletion(
+    userId: string,
+  ): Promise<void>;
+
+  abstract count(): Promise<number>;
+
+  abstract updateProfile(
+    userId: string,
+    data: UpdateProfileData,
   ): Promise<UserEntity>;
 }

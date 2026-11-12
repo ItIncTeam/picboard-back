@@ -6,7 +6,7 @@ import {
   GeneratePresignedGetUrlResult,
   GeneratePresignedPutUrlResult,
 } from './output.models';
-import { GetObjectMetadataInput } from './input.models';
+import { GetObjectMetadataInput, ReadObjectBytesInput } from './input.models';
 import { ObjectMetadataResult } from './output.models';
 
 export abstract class StorageService {
@@ -19,6 +19,11 @@ export abstract class StorageService {
   abstract getObjectMetadata(
     input: GetObjectMetadataInput,
   ): Promise<ObjectMetadataResult | null>;
+
+  // reads the first `length` bytes of the object; null if it doesn't exist
+  abstract readObjectBytes(
+    input: ReadObjectBytesInput,
+  ): Promise<Uint8Array | null>;
 
   abstract generatePresignedGetUrl(
     input: GeneratePresignedGetUrlInput,

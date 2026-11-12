@@ -1,21 +1,16 @@
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AppConfig } from './config/app.config';
+import { createValidationPipe } from '@app/common';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const appConfig = app.get<AppConfig>(AppConfig);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
+
 
   // app.connectMicroservice<MicroserviceOptions>({
   //   transport: Transport.RMQ,

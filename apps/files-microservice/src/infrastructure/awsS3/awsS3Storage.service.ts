@@ -16,6 +16,7 @@ import {
   GeneratePresignedGetUrlInput,
   GeneratePresignedPutUrlInput,
   GetObjectMetadataInput,
+  ReadObjectBytesInput,
 } from '../../domain/services/awsS3Storage/input.models';
 import {
   GeneratePresignedGetUrlResult,
@@ -122,6 +123,37 @@ export class AwsS3StorageService implements StorageService {
         return null;
       }
       this.logger.error('Failed to get object metadata', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Read the first bytes of an object
+   * Best for: checking a file's signature (magic bytes) without downloading it
+   */
+  async readObjectBytes(
+    input: ReadObjectBytesInput,
+  ): Promise<Uint8Array | null> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: input.key,
+        // ranged GET: S3 sends only these bytes, not the whole file
+        Range: `bytes=0-${input.length - 1}`,
+      });
+
+      const response = await this.s3Client.send(command);
+
+      if (!response.Body) {
+        return null;
+      }
+
+      return await response.Body.transformToByteArray();
+    } catch (error) {
+      if (error.name === 'NotFound' || error.name === 'NoSuchKey') {
+        return null;
+      }
+      this.logger.error('Failed to read object bytes', error);
       throw error;
     }
   }

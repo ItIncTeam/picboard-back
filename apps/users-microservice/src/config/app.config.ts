@@ -249,4 +249,14 @@ export class AppConfig {
     if (!value) throw new Error('TCP_HOST is not defined');
     return Number(value);
   }
+
+  get filesTcpHost(): string {
+    return this.configService.get<string>('FILES_TCP_HOST') ?? 'localhost';
+  }
+
+  get filesTcpPort(): number {
+    const value = this.configService.get<string>('FILES_TCP_PORT');
+    if (!value) throw new Error('FILES_TCP_PORT is not defined');
+    return Number(value);
+  }
 }

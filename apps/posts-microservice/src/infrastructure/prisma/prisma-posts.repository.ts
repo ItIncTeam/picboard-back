@@ -33,7 +33,7 @@ export class PrismaPostsRepository implements PostsRepository {
     });
     return PostMapper.toEntities(posts);
   }
-
+  //todo: infinity scroll
   async findFeed(): Promise<PostEntity[]> {
     const posts = await this.prisma.post.findMany({
       where: { deletedAt: null },
@@ -109,10 +109,26 @@ export class PrismaPostsRepository implements PostsRepository {
     return PostMapper.toEntity(updated)!;
   }
 
-  async softDelete(id: string): Promise<void> {
-    await this.prisma.post.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+  /**
+   * Атомарно: soft-delete поста + постановка задачи на удаление его файлов
+   * в outbox (одна транзакция). Файлы удаляются фоновым воркером.
+   */
+  async softDeleteAndEnqueueFileDeletion(
+    postId: string,
+    fileIds: string[],
+    ownerId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.post.update({
+        where: { id: postId },
+        data: { deletedAt: new Date() },
+      });
+
+      if (fileIds.length > 0) {
+        await tx.fileDeletionOutbox.create({
+          data: { postId, ownerId, fileIds },
+        });
+      }
     });
   }
 }

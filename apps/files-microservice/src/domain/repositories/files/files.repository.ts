@@ -1,6 +1,7 @@
 import { CreatePendingFileData } from './create-pending-file-data.type';
 import { FileEntity } from '../../entities/file.entity';
 import { FileStatus } from '../../enums/file-status.enum';
+import { Purpose } from '../../enums/file-purpose.enum';
 
 export abstract class FilesRepository {
   abstract createManyPending(
@@ -10,6 +11,11 @@ export abstract class FilesRepository {
     ids: string[],
     ownerId: string,
     status: FileStatus,
+    purpose?: Purpose,
+  ): Promise<FileEntity[]>;
+  abstract findRetryable(
+    ids: string[],
+    ownerId: string,
   ): Promise<FileEntity[]>;
   abstract updateStatus(
     id: string,
@@ -17,6 +23,7 @@ export abstract class FilesRepository {
     failedReason?: string | null,
     timestamp?: Date | null,
   ): Promise<FileEntity>;
+  abstract markRetrying(id: string): Promise<FileEntity>;
   abstract findById(id: string): Promise<FileEntity>;
   abstract findByIds(ids: string[]): Promise<FileEntity[]>;
   abstract softDeleteMany(input: {

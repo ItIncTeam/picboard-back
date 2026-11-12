@@ -1,63 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../domain/repositories/users.repository';
 import { UserEntity } from '../../domain/entities/user.entity';
+import { UpdateProfileData } from '../../domain/repositories/update-profile-data.type';
 import { UsersPrismaService } from './users-prisma.service';
 import { CreateUserData } from '../../domain/repositories/create-user-data.type';
 import { UpdateConfirmationData } from '../../domain/repositories/update-confirmation-data.type';
 import { User } from '../../../../../prisma/apps/users/src/generated/prisma/users-client';
-
-/*//A REUSABLE MAPPER:
-//examples in comments in methods below
-
-// user.prisma-mapper.ts
-export const userEntitySelect = {
-  id: true,
-  email: true,
-  username: true,
-  passwordHash: true,
-  createdAt: true,
-  confirmationCode: true,
-  confirmationCodeExpDate: true,
-  isConfirmed: true,
-} satisfies Prisma.UserSelect;
-
-export type UserEntityRow = Prisma.UserGetPayload<{
-  select: typeof userEntitySelect;
-}>;
-
-export function mapToUserEntity(user: UserEntityRow): UserEntity {
-  return new UserEntity(
-    user.id,
-    user.email,
-    user.username,
-    user.passwordHash,
-    user.createdAt,
-    user.confirmationCode,
-    user.confirmationCodeExpDate,
-    user.isConfirmed,
-  );
-
-  export function mapToUserEntityOrNull(
-  row: UserEntityRow | null,
-): UserEntity | null {
-  return row ? mapToUserEntity(row) : null;
-}
-
-export function mapToUserEntities(rows: UserEntityRow[]): UserEntity[] {
-  return rows.map(mapToUserEntity);
-}
-
-export function mapCreateUserDataToPrisma(data: CreateUserData): Prisma.UserCreateInput {
-  return {
-    email: data.email,
-    username: data.username,
-    passwordHash: data.passwordHash,
-    confirmationCode: data.confirmationCode,
-    confirmationCodeExpDate: data.confirmationCodeExpDate,
-    isConfirmed: data.isConfirmed,
-  };
-}
-}*/
+import {
+  mapToUserEntity,
+  mapToUserEntityOrNull,
+  mapToUserEntities,
+} from './mappers/user.mapper';
 
 @Injectable()
 export class PrismaUsersRepository implements UsersRepository {
@@ -68,19 +21,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { id: { in: ids } },
     });
 
-    return users.map(
-      (user) =>
-        new UserEntity(
-          user.id,
-          user.email,
-          user.username,
-          user.passwordHash,
-          user.createdAt,
-          user.confirmationCode,
-          user.confirmationCodeExpDate,
-          user.isConfirmed,
-        ),
-    );
+    return mapToUserEntities(users);
   }
 
   async findById(id: string): Promise<UserEntity | null> {
@@ -88,20 +29,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { id },
     });
 
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async findByUsername(username: string): Promise<UserEntity | null> {
@@ -110,22 +38,7 @@ export class PrismaUsersRepository implements UsersRepository {
       /*select: userEntitySelect,*/
     });
 
-    if (!user) {
-      return null;
-    }
-
-    /*return mapToUserEntityOrNull(user);*/
-    /*same with all FIND*/
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
@@ -133,20 +46,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { email },
     });
 
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async create(data: CreateUserData): Promise<UserEntity> {
@@ -162,17 +62,7 @@ export class PrismaUsersRepository implements UsersRepository {
       /* select: userEntitySelect,*/
     });
 
-    /*return mapToUserEntity(user);*/
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntity(user);
   }
 
   async findByConfirmationCode(
@@ -182,20 +72,7 @@ export class PrismaUsersRepository implements UsersRepository {
       where: { confirmationCode },
     });
 
-    if (!user) {
-      return null;
-    }
-
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntityOrNull(user);
   }
 
   async confirmUserEmail(id: string): Promise<UserEntity> {
@@ -204,16 +81,7 @@ export class PrismaUsersRepository implements UsersRepository {
       data: { isConfirmed: true },
     });
 
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntity(user);
   }
 
   /*async findManyConfirmed(): Promise<UserEntity[]> {
@@ -238,16 +106,7 @@ export class PrismaUsersRepository implements UsersRepository {
       },
     });
 
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntity(user);
   }
 
   async updatePasswordHash(
@@ -261,15 +120,76 @@ export class PrismaUsersRepository implements UsersRepository {
       },
     });
 
-    return new UserEntity(
-      user.id,
-      user.email,
-      user.username,
-      user.passwordHash,
-      user.createdAt,
-      user.confirmationCode,
-      user.confirmationCodeExpDate,
-      user.isConfirmed,
-    );
+    return mapToUserEntity(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileData,
+  ): Promise<UserEntity> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+
+    return mapToUserEntity(user);
+  }
+
+  async setProfilePictureAndEnqueueOldFileDeletion(
+    userId: string,
+    fileId: string,
+  ): Promise<UserEntity> {
+    return this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE locks the row until commit: a concurrent call waits here and
+      // then reads our new avatar as its "previous" one, so no avatar is lost
+      // without being queued for deletion
+      const [current] = await tx.$queryRaw<
+        { profilePictureFileId: string | null }[]
+      >`SELECT "profilePictureFileId" FROM "User" WHERE "id" = ${userId}::uuid FOR UPDATE`;
+
+      const user: User = await tx.user.update({
+        where: { id: userId },
+        data: { profilePictureFileId: fileId },
+      });
+
+      const previousFileId = current?.profilePictureFileId;
+      if (previousFileId && previousFileId !== fileId) {
+        await tx.fileDeletionOutbox.create({
+          data: { ownerId: userId, fileIds: [previousFileId] },
+        });
+      }
+
+      return mapToUserEntity(user);
+    });
+  }
+
+  async clearProfilePictureAndEnqueueFileDeletion(
+    userId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // FOR UPDATE: a concurrent setProfilePhoto either waits for our commit
+      // and then reads null (queues nothing), or commits first and its new
+      // avatar is the one we clear and queue here, so no file is left behind
+      const [current] = await tx.$queryRaw<
+        { profilePictureFileId: string | null }[]
+      >`SELECT "profilePictureFileId" FROM "User" WHERE "id" = ${userId}::uuid FOR UPDATE`;
+
+      const fileId = current?.profilePictureFileId;
+      // no avatar (or no row): nothing to clear, and updatedAt stays as it is
+      if (!fileId) return;
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { profilePictureFileId: null },
+      });
+
+      await tx.fileDeletionOutbox.create({
+        data: { ownerId: userId, fileIds: [fileId] },
+      });
+    });
+  }
+
+  async count(): Promise<number> {
+    return this.prisma.user.count();
   }
 }

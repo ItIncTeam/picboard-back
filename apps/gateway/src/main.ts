@@ -8,6 +8,13 @@ async function bootstrap() {
 
   const appConfig = app.get<AppConfig>(AppConfig);
 
+  app.enableCors({
+    origin: ['https://picboard.space', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
   app.use(cookieParser());

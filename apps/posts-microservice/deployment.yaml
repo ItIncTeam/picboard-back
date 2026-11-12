@@ -40,11 +40,11 @@ spec:
                  secretKeyRef:
                    name: posts-micro-production-config-secret
                    key: FILES_TCP_PORT
-             - name: FILES_SUBGRAPH_SECRET
+             - name: POSTS_SUBGRAPH_SECRET
                valueFrom:
                  secretKeyRef:
                    name: posts-micro-production-config-secret
-                   key: FILES_SUBGRAPH_SECRET
+                   key: POSTS_SUBGRAPH_SECRET
              - name: PORT
                valueFrom:
                  secretKeyRef:

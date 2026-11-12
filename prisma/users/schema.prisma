@@ -17,6 +17,12 @@ enum ConsentAction {
   WITHDRAWN
 }
 
+enum OutboxStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
 model User {
   id                      String         @id @default(uuid()) @db.Uuid
   email                   String         @unique
@@ -25,9 +31,11 @@ model User {
   confirmationCode        String?
   confirmationCodeExpDate DateTime?      @db.Timestamptz(6)
   isConfirmed             Boolean        @default(false)
-  displayName             String?
-  bio                     String?
+  aboutMe                 String?
   profilePictureFileId    String?        @db.Uuid
+  firstName               String?
+  lastName                String?
+  dateOfBirth             DateTime?      @db.Date
   createdAt               DateTime       @default(now()) @db.Timestamptz(6)
   updatedAt               DateTime       @updatedAt @db.Timestamptz(6)
 
@@ -35,6 +43,11 @@ model User {
   refreshToken            RefreshToken[]
   consents                UserConsent[]
   oauthExchangeCodes      OAuthExchangeCode[]
+  countryId               String?        @db.Uuid
+  cityId                  String?        @db.Uuid
+
+  country                 Country?       @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  city                    City?          @relation(fields: [cityId], references: [id], onDelete: SetNull)
 }
 
 model UserConsent {
@@ -92,4 +105,48 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Country {
+  id     String @id @default(uuid()) @db.Uuid
+  code   String @unique
+  name   String
+  nameRu String?
+  cities City[]
+  users  User[]
+  @@map("countries")
+}
+
+model City {
+  id         String  @id @default(uuid()) @db.Uuid
+  countryId  String  @db.Uuid
+  name       String
+  nameRu     String?
+  population Int?
+  geonameId  Int     @unique
+  country    Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  users      User[]
+  @@index([countryId])
+  @@index([name])
+  @@index([nameRu])
+  @@map("cities")
+}
+
+// Transactional outbox: "delete the replaced avatar in files-service".
+// The row is created in the same transaction as the avatar change; the shared
+// worker (libs/common/src/file-deletion-outbox) delivers it with retries.
+// No relation to User: the old file must be deleted even if the user is gone.
+model FileDeletionOutbox {
+  id            String       @id @default(uuid()) @db.Uuid
+  ownerId       String       @db.Uuid
+  fileIds       String[]     @db.Uuid
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  lastError     String?
+  nextAttemptAt DateTime     @default(now()) @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
+  processedAt   DateTime?    @db.Timestamptz(6)
+
+  @@index([status, nextAttemptAt])
 }
