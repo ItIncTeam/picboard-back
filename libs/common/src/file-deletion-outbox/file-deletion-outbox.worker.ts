@@ -11,7 +11,7 @@ import { FileDeletionSender } from './file-deletion-sender';
 import { extractErrorMessage } from '../rpc/extract-error-message';
 
 /** Период опроса outbox-таблицы */
-const PROCESS_INTERVAL_MS = 15_000;
+const PROCESS_INTERVAL_MS = 24 * 60 * 60_000; // раз в сутки
 /** Сколько задач брать за один проход */
 const BATCH_SIZE = 20;
 /** Период аренды задачи (60 секунд) */
