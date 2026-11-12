@@ -17,7 +17,7 @@ export class PostEntity {
   @Field(() => [PostAttachmentEntity])
   attachments: PostAttachmentEntity[];
 
-  @Field(() => User)
+  @Field(() => User, { nullable: true })
   author?: User;
 
   @Field()
