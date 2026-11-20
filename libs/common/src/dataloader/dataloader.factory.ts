@@ -1,6 +1,9 @@
 import DataLoader from 'dataloader';
 
-export type BatchLoadFn<K, V> = (keys: K[]) => Promise<V[]>;
+// An entry may be an Error instead of a value: DataLoader rejects only that
+// key's promise and resolves the rest. Throwing inside a batch function
+// instead rejects every key in the batch.
+export type BatchLoadFn<K, V> = (keys: K[]) => Promise<(V | Error)[]>;
 
 export class DataloaderFactory {
   private loaders = new Map<string, DataLoader<any, any>>();

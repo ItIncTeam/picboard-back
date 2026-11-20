@@ -11,6 +11,7 @@ import {
   ApolloFederationDriver,
   ApolloFederationDriverConfig,
 } from '@nestjs/apollo';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from '@app/auth';
 import { AppConfigModule } from './config/app-config.module';
@@ -19,14 +20,23 @@ import {
   normalizeContext,
   SubgraphAuthModule,
   SubgraphGatewayAuthMiddleware,
+  PrismaExceptionModule,
 } from '@app/common';
 import { AppConfig } from './config/app.config';
 import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
+import { Me } from './graphql/types/me.type';
 
 @Module({
   imports: [
     configModule,
     AppConfigModule,
+    PrismaExceptionModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfig],
+      useFactory: (appConfig: AppConfig) => ({
+        exposeErrorCode: !appConfig.isProduction,
+      }),
+    }),
     SubgraphAuthModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfig],
@@ -42,10 +52,16 @@ import { DataloaderFactory } from '@app/common/dataloader/dataloader.factory';
         autoSchemaFile: {
           federation: 2,
         },
+        buildSchemaOptions: {
+          orphanedTypes: [Me],
+        },
         path: '/api/v1',
         introspection: true /*!appConfig.isProduction*/,
         sortSchema: true,
-        playground: true /*!appConfig.isProduction*/,
+        playground: false,
+        ...(appConfig.isProduction
+          ? { plugins: [ApolloServerPluginLandingPageLocalDefault()] }
+          : { plugins: [ApolloServerPluginLandingPageLocalDefault()] }),
         context: ({ req, res }) => ({
           dataloaderFactory: new DataloaderFactory(),
           ...normalizeContext(req, res),
@@ -61,6 +77,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(SubgraphGatewayAuthMiddleware)
+      .exclude({ path: 'api/v1/auth/*path', method: RequestMethod.GET })
       .forRoutes({ path: 'api/v1', method: RequestMethod.ALL });
   }
 }

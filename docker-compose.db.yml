@@ -1,0 +1,27 @@
+name: picboard-db
+
+# Локальный Postgres для всех трёх микросервисов (users / posts / files).
+# Запуск: docker compose -f docker-compose.db.yml up -d
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: picboard-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: picboard
+      POSTGRES_PASSWORD: picboard
+      POSTGRES_DB: users_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # выполняется только при первом создании тома — добивает posts_db и files_db
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U picboard -d users_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

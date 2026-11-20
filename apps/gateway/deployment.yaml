@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: DEPLOYMENT_NAME
+  namespace: NAMESPACE
+  labels:
+    app: PROJECT
+spec:
+  selector:
+    matchLabels:
+      project: PROJECT
+  template:
+    metadata:
+      namespace: NAMESPACE
+      labels:
+        project: PROJECT
+    spec:
+      containers:
+         - name: PROJECT
+           image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
+           securityContext:
+             allowPrivilegeEscalation: false
+             runAsNonRoot: true      # опционально, но хорошая практика
+             runAsUser: 1000         # опционально
+           ports:
+             - containerPort: PORT_CONTAINER
+           env:
+             - name: USERS_GQL_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: USERS_GQL_URL
+             - name: POSTS_GQL_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: POSTS_GQL_URL
+             - name: FILES_GQL_URL
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: FILES_GQL_URL
+             - name: JWT_ACCESS_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: JWT_ACCESS_SECRET
+             - name: JWT_ACCESS_EXPIRES_IN
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: JWT_ACCESS_EXPIRES_IN
+             - name: USERS_SUBGRAPH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: USERS_SUBGRAPH_SECRET
+             - name: POSTS_SUBGRAPH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: POSTS_SUBGRAPH_SECRET
+             - name: FILES_SUBGRAPH_SECRET
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: FILES_SUBGRAPH_SECRET
+             - name: PORT
+               valueFrom:
+                 secretKeyRef:
+                   name: gateway-micro-production-config-secret
+                   key: PORT

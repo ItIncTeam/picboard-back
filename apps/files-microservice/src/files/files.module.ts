@@ -7,6 +7,7 @@ import { PrismaFilesRepository } from '../infrastructure/prisma/repositories/pri
 import { StorageService } from '../domain/services/awsS3Storage/storage.service';
 import { AwsS3StorageService } from '../infrastructure/awsS3/awsS3Storage.service';
 import { StorageKeyBuilder } from '../infrastructure/storage-key/storage-key-builder.service';
+import { FileUploadPolicyService } from '../infrastructure/upload-policy/upload-policy.service';
 import { InitiateUploadBatchUseCase } from '../application/use-cases/initiate-upload/initiate-upload-batch.use.case';
 import { FilesTcpController } from './tcp/files-tcp.controller';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -14,6 +15,7 @@ import { CompleteUploadBatchUseCase } from '../application/use-cases/complete-up
 import { CheckOwnedReadyFilesHandler } from '../application/handlers/check-owned-ready-files/check-owned-ready-files.handler';
 import { ResolveFileUrlUseCase } from '../application/use-cases/resolve-file-url/resolve-file-url.use.case';
 import { SoftDeleteFilesUseCase } from '../application/use-cases/soft-delete-files/soft-delete-files.use.case';
+import { RetryUploadBatchUseCase } from '../application/use-cases/retry-upload/retry-upload-batch.use.case';
 
 @Module({
   imports: [
@@ -35,10 +37,12 @@ import { SoftDeleteFilesUseCase } from '../application/use-cases/soft-delete-fil
     FilesResolver,
     InitiateUploadBatchUseCase,
     CompleteUploadBatchUseCase,
+    RetryUploadBatchUseCase,
     ResolveFileUrlUseCase,
     SoftDeleteFilesUseCase,
     CheckOwnedReadyFilesHandler,
     StorageKeyBuilder,
+    FileUploadPolicyService,
     {
       provide: FilesRepository,
       useClass: PrismaFilesRepository,
